@@ -25,6 +25,7 @@ CREATE TABLE lembagas (
     yayasan_id BIGINT UNSIGNED NOT NULL,
     nama VARCHAR(255) NOT NULL,
     kode VARCHAR(50) NOT NULL,                  -- Kode singkat di lingkup yayasan
+    kode_sisda VARCHAR(10) NULL,                -- Kode dari Sisda API (idunit), utk generate NIY
     npsn VARCHAR(20) NULL,
     alamat TEXT NULL,
     telp VARCHAR(50) NULL,
@@ -125,6 +126,7 @@ CREATE TABLE gurus (
     lembaga_id BIGINT UNSIGNED NOT NULL,
     kode_guru_lembaga VARCHAR(50) NULL UNIQUE,  -- Format: [KodeLembaga].[NomorUrut]
     kode_guru_satminkal VARCHAR(50) NULL UNIQUE, -- Format: [KodeYayasan].[KodeLembaga].[NomorUrut]
+    niy VARCHAR(20) NULL UNIQUE,                -- Nomor Induk Yayasan, format: YYYY[KodeSisda][NN], generate saat approve
     nama VARCHAR(255) NOT NULL,
     nip VARCHAR(30) NULL,                       -- NIP bagi PNS
     nuptk VARCHAR(30) NULL,
@@ -132,6 +134,7 @@ CREATE TABLE gurus (
     status_satminkal BOOLEAN DEFAULT FALSE,
     tempat_lahir VARCHAR(100) NULL,
     tanggal_lahir DATE NULL,
+    tmt DATE NULL,                              -- Tanggal Mulai Tugas
     alamat TEXT NULL,
     telp VARCHAR(50) NULL,
     email VARCHAR(255) NULL,

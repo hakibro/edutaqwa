@@ -69,6 +69,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Default Password
+    |--------------------------------------------------------------------------
+    |
+    | Password default untuk user baru yang dibuat otomatis (guru approve, dll).
+    | User dengan password ini akan dipaksa ganti password saat login pertama.
+    |
+    */
+
+    'default_password' => env('DEFAULT_PASSWORD', 'password123'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |

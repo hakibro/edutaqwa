@@ -124,6 +124,12 @@
                                 class="mt-1 block w-full" :value="old('tanggal_lahir')" />
                             <x-input-error :messages="$errors->get('tanggal_lahir')" class="mt-2" />
                         </div>
+                        <div>
+                            <x-input-label for="tmt" value="TMT (Tanggal Mulai Tugas)" />
+                            <x-text-input id="tmt" name="tmt" type="date" class="mt-1 block w-full"
+                                :value="old('tmt')" />
+                            <x-input-error :messages="$errors->get('tmt')" class="mt-2" />
+                        </div>
                     </div>
 
                     <div>

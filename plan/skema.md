@@ -44,6 +44,7 @@ LEMBAGA (Sekolah/Madrasah)
 | CRUD Lembaga                            | Admin Yayasan                | 🔴 Tinggi |
 | Tahun Ajaran                            | Admin Yayasan                | 🔴 Tinggi |
 | Approval Guru (baru, satminkal)         | Admin Yayasan                | 🔴 Tinggi |
+| NIY (generate otomatis saat approve)    | Admin Yayasan                | 🔴 Tinggi |
 | Kode Guru Lembaga & Satminkal           | Admin Lembaga                | 🔴 Tinggi |
 | Master Data Guru                        | Admin Lembaga                | 🔴 Tinggi |
 | Master Data Siswa (import Sisda API)    | Admin Lembaga                | 🔴 Tinggi |

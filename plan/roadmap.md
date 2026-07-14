@@ -68,10 +68,18 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 ### 3.1 Admin Lembaga — Guru
 
 - [x] CRUD Guru
+- [x] TMT (Tanggal Mulai Tugas) field
 - [x] Kode Guru Lembaga (generate otomatis)
 - [x] Klasifikasi PTK (jenis PTK, satminkal/non)
 - [x] Import Guru (XLSX)
 - [x] Upload dokumen guru
+
+### 3.2 Admin Yayasan — Approval Guru
+
+- [x] NIY (Nomor Induk Yayasan) generate otomatis saat approve
+- [x] Format NIY: YYYY[KodeSisda][NN] — contoh 20260701
+- [x] NIY sebagai username login guru
+- [x] Kode Sisda (idunit) disimpan di lembaga.kode_sisda
 
 ### 3.2 Admin Lembaga — Siswa
 

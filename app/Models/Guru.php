@@ -15,6 +15,7 @@ class Guru extends Model
         'lembaga_id',
         'kode_guru_lembaga',
         'kode_guru_satminkal',
+        'niy',
         'nama',
         'nip',
         'nuptk',
@@ -22,6 +23,7 @@ class Guru extends Model
         'status_satminkal',
         'tempat_lahir',
         'tanggal_lahir',
+        'tmt',
         'alamat',
         'telp',
         'email',
@@ -38,6 +40,7 @@ class Guru extends Model
         'is_active' => 'boolean',
         'status_satminkal' => 'boolean',
         'tanggal_lahir' => 'date',
+        'tmt' => 'date',
         'approved_at' => 'datetime',
     ];
 
@@ -74,6 +77,29 @@ class Guru extends Model
     public function jadwals(): HasMany
     {
         return $this->hasMany(Jadwal::class);
+    }
+
+    /**
+     * Generate NIY: YYYYUUNN — tahun TMT + kode lembaga Sisda + nomor urut.
+     * Dipanggil saat Admin Yayasan approve guru.
+     */
+    public static function generateNiy(Lembaga $lembaga, string $tmt): string
+    {
+        $tahun = date('Y', strtotime($tmt));
+        $kodeLembaga = $lembaga->kode_sisda ?? strtoupper($lembaga->kode);
+
+        $last = static::where('lembaga_id', $lembaga->id)
+            ->whereNotNull('niy')
+            ->where('niy', 'like', $tahun . $kodeLembaga . '%')
+            ->orderByDesc('niy')
+            ->first();
+
+        $urut = 1;
+        if ($last && preg_match('/' . $tahun . $kodeLembaga . '(\d+)$/', $last->niy, $m)) {
+            $urut = (int) $m[1] + 1;
+        }
+
+        return $tahun . $kodeLembaga . str_pad($urut, 2, '0', STR_PAD_LEFT);
     }
 
     /**

@@ -9,15 +9,31 @@
    └── Simpan → status: PENDING_APPROVAL
        │
 2. Admin Yayasan lihat daftar approval pending
-   ├── Review data guru
+   ├── Review data guru (termasuk TMT)
    ├── Jika satminkal:
    │   └── Setujui → generate kode guru satminkal (YYS.LBG.NNN)
    ├── Jika non-satminkal:
    │   └── Setujui → generate kode guru lembaga (LBG.NNN)
+   ├── Generate NIY (Nomor Induk Yayasan) jika TMT sudah diisi
+   │   └── Format: YYYY[KodeSisda][NN] — contoh: 20260701
+   │       YYYY = tahun dari TMT, KodeSisda = idunit dari Sisda API, NN = nomor urut
    └── Jika ditolak → isi alasan → status: REJECTED
         │
-3. Sistem kirim notifikasi ke guru
-   └── Jika disetujui → guru bisa login & akses fitur
+3. Sistem buat akun User otomatis:
+   ├── Email: dari data guru atau nama@edutaqwa.local (auto-dedup)
+   ├── Password: config('app.default_password') default 'password123'
+   ├── Role: guru
+   ├── must_change_password: true
+   └── Tampilkan email akun ke Admin Yayasan
+        │
+4. Guru login dengan email & password default
+   ├── Middleware ForcePasswordChange deteksi must_change_password=true
+   └── Redirect ke halaman Ganti Password Wajib (tanpa current_password)
+        │
+5. Guru ganti password:
+   ├── Isi password baru + konfirmasi
+   ├── Sistem simpan password baru, set must_change_password=false
+   └── Redirect ke dashboard guru
 ```
 
 ## 2. Alur Import Siswa dari Sisda API

@@ -8,6 +8,7 @@ use App\Models\Lembaga;
 use App\Models\LogAktivita;
 use App\Models\TahunAjaran;
 use App\Models\TugasTambahan;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -67,6 +68,7 @@ class GuruController extends Controller
             'status_satminkal' => 'boolean',
             'tempat_lahir' => 'nullable|string|max:100',
             'tanggal_lahir' => 'nullable|date',
+            'tmt' => 'nullable|date',
             'alamat' => 'nullable|string',
             'telp' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',
@@ -149,6 +151,7 @@ class GuruController extends Controller
             'status_satminkal' => 'boolean',
             'tempat_lahir' => 'nullable|string|max:100',
             'tanggal_lahir' => 'nullable|date',
+            'tmt' => 'nullable|date',
             'alamat' => 'nullable|string',
             'telp' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',
@@ -205,7 +208,7 @@ class GuruController extends Controller
 
     /**
      * Import guru dari file XLSX.
-     * Format XLSX: nama,nip,nuptk,jenis_ptk,status_satminkal,tempat_lahir,tanggal_lahir,alamat,telp,email
+     * Format XLSX: nama,nip,nuptk,jenis_ptk,status_satminkal,tempat_lahir,tanggal_lahir,tmt,alamat,telp,email
      */
     public function import(Request $request): RedirectResponse
     {
@@ -256,9 +259,10 @@ class GuruController extends Controller
                     'status_satminkal' => strtolower(trim($row[4] ?? '')) === 'ya',
                     'tempat_lahir' => trim($row[5] ?? '') ?: null,
                     'tanggal_lahir' => trim($row[6] ?? '') ?: null,
-                    'alamat' => trim($row[7] ?? '') ?: null,
-                    'telp' => trim($row[8] ?? '') ?: null,
-                    'email' => trim($row[9] ?? '') ?: null,
+                    'tmt' => trim($row[7] ?? '') ?: null,
+                    'alamat' => trim($row[8] ?? '') ?: null,
+                    'telp' => trim($row[9] ?? '') ?: null,
+                    'email' => trim($row[10] ?? '') ?: null,
                 ]);
                 $created++;
             } catch (\Exception $e) {
@@ -282,13 +286,13 @@ class GuruController extends Controller
      */
     public function template(): \Symfony\Component\HttpFoundation\StreamedResponse
     {
-        $headers = ['nama', 'nip', 'nuptk', 'jenis_ptk', 'status_satminkal (Ya/Tidak)', 'tempat_lahir', 'tanggal_lahir (YYYY-MM-DD)', 'alamat', 'telp', 'email'];
+        $headers = ['nama', 'nip', 'nuptk', 'jenis_ptk', 'status_satminkal (Ya/Tidak)', 'tempat_lahir', 'tanggal_lahir (YYYY-MM-DD)', 'tmt (YYYY-MM-DD)', 'alamat', 'telp', 'email'];
 
         return response()->streamDownload(function () use ($headers) {
             $spreadsheet = new Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
             $sheet->fromArray([$headers], null, 'A1');
-            $sheet->fromArray([['Ahmad Fauzi', '199001012020011001', '1234567890123456', 'Guru Mapel', 'Ya', 'Jakarta', '1990-01-01', 'Jl. Merdeka No. 1', '08123456789', 'ahmad@email.com']], null, 'A2');
+            $sheet->fromArray([['Ahmad Fauzi', '199001012020011001', '1234567890123456', 'Guru Mapel', 'Ya', 'Jakarta', '1990-01-01', '2026-07-01', 'Jl. Merdeka No. 1', '08123456789', 'ahmad@email.com']], null, 'A2');
 
             $writer = new Xlsx($spreadsheet);
             $writer->save('php://output');
@@ -353,15 +357,19 @@ class GuruController extends Controller
      */
     public function approve(Guru $guru): RedirectResponse
     {
-        $user = auth()->user();
+        $admin = auth()->user();
         $lembaga = $guru->lembaga;
 
-        // Generate kode satminkal jika status satminkal dan belum ada
         $updateData = [
             'is_approved' => true,
             'approved_at' => now(),
-            'approved_by' => $user->id,
+            'approved_by' => $admin->id,
         ];
+
+        // Generate NIY saat approve (jika belum punya dan TMT sudah diisi)
+        if (!$guru->niy && $guru->tmt) {
+            $updateData['niy'] = Guru::generateNiy($lembaga, $guru->tmt->format('Y-m-d'));
+        }
 
         if ($guru->status_satminkal && !$guru->kode_guru_satminkal) {
             $updateData['kode_guru_satminkal'] = Guru::generateKodeSatminkal($lembaga);
@@ -369,9 +377,39 @@ class GuruController extends Controller
 
         $guru->update($updateData);
 
-        LogAktivita::log('approve', 'Menyetujui guru "' . $guru->nama . '" (Kode: ' . ($guru->kode_guru_satminkal ?: $guru->kode_guru_lembaga) . ')', $guru);
+        // Refresh guru agar niy terbaca
+        $guru->refresh();
 
-        return redirect()->route('guru.approval')->with('success', 'Guru "' . $guru->nama . '" telah disetujui.');
+        // Buat akun user untuk guru jika belum ada — username=NIY, password=NIY
+        $niy = $guru->niy;
+        $user = User::where('guru_id', $guru->id)->first();
+
+        if (!$user) {
+            $email = $guru->email;
+
+            User::create([
+                'guru_id' => $guru->id,
+                'lembaga_id' => $guru->lembaga_id,
+                'yayasan_id' => $lembaga->yayasan_id,
+                'name' => $guru->nama,
+                'username' => $niy,
+                'email' => $email,
+                'password' => $niy,
+                'role' => 'guru',
+                'is_active' => true,
+                'must_change_password' => true,
+            ]);
+        } else {
+            $user->update([
+                'is_active' => true,
+                'must_change_password' => true,
+                'username' => $user->username ?? $niy,
+            ]);
+        }
+
+        LogAktivita::log('approve', 'Menyetujui guru "' . $guru->nama . '" (NIY: ' . $niy . ')', $guru);
+
+        return redirect()->route('guru.approval')->with('success', 'Guru "' . $guru->nama . '" telah disetujui. Username: ' . $niy . ' | Password: ' . $niy);
     }
 
     /**

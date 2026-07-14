@@ -28,6 +28,12 @@
                                         Jenis PTK</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                        TMT</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                        NIY</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                         Satminkal</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
@@ -49,6 +55,12 @@
                                             {{ $g->lembaga->nama }}</td>
                                         <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
                                             {{ $g->jenisPtk?->nama ?? '-' }}</td>
+                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
+                                            {{ $g->tmt?->format('d/m/Y') ?? '-' }}
+                                        </td>
+                                        <td class="whitespace-nowrap px-6 py-4 text-sm font-mono text-gray-700">
+                                            {{ $g->niy ?? '-' }}
+                                        </td>
                                         <td class="whitespace-nowrap px-6 py-4 text-sm">
                                             <span
                                                 class="rounded-full px-2 py-1 text-xs font-semibold {{ $g->status_satminkal ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700' }}">
@@ -83,7 +95,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="px-6 py-8 text-center text-sm text-gray-500">Semua
+                                        <td colspan="8" class="px-6 py-8 text-center text-sm text-gray-500">Semua
                                             guru sudah disetujui. Tidak ada pending.</td>
                                     </tr>
                                 @endforelse
