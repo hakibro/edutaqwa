@@ -221,6 +221,12 @@ Route::middleware('auth')->group(function () {
         Route::delete('/agenda-mengajar/{agenda}', [AgendaMengajarController::class, 'destroy'])->name('agenda-mengajar.destroy');
     });
 
+    // Agenda Mengajar — Monitoring & Verifikasi (Admin/Kepala Lembaga)
+    Route::middleware('role:admin_lembaga,kepala_lembaga')->group(function () {
+        Route::get('/agenda-mengajar/monitoring', [AgendaMengajarController::class, 'monitoring'])->name('agenda-mengajar.monitoring');
+        Route::post('/agenda-mengajar/{agenda}/verify', [AgendaMengajarController::class, 'verify'])->name('agenda-mengajar.verify');
+    });
+
     // === KESISWAAN (P8) ===
 
     // Kategori Pelanggaran (Kesiswaan, Guru bisa lihat)
