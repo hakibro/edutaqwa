@@ -62,6 +62,37 @@
 
             <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div class="p-6">
+                    {{-- Filter Bar --}}
+                    <div class="mb-4 flex flex-wrap items-end gap-3">
+                        <div class="flex-1 min-w-[200px]">
+                            <x-input-label for="searchGuru" value="Cari" />
+                            <input id="searchGuru" type="text" placeholder="Nama / NIP / NUPTK / NIY / Kode..."
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                value="{{ request('search') }}">
+                        </div>
+                        <div>
+                            <x-input-label for="filterSatminkal" value="Status Satminkal" />
+                            <select id="filterSatminkal"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                <option value="">-- Semua --</option>
+                                <option value="1" @selected(request('status_satminkal') === '1')>Satminkal</option>
+                                <option value="0" @selected(request('status_satminkal') === '0')>Non-Satminkal</option>
+                            </select>
+                        </div>
+                        <div>
+                            <x-input-label for="filterTmtFrom" value="TMT Dari" />
+                            <input id="filterTmtFrom" type="date"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                value="{{ request('tmt_from') }}">
+                        </div>
+                        <div>
+                            <x-input-label for="filterTmtTo" value="TMT Sampai" />
+                            <input id="filterTmtTo" type="date"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                value="{{ request('tmt_to') }}">
+                        </div>
+                    </div>
+
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
@@ -92,111 +123,12 @@
                                         Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-200 bg-white">
-                                @forelse ($gurus as $g)
-                                    <tr>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm font-mono text-gray-700">
-                                            {{ $g->kode_guru_lembaga ?? '-' }}
-                                            @if ($g->kode_guru_satminkal)
-                                                <br><span
-                                                    class="text-xs text-indigo-600">{{ $g->kode_guru_satminkal }}</span>
-                                            @endif
-                                        </td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm font-mono text-gray-700">
-                                            {{ $g->niy ?? '-' }}
-                                        </td>
-                                        <td class="px-6 py-4 text-sm text-gray-900">{{ $g->nama }}</td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
-                                            {{ $g->lembaga->nama }}</td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
-                                            <select
-                                                class="inline-update-jenis-ptk block w-full min-w-[130px] rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                                data-guru-id="{{ $g->id }}">
-                                                <option value="">-- Pilih --</option>
-                                                @foreach ($jenisPtks->where('lembaga_id', $g->lembaga_id) as $j)
-                                                    <option value="{{ $j->id }}" @selected($g->jenis_ptk_id == $j->id)>
-                                                        {{ $j->nama }}</option>
-                                                @endforeach
-                                            </select>
-                                        </td>
-                                        <td class="px-6 py-4 text-sm text-gray-700">
-                                            <div class="tugas-tambahan-inline" data-guru-id="{{ $g->id }}">
-                                                @php $ttList = $g->tugasTambahans; @endphp
-                                                @if ($ttList->isNotEmpty())
-                                                    @foreach ($ttList as $tt)
-                                                        <div class="tt-row flex flex-wrap items-center gap-1 mb-1">
-                                                            <select
-                                                                class="tt-jenis rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                                                style="min-width:120px">
-                                                                <option value="">-- Pilih --</option>
-                                                                <option value="Guru Mapel" @selected($tt->jenis == 'Guru Mapel')>
-                                                                    Guru Mapel</option>
-                                                                <option value="BK" @selected($tt->jenis == 'BK')>BK
-                                                                </option>
-                                                                <option value="Wali Kelas" @selected($tt->jenis == 'Wali Kelas')>
-                                                                    Wali Kelas</option>
-                                                                <option value="Pembina Ekskul"
-                                                                    @selected($tt->jenis == 'Pembina Ekskul')>Pembina Ekskul</option>
-                                                                <option value="Koordinator"
-                                                                    @selected($tt->jenis == 'Koordinator')>Koordinator</option>
-                                                            </select>
-                                                            <input type="text" value="{{ $tt->keterangan }}"
-                                                                class="tt-keterangan w-24 rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                                                placeholder="Ket">
-                                                            <select
-                                                                class="tt-ta rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                                                <option value="">-- TA --</option>
-                                                                @foreach ($tahunAjarans as $ta)
-                                                                    <option value="{{ $ta->id }}"
-                                                                        @selected($tt->tahun_ajaran_id == $ta->id)>
-                                                                        {{ $ta->nama }}</option>
-                                                                @endforeach
-                                                            </select>
-                                                            <button type="button"
-                                                                class="tt-remove text-red-400 hover:text-red-600 text-xs leading-none">&times;</button>
-                                                        </div>
-                                                    @endforeach
-                                                @else
-                                                    <span class="tt-empty text-xs text-gray-400">-</span>
-                                                @endif
-                                                <button type="button"
-                                                    class="tt-add text-xs text-indigo-600 hover:text-indigo-800 mt-1">+
-                                                    Tambah</button>
-                                            </div>
-                                        </td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm">
-                                            <span
-                                                class="rounded-full px-2 py-1 text-xs font-semibold {{ $g->status_satminkal ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700' }}">
-                                                {{ $g->status_satminkal ? 'Satminkal' : 'Non-Satminkal' }}
-                                            </span>
-                                        </td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm">
-                                            <span
-                                                class="rounded-full px-2 py-1 text-xs font-semibold {{ $g->is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
-                                                {{ $g->is_active ? 'Aktif' : 'Nonaktif' }}
-                                            </span>
-                                        </td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-right text-sm">
-                                            <a href="{{ route('guru.edit', $g) }}"
-                                                class="text-indigo-600 hover:text-indigo-900">Edit</a>
-                                            <form action="{{ route('guru.destroy', $g) }}" method="POST"
-                                                class="inline" onsubmit="return confirm('Hapus guru ini?')">
-                                                @csrf @method('DELETE')
-                                                <button type="submit"
-                                                    class="ml-2 text-red-600 hover:text-red-900">Hapus</button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="8" class="px-6 py-8 text-center text-sm text-gray-500">Belum ada
-                                            data guru.</td>
-                                    </tr>
-                                @endforelse
+                            <tbody id="guruTableBody" class="divide-y divide-gray-200 bg-white">
+                                @include('guru._table')
                             </tbody>
                         </table>
                     </div>
-                    <div class="mt-4">{{ $gurus->links() }}</div>
+                    <div id="guruPagination" class="mt-4">{{ $gurus->links() }}</div>
                 </div>
             </div>
         </div>
@@ -204,7 +136,6 @@
 </x-app-layout>
 
 <script>
-    // Inline update: debounce helper
     function debounce(fn, ms) {
         let t;
         return (...a) => {
@@ -213,27 +144,24 @@
         };
     }
 
-    // Jenis PTK dropdown change
-    document.querySelectorAll('.inline-update-jenis-ptk').forEach(el => {
-        el.addEventListener('change', function() {
-            const guruId = this.dataset.guruId;
-            fetch(`/guru/${guruId}/inline-update`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({
-                    field: 'jenis_ptk_id',
-                    value: this.value
-                })
-            }).then(r => r.json()).then(d => {
-                if (!d.success) alert('Gagal update Jenis PTK');
-            });
+    // ===== Inline update helpers =====
+    function saveJenisPtk(el) {
+        const guruId = el.dataset.guruId;
+        fetch(`/guru/${guruId}/inline-update`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                field: 'jenis_ptk_id',
+                value: el.value
+            })
+        }).then(r => r.json()).then(d => {
+            if (!d.success) alert('Gagal update Jenis PTK');
         });
-    });
+    }
 
-    // Tugas Tambahan: save state per guru
     function saveTugasTambahan(container) {
         const guruId = container.dataset.guruId;
         const rows = container.querySelectorAll('.tt-row');
@@ -242,13 +170,11 @@
             const jenis = row.querySelector('.tt-jenis')?.value || '';
             const keterangan = row.querySelector('.tt-keterangan')?.value || '';
             const ta = row.querySelector('.tt-ta')?.value || '';
-            if (jenis) {
-                tugasTambahan.push({
-                    jenis,
-                    keterangan,
-                    tahun_ajaran_id: ta
-                });
-            }
+            if (jenis) tugasTambahan.push({
+                jenis,
+                keterangan,
+                tahun_ajaran_id: ta
+            });
         });
         fetch(`/guru/${guruId}/inline-update`, {
             method: 'PUT',
@@ -266,37 +192,6 @@
     }
 
     const debouncedSaveTT = debounce(saveTugasTambahan, 500);
-
-    // Delegated events for tugas tambahan
-    document.querySelectorAll('.tugas-tambahan-inline').forEach(container => {
-        // Add row
-        container.querySelector('.tt-add')?.addEventListener('click', function() {
-            const empty = container.querySelector('.tt-empty');
-            if (empty) empty.remove();
-            const div = document.createElement('div');
-            div.className = 'tt-row flex flex-wrap items-center gap-1 mb-1';
-            div.innerHTML = `
-                <select class="tt-jenis rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500" style="min-width:120px">
-                    <option value="">-- Pilih --</option>
-                    <option value="Guru Mapel">Guru Mapel</option>
-                    <option value="BK">BK</option>
-                    <option value="Wali Kelas">Wali Kelas</option>
-                    <option value="Pembina Ekskul">Pembina Ekskul</option>
-                    <option value="Koordinator">Koordinator</option>
-                </select>
-                <input type="text" value="" class="tt-keterangan w-24 rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Ket">
-                <select class="tt-ta rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    <option value="">-- TA --</option>
-                    @foreach ($tahunAjarans as $ta)
-                        <option value="{{ $ta->id }}">{{ $ta->nama }}</option>
-                    @endforeach
-                </select>
-                <button type="button" class="tt-remove text-red-400 hover:text-red-600 text-xs leading-none">&times;</button>
-            `;
-            container.insertBefore(div, this);
-            attachTTEvents(div, container);
-        });
-    });
 
     function attachTTEvents(row, container) {
         row.querySelector('.tt-remove')?.addEventListener('click', function() {
@@ -316,8 +211,105 @@
         });
     }
 
-    // Attach events to existing rows
-    document.querySelectorAll('.tugas-tambahan-inline').forEach(container => {
-        container.querySelectorAll('.tt-row').forEach(row => attachTTEvents(row, container));
+    function initTTEvents() {
+        document.querySelectorAll('.tugas-tambahan-inline').forEach(container => {
+            container.querySelectorAll('.tt-row').forEach(row => attachTTEvents(row, container));
+            container.querySelector('.tt-add')?.addEventListener('click', function() {
+                const empty = container.querySelector('.tt-empty');
+                if (empty) empty.remove();
+                const div = document.createElement('div');
+                div.className = 'tt-row flex flex-wrap items-center gap-1 mb-1';
+                div.innerHTML = `
+                    <select class="tt-jenis rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500" style="min-width:120px">
+                        <option value="">-- Pilih --</option>
+                        <option value="Guru Mapel">Guru Mapel</option>
+                        <option value="BK">BK</option>
+                        <option value="Wali Kelas">Wali Kelas</option>
+                        <option value="Pembina Ekskul">Pembina Ekskul</option>
+                        <option value="Koordinator">Koordinator</option>
+                    </select>
+                    <input type="text" value="" class="tt-keterangan w-24 rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Ket">
+                    <select class="tt-ta rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="">-- TA --</option>
+                        @foreach ($tahunAjarans as $ta)
+                            <option value="{{ $ta->id }}">{{ $ta->nama }}</option>
+                        @endforeach
+                    </select>
+                    <button type="button" class="tt-remove text-red-400 hover:text-red-600 text-xs leading-none">&times;</button>
+                `;
+                container.insertBefore(div, this);
+                attachTTEvents(div, container);
+            });
+        });
+        document.querySelectorAll('.inline-update-jenis-ptk').forEach(el => {
+            el.addEventListener('change', function() {
+                saveJenisPtk(this);
+            });
+        });
+    }
+
+    // ===== AJAX Search / Filter =====
+    function fetchGuru() {
+        const params = new URLSearchParams();
+        const search = document.getElementById('searchGuru')?.value;
+        const satminkal = document.getElementById('filterSatminkal')?.value;
+        const tmtFrom = document.getElementById('filterTmtFrom')?.value;
+        const tmtTo = document.getElementById('filterTmtTo')?.value;
+        if (search) params.set('search', search);
+        if (satminkal !== '') params.set('status_satminkal', satminkal);
+        if (tmtFrom) params.set('tmt_from', tmtFrom);
+        if (tmtTo) params.set('tmt_to', tmtTo);
+        params.set('page', '{{ $gurus->currentPage() }}');
+
+        fetch(`{{ route('guru.index') }}?${params.toString()}`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        }).then(r => r.json()).then(d => {
+            document.getElementById('guruTableBody').innerHTML = d.html;
+            document.getElementById('guruPagination').innerHTML = d.pagination;
+            initTTEvents();
+        }).catch(() => {});
+    }
+
+    const debouncedFetch = debounce(fetchGuru, 400);
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initTTEvents();
+
+        document.getElementById('searchGuru')?.addEventListener('input', debouncedFetch);
+        document.getElementById('filterSatminkal')?.addEventListener('change', fetchGuru);
+        document.getElementById('filterTmtFrom')?.addEventListener('change', fetchGuru);
+        document.getElementById('filterTmtTo')?.addEventListener('change', fetchGuru);
+
+        // Pagination click via AJAX
+        document.getElementById('guruPagination')?.addEventListener('click', function(e) {
+            const link = e.target.closest('a');
+            if (!link) return;
+            e.preventDefault();
+            const url = new URL(link.href);
+            const params = new URLSearchParams(url.search);
+
+            const search = document.getElementById('searchGuru')?.value;
+            const satminkal = document.getElementById('filterSatminkal')?.value;
+            const tmtFrom = document.getElementById('filterTmtFrom')?.value;
+            const tmtTo = document.getElementById('filterTmtTo')?.value;
+            if (search) params.set('search', search);
+            if (satminkal !== '') params.set('status_satminkal', satminkal);
+            if (tmtFrom) params.set('tmt_from', tmtFrom);
+            if (tmtTo) params.set('tmt_to', tmtTo);
+
+            fetch(`{{ route('guru.index') }}?${params.toString()}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }).then(r => r.json()).then(d => {
+                document.getElementById('guruTableBody').innerHTML = d.html;
+                document.getElementById('guruPagination').innerHTML = d.pagination;
+                initTTEvents();
+            }).catch(() => {});
+        });
     });
 </script>

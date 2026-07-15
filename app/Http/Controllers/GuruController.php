@@ -19,7 +19,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class GuruController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         $user = auth()->user();
         $query = Guru::with('lembaga', 'tugasTambahans', 'jenisPtk');
@@ -30,10 +30,39 @@ class GuruController extends Controller
             $query->whereHas('lembaga', fn($q) => $q->where('yayasan_id', $user->yayasan_id));
         }
 
+        // Search
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                    ->orWhere('nip', 'like', "%{$search}%")
+                    ->orWhere('nuptk', 'like', "%{$search}%")
+                    ->orWhere('niy', 'like', "%{$search}%")
+                    ->orWhere('kode_guru_lembaga', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter status satminkal
+        if ($request->has('status_satminkal') && $request->input('status_satminkal') !== '') {
+            $query->where('status_satminkal', $request->boolean('status_satminkal'));
+        }
+
+        // Filter TMT range
+        if ($tmtFrom = $request->input('tmt_from')) {
+            $query->whereDate('tmt', '>=', $tmtFrom);
+        }
+        if ($tmtTo = $request->input('tmt_to')) {
+            $query->whereDate('tmt', '<=', $tmtTo);
+        }
+
         $gurus = $query->latest()->paginate(10);
 
         $jenisPtks = JenisPtk::whereIn('lembaga_id', $gurus->pluck('lembaga_id')->unique())->where('is_active', true)->get();
         $tahunAjarans = TahunAjaran::where('is_active', true)->get();
+
+        if ($request->wantsJson()) {
+            $html = view('guru._table', compact('gurus', 'jenisPtks', 'tahunAjarans'))->render();
+            return response()->json(['html' => $html, 'pagination' => $gurus->links()->toHtml()]);
+        }
 
         return view('guru.index', compact('gurus', 'jenisPtks', 'tahunAjarans'));
     }
