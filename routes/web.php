@@ -113,6 +113,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('guru', GuruController::class)->except(['show']);
         Route::post('guru/import', [GuruController::class, 'import'])->name('guru.import');
         Route::get('guru/template', [GuruController::class, 'template'])->name('guru.template');
+        Route::put('guru/{guru}/inline-update', [GuruController::class, 'inlineUpdate'])->name('guru.inline-update');
         Route::resource('siswa', SiswaController::class)->except(['show']);
         Route::resource('kelas', KelasController::class)->except(['show']);
         Route::resource('jurusan', JurusanController::class)->except(['show']);

@@ -9,6 +9,7 @@ use App\Models\LogAktivita;
 use App\Models\TahunAjaran;
 use App\Models\TugasTambahan;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -31,7 +32,10 @@ class GuruController extends Controller
 
         $gurus = $query->latest()->paginate(10);
 
-        return view('guru.index', compact('gurus'));
+        $jenisPtks = JenisPtk::whereIn('lembaga_id', $gurus->pluck('lembaga_id')->unique())->where('is_active', true)->get();
+        $tahunAjarans = TahunAjaran::where('is_active', true)->get();
+
+        return view('guru.index', compact('gurus', 'jenisPtks', 'tahunAjarans'));
     }
 
     public function create(): View
@@ -204,6 +208,41 @@ class GuruController extends Controller
         LogAktivita::log('delete', 'Menghapus guru "' . $guru->nama . '"', $guru);
         $guru->delete();
         return redirect()->route('guru.index')->with('success', 'Guru berhasil dihapus.');
+    }
+
+    /**
+     * Inline update dari dropdown di tabel index.
+     */
+    public function inlineUpdate(Request $request, Guru $guru): JsonResponse
+    {
+        $field = $request->input('field');
+        $value = $request->input('value');
+
+        if ($field === 'jenis_ptk_id') {
+            $guru->update(['jenis_ptk_id' => $value ?: null]);
+            LogAktivita::log('update', 'Update jenis PTK guru "' . $guru->nama . '"', $guru);
+            return response()->json(['success' => true]);
+        }
+
+        if ($field === 'tugas_tambahan') {
+            $tugasTambahan = $request->input('tugas_tambahan', []);
+            $guru->tugasTambahans()->delete();
+            foreach ($tugasTambahan as $tt) {
+                if (!empty($tt['jenis'])) {
+                    TugasTambahan::create([
+                        'guru_id' => $guru->id,
+                        'jenis' => $tt['jenis'],
+                        'keterangan' => $tt['keterangan'] ?? null,
+                        'tahun_ajaran_id' => $tt['tahun_ajaran_id'] ?? null,
+                        'is_active' => true,
+                    ]);
+                }
+            }
+            LogAktivita::log('update', 'Update tugas tambahan guru "' . $guru->nama . '"', $guru);
+            return response()->json(['success' => true]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Field tidak dikenali.'], 400);
     }
 
     /**
