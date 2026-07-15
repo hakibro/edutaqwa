@@ -43,7 +43,7 @@ class GuruController extends Controller
 
         // Filter status satminkal
         if ($request->has('status_satminkal') && $request->input('status_satminkal') !== '') {
-            $query->where('status_satminkal', $request->boolean('status_satminkal'));
+            $query->where('status_satminkal', (int) $request->input('status_satminkal'));
         }
 
         // Filter TMT range

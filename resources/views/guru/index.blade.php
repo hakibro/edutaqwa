@@ -259,7 +259,6 @@
         if (satminkal !== '') params.set('status_satminkal', satminkal);
         if (tmtFrom) params.set('tmt_from', tmtFrom);
         if (tmtTo) params.set('tmt_to', tmtTo);
-        params.set('page', '{{ $gurus->currentPage() }}');
 
         fetch(`{{ route('guru.index') }}?${params.toString()}`, {
             headers: {
