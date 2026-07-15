@@ -3,7 +3,7 @@
     <div class="flex items-center h-16 shrink-0 px-4 border-b border-gray-200">
         <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
             <x-application-logo class="block h-8 w-auto fill-current text-gray-800" />
-            <span class="font-semibold text-lg text-gray-800">{{ config('app.name', 'EduTaqwa') }}</span>
+            <span class="font-semibold text-lg text-gray-800">{{ config('app.name', 'MyDaruttaqwa') }}</span>
         </a>
     </div>
 
