@@ -103,10 +103,28 @@
                         </div>
                     </div>
 
+                    <form id="bulk-form" method="POST" action="{{ route('guru.bulk-update') }}" class="mb-4">
+                        @csrf
+                        <div class="flex items-center gap-3" id="bulk-actions" style="display:none">
+                            <span class="text-sm text-gray-600"><span id="selected-count">0</span> terpilih</span>
+                            <button type="submit" name="action" value="activate"
+                                class="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                                onclick="return confirm('Aktifkan semua guru terpilih?')">Aktifkan Semua</button>
+                            <button type="submit" name="action" value="deactivate"
+                                class="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                                onclick="return confirm('Nonaktifkan semua guru terpilih?')">Nonaktifkan Semua</button>
+                        </div>
+                    </form>
+
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                        <input type="checkbox" id="check-all"
+                                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
+                                    </th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                         Kode</th>
@@ -310,7 +328,35 @@
                 document.getElementById('guruTableBody').innerHTML = d.html;
                 document.getElementById('guruPagination').innerHTML = d.pagination;
                 initTTEvents();
+                initBulkCheckboxes();
             }).catch(() => {});
         });
+
+        // ===== Bulk Action Checkboxes =====
+        function initBulkCheckboxes() {
+            const checkAll = document.getElementById('check-all');
+            const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+            const bulkActions = document.getElementById('bulk-actions');
+            const selectedCount = document.getElementById('selected-count');
+
+            if (!checkAll) return;
+
+            function updateBulkUI() {
+                const checked = document.querySelectorAll('.row-checkbox:checked').length;
+                selectedCount.textContent = checked;
+                bulkActions.style.display = checked > 0 ? 'flex' : 'none';
+            }
+
+            checkAll.addEventListener('change', function() {
+                rowCheckboxes.forEach(cb => cb.checked = checkAll.checked);
+                updateBulkUI();
+            });
+
+            rowCheckboxes.forEach(cb => {
+                cb.addEventListener('change', updateBulkUI);
+            });
+        }
+
+        initBulkCheckboxes();
     });
 </script>

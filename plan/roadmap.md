@@ -74,6 +74,7 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 - [x] Klasifikasi PTK (jenis PTK, satminkal/non)
 - [x] Import Guru (XLSX)
 - [x] Upload dokumen guru
+- [x] Bulk Action Guru (aktifkan/nonaktifkan massal via checkbox)
 
 ### 3.2 Admin Yayasan — Approval Guru
 

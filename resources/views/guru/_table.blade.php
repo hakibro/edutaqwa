@@ -1,5 +1,9 @@
 @forelse ($gurus as $g)
     <tr>
+        <td class="whitespace-nowrap px-6 py-4 text-sm">
+            <input type="checkbox" name="ids[]" value="{{ $g->id }}" form="bulk-form"
+                class="row-checkbox rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
+        </td>
         <td class="whitespace-nowrap px-6 py-4 text-sm font-mono text-gray-700">
             {{ $g->kode_guru_lembaga ?? '-' }}
             @if ($g->kode_guru_satminkal)
@@ -83,6 +87,6 @@
     </tr>
 @empty
     <tr>
-        <td colspan="8" class="px-6 py-8 text-center text-sm text-gray-500">Belum ada data guru.</td>
+        <td colspan="9" class="px-6 py-8 text-center text-sm text-gray-500">Belum ada data guru.</td>
     </tr>
 @endforelse

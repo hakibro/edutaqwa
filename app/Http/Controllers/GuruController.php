@@ -562,6 +562,26 @@ class GuruController extends Controller
     }
 
     /**
+     * Bulk update status guru (activate/deactivate).
+     */
+    public function bulkUpdate(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:gurus,id',
+            'action' => 'required|in:activate,deactivate',
+        ]);
+
+        $isActive = $request->input('action') === 'activate';
+        $count = Guru::whereIn('id', $request->ids)->update(['is_active' => $isActive]);
+
+        $label = $isActive ? 'diaktifkan' : 'dinonaktifkan';
+        LogAktivita::log('bulk', $count . ' guru ' . $label . ' secara massal');
+
+        return redirect()->route('guru.index')->with('success', $count . ' guru ' . $label . '.');
+    }
+
+    /**
      * Tolak banyak guru sekaligus.
      */
     public function bulkReject(Request $request): RedirectResponse

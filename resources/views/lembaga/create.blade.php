@@ -42,6 +42,15 @@
                     </div>
 
                     <div>
+                        <x-input-label for="kode_sisda" value="Kode Sisda (idunit)" />
+                        <x-text-input id="kode_sisda" name="kode_sisda" type="text" class="mt-1 block w-full"
+                            :value="old('kode_sisda')" maxlength="10" />
+                        <p class="mt-1 text-xs text-gray-500">Kode <code>idunit</code> dari Sisda API, digunakan untuk
+                            generate NIY guru.</p>
+                        <x-input-error :messages="$errors->get('kode_sisda')" class="mt-2" />
+                    </div>
+
+                    <div>
                         <x-input-label for="tingkat" value="Tingkat" />
                         <select id="tingkat" name="tingkat"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -119,8 +128,8 @@
 
                         <div>
                             <x-input-label for="admin_email" value="Email" />
-                            <x-text-input id="admin_email" name="admin_email" type="email" class="mt-1 block w-full"
-                                :value="old('admin_email')" required />
+                            <x-text-input id="admin_email" name="admin_email" type="email"
+                                class="mt-1 block w-full" :value="old('admin_email')" required />
                             <x-input-error :messages="$errors->get('admin_email')" class="mt-2" />
                         </div>
 
@@ -142,3 +151,22 @@
         </div>
     </div>
 </x-app-layout>
+
+@push('scripts')
+    <script>
+        const API_LEMBAGA = 'https://apiakademik.daruttaqwa.or.id/api/lembaga';
+
+        let lembagaData = [];
+        fetch(API_LEMBAGA)
+            .then(r => r.json())
+            .then(d => {
+                lembagaData = d.data || d;
+            })
+            .catch(() => {});
+
+        document.getElementById('unit_formal')?.addEventListener('change', function() {
+            const match = lembagaData.find(item => item.kode === this.value);
+            document.getElementById('kode_sisda').value = match ? match.idunit : '';
+        });
+    </script>
+@endpush
