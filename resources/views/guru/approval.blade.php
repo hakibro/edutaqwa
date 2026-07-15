@@ -13,10 +13,28 @@
 
             <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div class="p-6">
+                    <form id="bulk-form" method="POST" class="mb-4">
+                        @csrf
+                        <div class="flex items-center gap-3" id="bulk-actions" style="display:none">
+                            <span class="text-sm text-gray-600"><span id="selected-count">0</span> terpilih</span>
+                            <button type="submit" formaction="{{ route('guru.bulk-approve') }}"
+                                class="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                                onclick="return confirm('Setujui semua guru terpilih?')">Setujui Semua</button>
+                            <button type="submit" formaction="{{ route('guru.bulk-reject') }}"
+                                class="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                                onclick="return confirm('Tolak semua guru terpilih?')">Tolak Semua</button>
+                        </div>
+                    </form>
+
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                        <input type="checkbox" id="check-all"
+                                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
+                                    </th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                         Nama</th>
@@ -46,6 +64,11 @@
                             <tbody class="divide-y divide-gray-200 bg-white">
                                 @forelse ($gurus as $g)
                                     <tr>
+                                        <td class="px-6 py-4 text-sm">
+                                            <input type="checkbox" name="ids[]" value="{{ $g->id }}"
+                                                form="bulk-form"
+                                                class="row-checkbox rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
+                                        </td>
                                         <td class="px-6 py-4 text-sm text-gray-900">{{ $g->nama }}
                                             @if ($g->email)
                                                 <br><span class="text-xs text-gray-500">{{ $g->email }}</span>
@@ -95,7 +118,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="px-6 py-8 text-center text-sm text-gray-500">Semua
+                                        <td colspan="9" class="px-6 py-8 text-center text-sm text-gray-500">Semua
                                             guru sudah disetujui. Tidak ada pending.</td>
                                     </tr>
                                 @endforelse
@@ -107,4 +130,30 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const checkAll = document.getElementById('check-all');
+                const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+                const bulkActions = document.getElementById('bulk-actions');
+                const selectedCount = document.getElementById('selected-count');
+
+                function updateBulkUI() {
+                    const checked = document.querySelectorAll('.row-checkbox:checked').length;
+                    selectedCount.textContent = checked;
+                    bulkActions.style.display = checked > 0 ? 'flex' : 'none';
+                }
+
+                checkAll.addEventListener('change', function() {
+                    rowCheckboxes.forEach(cb => cb.checked = checkAll.checked);
+                    updateBulkUI();
+                });
+
+                rowCheckboxes.forEach(cb => {
+                    cb.addEventListener('change', updateBulkUI);
+                });
+            });
+        </script>
+    @endpush
 </x-app-layout>

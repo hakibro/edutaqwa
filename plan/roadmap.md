@@ -58,6 +58,7 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 - [x] CRUD Lembaga
 - [x] CRUD Tahun Ajaran (set active, nonaktifkan jadwal & riwayat tahun lalu)
 - [x] Approval Guru Baru (daftar pending, setujui/tolak)
+- [x] Bulk Action Approval (setujui/tolak massal via checkbox)
 - [x] Approval Satminkal (generate kode satminkal otomatis saat approve)
 - [x] Kalender Akademik (hari efektif, libur)
 

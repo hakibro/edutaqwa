@@ -99,6 +99,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/guru-approval', [GuruController::class, 'approval'])->name('guru.approval');
         Route::put('/guru/{guru}/approve', [GuruController::class, 'approve'])->name('guru.approve');
         Route::put('/guru/{guru}/reject', [GuruController::class, 'reject'])->name('guru.reject');
+        Route::post('/guru/bulk-approve', [GuruController::class, 'bulkApprove'])->name('guru.bulk-approve');
+        Route::post('/guru/bulk-reject', [GuruController::class, 'bulkReject'])->name('guru.bulk-reject');
     });
 
     // Sync Siswa dari Sisda API (Admin Yayasan & Admin Lembaga)

@@ -14,13 +14,13 @@
 
 ### 1.2 Manajemen Yayasan (Admin Yayasan)
 
-| Fitur              | Deskripsi                                           |
-| ------------------ | --------------------------------------------------- |
-| CRUD Lembaga       | Tambah/sunting/hapus lembaga di bawah yayasan       |
-| Approval Guru Baru | Verifikasi & setujui guru baru sebelum aktif        |
-| Approval Satminkal | Verifikasi guru satminkal, generate kode satminkal  |
-| Tahun Ajaran       | CRUD tahun ajaran (mencakup Ganjil & Genap)         |
-| Kalender Akademik  | Hari efektif, libur, jadwal PTS/PAS tingkat yayasan |
+| Fitur              | Deskripsi                                                        |
+| ------------------ | ---------------------------------------------------------------- |
+| CRUD Lembaga       | Tambah/sunting/hapus lembaga di bawah yayasan                    |
+| Approval Guru Baru | Verifikasi & setujui guru baru sebelum aktif (individual & bulk) |
+| Approval Satminkal | Verifikasi guru satminkal, generate kode satminkal               |
+| Tahun Ajaran       | CRUD tahun ajaran (mencakup Ganjil & Genap)                      |
+| Kalender Akademik  | Hari efektif, libur, jadwal PTS/PAS tingkat yayasan              |
 
 ### 1.3 Manajemen Lembaga (Admin Lembaga / TU)
 

@@ -481,6 +481,93 @@ class GuruController extends Controller
     }
 
     /**
+     * Setujui banyak guru sekaligus.
+     */
+    public function bulkApprove(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:gurus,id',
+        ]);
+
+        $admin = auth()->user();
+        $count = 0;
+
+        $gurus = Guru::with('lembaga')->whereIn('id', $request->ids)->get();
+
+        foreach ($gurus as $guru) {
+            if ($guru->is_approved)
+                continue;
+
+            $lembaga = $guru->lembaga;
+            $updateData = [
+                'is_approved' => true,
+                'approved_at' => now(),
+                'approved_by' => $admin->id,
+            ];
+
+            if (!$guru->niy && $guru->tmt) {
+                $updateData['niy'] = Guru::generateNiy($lembaga, $guru->tmt->format('Y-m-d'));
+            }
+
+            if ($guru->status_satminkal && !$guru->kode_guru_satminkal) {
+                $updateData['kode_guru_satminkal'] = Guru::generateKodeSatminkal($lembaga);
+            }
+
+            $guru->update($updateData);
+            $guru->refresh();
+
+            $niy = $guru->niy;
+            $user = User::where('guru_id', $guru->id)->first();
+
+            if (!$user) {
+                User::create([
+                    'guru_id' => $guru->id,
+                    'lembaga_id' => $guru->lembaga_id,
+                    'yayasan_id' => $lembaga->yayasan_id,
+                    'name' => $guru->nama,
+                    'username' => $niy,
+                    'email' => $guru->email,
+                    'password' => $niy,
+                    'role' => 'guru',
+                    'is_active' => true,
+                    'must_change_password' => true,
+                ]);
+            } else {
+                $user->update([
+                    'is_active' => true,
+                    'must_change_password' => true,
+                    'username' => $user->username ?? $niy,
+                ]);
+            }
+
+            LogAktivita::log('approve', 'Menyetujui guru "' . $guru->nama . '" (NIY: ' . $niy . ')', $guru);
+            $count++;
+        }
+
+        return redirect()->route('guru.approval')->with('success', $count . ' guru berhasil disetujui.');
+    }
+
+    /**
+     * Tolak banyak guru sekaligus.
+     */
+    public function bulkReject(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:gurus,id',
+        ]);
+
+        $count = Guru::whereIn('id', $request->ids)
+            ->where('is_approved', false)
+            ->update(['is_active' => false, 'is_approved' => false]);
+
+        LogAktivita::log('reject', 'Menolak ' . $count . ' guru secara massal');
+
+        return redirect()->route('guru.approval')->with('success', $count . ' guru ditolak.');
+    }
+
+    /**
      * Tolak guru (set is_active = false, biarkan is_approved = false).
      */
     public function reject(Request $request, Guru $guru): RedirectResponse
