@@ -141,24 +141,37 @@ class GuruController extends Controller
         $tugasTambahan = $request->input('tugas_tambahan', []);
         unset($validated['tugas_tambahan']);
 
-        $guru = Guru::create($validated);
+        try {
+            $guru = Guru::create($validated);
 
-        // Simpan tugas tambahan
-        foreach ($tugasTambahan as $tt) {
-            if (!empty($tt['jenis'])) {
-                TugasTambahan::create([
-                    'guru_id' => $guru->id,
-                    'jenis' => $tt['jenis'],
-                    'keterangan' => $tt['keterangan'] ?? null,
-                    'tahun_ajaran_id' => $tt['tahun_ajaran_id'],
-                    'is_active' => true,
-                ]);
+            // Simpan tugas tambahan
+            foreach ($tugasTambahan as $tt) {
+                if (!empty($tt['jenis'])) {
+                    TugasTambahan::create([
+                        'guru_id' => $guru->id,
+                        'jenis' => $tt['jenis'],
+                        'keterangan' => $tt['keterangan'] ?? null,
+                        'tahun_ajaran_id' => $tt['tahun_ajaran_id'],
+                        'is_active' => true,
+                    ]);
+                }
             }
+
+            LogAktivita::log('create', 'Menambah guru "' . $guru->nama . '"', $guru);
+
+            return redirect()->route('guru.index')->with('success', 'Guru berhasil ditambahkan. Kode: ' . $validated['kode_guru_lembaga']);
+        } catch (\Exception $e) {
+            // Hapus dokumen yang sudah terupload jika guru gagal dibuat
+            if (!empty($validated['dokumen'])) {
+                foreach ($validated['dokumen'] as $file) {
+                    \Illuminate\Support\Facades\Storage::delete($file);
+                }
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Gagal menambahkan guru: ' . $e->getMessage());
         }
-
-        LogAktivita::log('create', 'Menambah guru "' . $guru->nama . '"', $guru);
-
-        return redirect()->route('guru.index')->with('success', 'Guru berhasil ditambahkan. Kode: ' . $validated['kode_guru_lembaga']);
     }
 
     public function edit(Guru $guru): View

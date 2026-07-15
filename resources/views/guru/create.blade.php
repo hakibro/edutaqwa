@@ -9,6 +9,12 @@
                 <form action="{{ route('guru.store') }}" method="POST" class="p-6 space-y-4" enctype="multipart/form-data">
                     @csrf
 
+                    @if (session('error'))
+                        <div class="rounded-md bg-red-50 p-4 text-sm text-red-700 border border-red-200">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
                     @if (!auth()->user()->lembaga_id)
                         <div>
                             <x-input-label for="lembaga_id">
