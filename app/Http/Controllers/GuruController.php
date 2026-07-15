@@ -634,4 +634,110 @@ class GuruController extends Controller
 
         return redirect()->route('guru.approval')->with('success', 'Guru "' . $guru->nama . '" telah ditolak.');
     }
+
+    /**
+     * Export guru ke XLSX.
+     */
+    public function export(): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $user = auth()->user();
+        $query = Guru::with('lembaga', 'jenisPtk', 'tugasTambahans.tahunAjaran');
+
+        // Scope lembaga sama seperti index
+        if ($user->lembaga_id) {
+            $query->where('lembaga_id', $user->lembaga_id);
+        } elseif ($user->yayasan_id) {
+            $query->whereHas('lembaga', fn($q) => $q->where('yayasan_id', $user->yayasan_id));
+        }
+
+        // Apply filters same as index
+        if ($search = request('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                    ->orWhere('nip', 'like', "%{$search}%")
+                    ->orWhere('nuptk', 'like', "%{$search}%")
+                    ->orWhere('niy', 'like', "%{$search}%")
+                    ->orWhere('kode_guru_lembaga', 'like', "%{$search}%");
+            });
+        }
+        if (request()->has('status_satminkal') && request('status_satminkal') !== '') {
+            $query->where('status_satminkal', (int) request('status_satminkal'));
+        }
+        if ($tmtFrom = request('tmt_from')) {
+            $query->whereDate('tmt', '>=', $tmtFrom);
+        }
+        if ($tmtTo = request('tmt_to')) {
+            $query->whereDate('tmt', '<=', $tmtTo);
+        }
+
+        $gurus = $query->latest()->get();
+
+        $filename = 'export-guru-' . now()->format('Ymd-His') . '.xlsx';
+
+        return response()->streamDownload(function () use ($gurus) {
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+
+            $headers = [
+                'No',
+                'Kode Lembaga',
+                'Kode Satminkal',
+                'NIY',
+                'Nama',
+                'NIP',
+                'NUPTK',
+                'Lembaga',
+                'Jenis PTK',
+                'Tugas Tambahan',
+                'Status Satminkal',
+                'Tempat Lahir',
+                'Tanggal Lahir',
+                'TMT',
+                'Alamat',
+                'Telp',
+                'Email',
+                'Status',
+            ];
+            $sheet->fromArray([$headers], null, 'A1');
+
+            $row = 2;
+            foreach ($gurus as $i => $g) {
+                $tugasTambahan = $g->tugasTambahans
+                    ->map(fn($tt) => $tt->jenis . ($tt->keterangan ? " ({$tt->keterangan})" : '') . ($tt->tahunAjaran ? ' TA:' . $tt->tahunAjaran->nama : ''))
+                    ->implode(', ');
+
+                $sheet->fromArray([
+                    [
+                        $i + 1,
+                        $g->kode_guru_lembaga,
+                        $g->kode_guru_satminkal,
+                        $g->niy,
+                        $g->nama,
+                        $g->nip,
+                        $g->nuptk,
+                        $g->lembaga?->nama,
+                        $g->jenisPtk?->nama,
+                        $tugasTambahan ?: '-',
+                        $g->status_satminkal ? 'Satminkal' : 'Non-Satminkal',
+                        $g->tempat_lahir,
+                        $g->tanggal_lahir?->format('Y-m-d'),
+                        $g->tmt?->format('Y-m-d'),
+                        $g->alamat,
+                        $g->telp,
+                        $g->email,
+                        $g->is_active ? 'Aktif' : 'Nonaktif',
+                    ],
+                ], null, "A{$row}");
+                $row++;
+            }
+
+            // Auto-size columns
+            foreach (range('A', 'R') as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
+    }
 }

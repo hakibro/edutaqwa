@@ -9,6 +9,10 @@
                     class="rounded-md bg-gray-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-400">
                     Download Template CSV
                 </a>
+                <a href="{{ route('guru.export', request()->query()) }}"
+                    class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">
+                    Export Excel
+                </a>
                 <button onclick="document.getElementById('importForm').classList.toggle('hidden')"
                     class="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">
                     Import CSV
