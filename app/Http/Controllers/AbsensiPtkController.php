@@ -162,13 +162,15 @@ class AbsensiPtkController extends Controller
         }
 
         // Validasi selfie jika wajib
-        if ($lembaga->wajib_selfie && !$request->hasFile('foto')) {
+        if ($lembaga->wajib_selfie && !$request->hasFile('foto') && !$request->filled('foto')) {
             return back()->with('error', 'Wajib upload foto selfie untuk check-in.');
         }
 
         $fotoPath = null;
         if ($request->hasFile('foto')) {
             $fotoPath = $request->file('foto')->store('absensi-ptk/checkin', 'public');
+        } elseif ($request->filled('foto')) {
+            $fotoPath = $this->simpanBase64Foto($request->input('foto'), 'absensi-ptk/checkin');
         }
 
         $now = Carbon::now();
@@ -248,6 +250,8 @@ class AbsensiPtkController extends Controller
         $fotoPath = $absensi->foto_check_out;
         if ($request->hasFile('foto')) {
             $fotoPath = $request->file('foto')->store('absensi-ptk/checkout', 'public');
+        } elseif ($request->filled('foto')) {
+            $fotoPath = $this->simpanBase64Foto($request->input('foto'), 'absensi-ptk/checkout');
         }
 
         $now = Carbon::now();
@@ -271,6 +275,19 @@ class AbsensiPtkController extends Controller
 
         $msg = $absensi->status === 'pulang_awal' ? 'Check-out berhasil. (Pulang awal)' : 'Check-out berhasil.';
         return redirect()->route('absensi-ptk.index')->with('success', $msg);
+    }
+
+    /**
+     * Simpan base64 foto ke storage.
+     */
+    private function simpanBase64Foto(string $base64, string $path): string
+    {
+        $base64 = preg_replace('/^data:image\/\w+;base64,/', '', $base64);
+        $data = base64_decode($base64);
+        $filename = uniqid('selfie_') . '.jpg';
+        $relativePath = $path . '/' . $filename;
+        \Illuminate\Support\Facades\Storage::disk('public')->put($relativePath, $data);
+        return $relativePath;
     }
 
     /**

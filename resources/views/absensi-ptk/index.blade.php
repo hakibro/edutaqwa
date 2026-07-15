@@ -79,8 +79,23 @@
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700">Foto Selfie <span
                                                     class="text-red-500">*</span></label>
-                                            <input type="file" name="foto" accept="image/*" capture="environment"
-                                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                            <div class="mt-1 flex items-center gap-3">
+                                                <button type="button" onclick="bukaKamera('checkin')"
+                                                    class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                                                    📷 Buka Kamera
+                                                </button>
+                                                <span class="text-sm text-gray-400" id="status-cam-checkin">Belum
+                                                    ambil foto</span>
+                                            </div>
+                                            <video id="video-checkin" autoplay playsinline
+                                                class="mt-2 hidden w-full max-w-xs rounded-lg border"></video>
+                                            <canvas id="canvas-checkin" class="hidden"></canvas>
+                                            <input type="hidden" name="foto" id="foto-base64-checkin"
+                                                value="">
+                                            <input type="file" name="foto_file" accept="image/*" capture="user"
+                                                onchange="fileToBase64(this, 'checkin')"
+                                                class="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                            <p class="mt-1 text-xs text-gray-400">Atau pilih dari galeri</p>
                                         </div>
                                     @endif
 
@@ -97,6 +112,30 @@
                                     <input type="hidden" name="latitude" id="lat-out" value="">
                                     <input type="hidden" name="longitude" id="lng-out" value="">
                                     <input type="hidden" name="lokasi" id="lokasi-out" value="">
+
+                                    @if ($lembaga->wajib_selfie)
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Foto Selfie <span
+                                                    class="text-red-500">*</span></label>
+                                            <div class="mt-1 flex items-center gap-3">
+                                                <button type="button" onclick="bukaKamera('checkout')"
+                                                    class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                                                    📷 Buka Kamera
+                                                </button>
+                                                <span class="text-sm text-gray-400" id="status-cam-checkout">Belum
+                                                    ambil foto</span>
+                                            </div>
+                                            <video id="video-checkout" autoplay playsinline
+                                                class="mt-2 hidden w-full max-w-xs rounded-lg border"></video>
+                                            <canvas id="canvas-checkout" class="hidden"></canvas>
+                                            <input type="hidden" name="foto" id="foto-base64-checkout"
+                                                value="">
+                                            <input type="file" name="foto_file" accept="image/*" capture="user"
+                                                onchange="fileToBase64(this, 'checkout')"
+                                                class="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                            <p class="mt-1 text-xs text-gray-400">Atau pilih dari galeri</p>
+                                        </div>
+                                    @endif
 
                                     <button type="submit" onclick="ambilLokasi(this.form)"
                                         class="rounded-md bg-orange-600 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-orange-500">
@@ -208,6 +247,92 @@
     </div>
 
     <script>
+        let mediaStreams = {};
+
+        function bukaKamera(tipe) {
+            const video = document.getElementById('video-' + tipe);
+            const status = document.getElementById('status-cam-' + tipe);
+            const btn = document.querySelector(`button[onclick="bukaKamera('${tipe}')"]`);
+
+            if (mediaStreams[tipe]) {
+                // Stop kamera
+                mediaStreams[tipe].getTracks().forEach(t => t.stop());
+                delete mediaStreams[tipe];
+                video.classList.add('hidden');
+                video.srcObject = null;
+                btn.textContent = '📷 Buka Kamera';
+                status.textContent = 'Belum ambil foto';
+                return;
+            }
+
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({
+                        video: {
+                            facingMode: 'user',
+                            width: {
+                                ideal: 640
+                            },
+                            height: {
+                                ideal: 480
+                            }
+                        },
+                        audio: false
+                    })
+                    .then(function(stream) {
+                        mediaStreams[tipe] = stream;
+                        video.srcObject = stream;
+                        video.classList.remove('hidden');
+                        btn.textContent = '❌ Tutup Kamera';
+                        status.textContent = 'Arahkan kamera ke wajah';
+                        video.onclick = function() {
+                            ambilFoto(tipe);
+                        };
+                    })
+                    .catch(function(err) {
+                        alert('Gagal akses kamera: ' + err.message +
+                            '\nGunakan opsi pilih file sebagai cadangan.');
+                    });
+            } else {
+                alert('Browser tidak mendukung akses kamera. Gunakan opsi pilih file.');
+            }
+        }
+
+        function ambilFoto(tipe) {
+            const video = document.getElementById('video-' + tipe);
+            const canvas = document.getElementById('canvas-' + tipe);
+            const status = document.getElementById('status-cam-' + tipe);
+            const hiddenInput = document.getElementById('foto-base64-' + tipe);
+            const btn = document.querySelector(`button[onclick="bukaKamera('${tipe}')"]`);
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+
+            const base64 = canvas.toDataURL('image/jpeg', 0.8);
+            hiddenInput.value = base64;
+
+            // Stop kamera
+            if (mediaStreams[tipe]) {
+                mediaStreams[tipe].getTracks().forEach(t => t.stop());
+                delete mediaStreams[tipe];
+                video.classList.add('hidden');
+                video.srcObject = null;
+            }
+            btn.textContent = '📷 Buka Kamera';
+            status.textContent = '✅ Foto sudah diambil';
+        }
+
+        function fileToBase64(input, tipe) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('foto-base64-' + tipe).value = e.target.result;
+                document.getElementById('status-cam-' + tipe).textContent = '✅ Foto dari galeri';
+            };
+            reader.readAsDataURL(file);
+        }
+
         function ambilLokasi(form) {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
@@ -216,6 +341,15 @@
                         form.querySelector('[id^="lng-"]').value = pos.coords.longitude;
                         form.querySelector('[id^="lokasi-"]').value =
                             pos.coords.latitude.toFixed(6) + ',' + pos.coords.longitude.toFixed(6);
+                        // Set base64 from camera hidden input if exists
+                        const tipe = form.querySelector('[id^="foto-base64-"]')?.id?.split('-').pop();
+                        if (tipe && !document.getElementById('foto-base64-' + tipe)?.value) {
+                            // If no camera capture, check file input
+                            const fileInput = form.querySelector('input[name="foto_file"]');
+                            if (fileInput && fileInput.files.length > 0) {
+                                fileToBase64(fileInput, tipe);
+                            }
+                        }
                         form.submit();
                     },
                     function(err) {
