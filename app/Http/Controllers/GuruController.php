@@ -54,7 +54,11 @@ class GuruController extends Controller
             $query->whereDate('tmt', '<=', $tmtTo);
         }
 
-        $gurus = $query->latest()->paginate(10);
+        $perPage = (int) $request->input('per_page', 10);
+        if (!in_array($perPage, [10, 25, 50, 100]))
+            $perPage = 10;
+
+        $gurus = $query->latest()->paginate($perPage);
 
         $jenisPtks = JenisPtk::whereIn('lembaga_id', $gurus->pluck('lembaga_id')->unique())->where('is_active', true)->get();
         $tahunAjarans = TahunAjaran::where('is_active', true)->get();

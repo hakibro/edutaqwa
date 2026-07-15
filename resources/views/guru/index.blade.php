@@ -91,6 +91,16 @@
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                 value="{{ request('tmt_to') }}">
                         </div>
+                        <div>
+                            <x-input-label for="perPage" value="Tampil" />
+                            <select id="perPage"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                <option value="10" @selected(request('per_page', 10) == 10)>10</option>
+                                <option value="25" @selected(request('per_page') == 25)>25</option>
+                                <option value="50" @selected(request('per_page') == 50)>50</option>
+                                <option value="100" @selected(request('per_page') == 100)>100</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -255,10 +265,12 @@
         const satminkal = document.getElementById('filterSatminkal')?.value;
         const tmtFrom = document.getElementById('filterTmtFrom')?.value;
         const tmtTo = document.getElementById('filterTmtTo')?.value;
+        const perPage = document.getElementById('perPage')?.value;
         if (search) params.set('search', search);
         if (satminkal !== '') params.set('status_satminkal', satminkal);
         if (tmtFrom) params.set('tmt_from', tmtFrom);
         if (tmtTo) params.set('tmt_to', tmtTo);
+        if (perPage) params.set('per_page', perPage);
 
         fetch(`{{ route('guru.index') }}?${params.toString()}`, {
             headers: {
@@ -281,6 +293,7 @@
         document.getElementById('filterSatminkal')?.addEventListener('change', fetchGuru);
         document.getElementById('filterTmtFrom')?.addEventListener('change', fetchGuru);
         document.getElementById('filterTmtTo')?.addEventListener('change', fetchGuru);
+        document.getElementById('perPage')?.addEventListener('change', fetchGuru);
 
         // Pagination click via AJAX
         document.getElementById('guruPagination')?.addEventListener('click', function(e) {
@@ -294,10 +307,12 @@
             const satminkal = document.getElementById('filterSatminkal')?.value;
             const tmtFrom = document.getElementById('filterTmtFrom')?.value;
             const tmtTo = document.getElementById('filterTmtTo')?.value;
+            const perPage = document.getElementById('perPage')?.value;
             if (search) params.set('search', search);
             if (satminkal !== '') params.set('status_satminkal', satminkal);
             if (tmtFrom) params.set('tmt_from', tmtFrom);
             if (tmtTo) params.set('tmt_to', tmtTo);
+            if (perPage) params.set('per_page', perPage);
 
             fetch(`{{ route('guru.index') }}?${params.toString()}`, {
                 headers: {
