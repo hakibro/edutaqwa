@@ -582,6 +582,27 @@ class GuruController extends Controller
     }
 
     /**
+     * Bulk hapus guru.
+     */
+    public function bulkDestroy(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:gurus,id',
+        ]);
+
+        $gurus = Guru::whereIn('id', $request->ids)->get();
+        $count = $gurus->count();
+
+        foreach ($gurus as $guru) {
+            LogAktivita::log('delete', 'Menghapus guru "' . $guru->nama . '" (bulk)', $guru);
+            $guru->delete();
+        }
+
+        return redirect()->route('guru.index')->with('success', $count . ' guru berhasil dihapus.');
+    }
+
+    /**
      * Tolak banyak guru sekaligus.
      */
     public function bulkReject(Request $request): RedirectResponse

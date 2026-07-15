@@ -113,6 +113,9 @@
                             <button type="submit" name="action" value="deactivate"
                                 class="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
                                 onclick="return confirm('Nonaktifkan semua guru terpilih?')">Nonaktifkan Semua</button>
+                            <button type="button" id="bulk-delete-btn"
+                                class="px-3 py-1.5 bg-red-700 text-white rounded hover:bg-red-800 text-sm"
+                                onclick="bulkDelete()">Hapus Terpilih</button>
                         </div>
                     </form>
 
@@ -299,10 +302,24 @@
             document.getElementById('guruTableBody').innerHTML = d.html;
             document.getElementById('guruPagination').innerHTML = d.pagination;
             initTTEvents();
+            initBulkCheckboxes();
         }).catch(() => {});
     }
 
     const debouncedFetch = debounce(fetchGuru, 400);
+
+    function bulkDelete() {
+        const checked = document.querySelectorAll('.row-checkbox:checked');
+        if (checked.length === 0) {
+            alert('Pilih guru terlebih dahulu.');
+            return;
+        }
+        if (!confirm('Hapus ' + checked.length + ' guru terpilih?')) return;
+
+        const form = document.getElementById('bulk-form');
+        form.action = '{{ route('guru.bulk-delete') }}';
+        form.submit();
+    }
 
     document.addEventListener('DOMContentLoaded', function() {
         initTTEvents();

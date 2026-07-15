@@ -117,6 +117,7 @@ Route::middleware('auth')->group(function () {
         Route::get('guru/template', [GuruController::class, 'template'])->name('guru.template');
         Route::put('guru/{guru}/inline-update', [GuruController::class, 'inlineUpdate'])->name('guru.inline-update');
         Route::post('guru/bulk-update', [GuruController::class, 'bulkUpdate'])->name('guru.bulk-update');
+        Route::post('guru/bulk-delete', [GuruController::class, 'bulkDestroy'])->name('guru.bulk-delete');
         Route::resource('siswa', SiswaController::class)->except(['show']);
         Route::resource('kelas', KelasController::class)->except(['show']);
         Route::resource('jurusan', JurusanController::class)->except(['show']);
