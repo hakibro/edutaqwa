@@ -19,16 +19,22 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class GuruController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $user = auth()->user();
         $query = Guru::with('lembaga', 'tugasTambahans', 'jenisPtk');
 
+        // Collect allowed lembaga IDs first
+        $allowedLembagaIds = collect();
         if ($user->lembaga_id) {
-            $query->where('lembaga_id', $user->lembaga_id);
+            $allowedLembagaIds = collect([$user->lembaga_id]);
         } elseif ($user->yayasan_id) {
-            $query->whereHas('lembaga', fn($q) => $q->where('yayasan_id', $user->yayasan_id));
+            $allowedLembagaIds = Lembaga::where('yayasan_id', $user->yayasan_id)->pluck('id');
+        } else {
+            $allowedLembagaIds = Lembaga::where('is_active', true)->pluck('id');
         }
+
+        $query->whereIn('lembaga_id', $allowedLembagaIds);
 
         // Search
         if ($search = $request->input('search')) {
@@ -58,12 +64,12 @@ class GuruController extends Controller
         if (!in_array($perPage, [10, 25, 50, 100]))
             $perPage = 10;
 
-        $gurus = $query->latest()->paginate($perPage);
+        $gurus = $query->latest()->paginate($perPage)->appends($request->except('page'));
 
-        $jenisPtks = JenisPtk::whereIn('lembaga_id', $gurus->pluck('lembaga_id')->unique())->where('is_active', true)->get();
+        $jenisPtks = JenisPtk::whereIn('lembaga_id', $allowedLembagaIds)->where('is_active', true)->get();
         $tahunAjarans = TahunAjaran::where('is_active', true)->get();
 
-        if ($request->wantsJson()) {
+        if ($request->ajax() || $request->wantsJson()) {
             $html = view('guru._table', compact('gurus', 'jenisPtks', 'tahunAjarans'))->render();
             return response()->json(['html' => $html, 'pagination' => $gurus->links()->toHtml()]);
         }

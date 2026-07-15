@@ -300,21 +300,8 @@
             const link = e.target.closest('a');
             if (!link) return;
             e.preventDefault();
-            const url = new URL(link.href);
-            const params = new URLSearchParams(url.search);
 
-            const search = document.getElementById('searchGuru')?.value;
-            const satminkal = document.getElementById('filterSatminkal')?.value;
-            const tmtFrom = document.getElementById('filterTmtFrom')?.value;
-            const tmtTo = document.getElementById('filterTmtTo')?.value;
-            const perPage = document.getElementById('perPage')?.value;
-            if (search) params.set('search', search);
-            if (satminkal !== '') params.set('status_satminkal', satminkal);
-            if (tmtFrom) params.set('tmt_from', tmtFrom);
-            if (tmtTo) params.set('tmt_to', tmtTo);
-            if (perPage) params.set('per_page', perPage);
-
-            fetch(`{{ route('guru.index') }}?${params.toString()}`, {
+            fetch(link.href, {
                 headers: {
                     'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
