@@ -89,6 +89,10 @@
                                             </div>
                                             <video id="video-checkin" autoplay playsinline
                                                 class="mt-2 hidden w-full max-w-xs rounded-lg border"></video>
+                                            <button type="button" id="btn-snap-checkin" onclick="ambilFoto('checkin')"
+                                                class="mt-2 hidden rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">
+                                                📸 Ambil Gambar
+                                            </button>
                                             <canvas id="canvas-checkin" class="hidden"></canvas>
                                             <input type="hidden" name="foto" id="foto-base64-checkin"
                                                 value="">
@@ -123,6 +127,11 @@
                                             </div>
                                             <video id="video-checkout" autoplay playsinline
                                                 class="mt-2 hidden w-full max-w-xs rounded-lg border"></video>
+                                            <button type="button" id="btn-snap-checkout"
+                                                onclick="ambilFoto('checkout')"
+                                                class="mt-2 hidden rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">
+                                                📸 Ambil Gambar
+                                            </button>
                                             <canvas id="canvas-checkout" class="hidden"></canvas>
                                             <input type="hidden" name="foto" id="foto-base64-checkout"
                                                 value="">
@@ -243,6 +252,7 @@
 
         function bukaKamera(tipe) {
             const video = document.getElementById('video-' + tipe);
+            const btnSnap = document.getElementById('btn-snap-' + tipe);
             const status = document.getElementById('status-cam-' + tipe);
             const btn = document.querySelector(`button[onclick="bukaKamera('${tipe}')"]`);
 
@@ -251,6 +261,7 @@
                 mediaStreams[tipe].getTracks().forEach(t => t.stop());
                 delete mediaStreams[tipe];
                 video.classList.add('hidden');
+                btnSnap.classList.add('hidden');
                 video.srcObject = null;
                 btn.textContent = '📷 Buka Kamera';
                 status.textContent = 'Belum ambil foto';
@@ -274,23 +285,21 @@
                         mediaStreams[tipe] = stream;
                         video.srcObject = stream;
                         video.classList.remove('hidden');
+                        btnSnap.classList.remove('hidden');
                         btn.textContent = '❌ Tutup Kamera';
-                        status.textContent = 'Arahkan kamera ke wajah';
-                        video.onclick = function() {
-                            ambilFoto(tipe);
-                        };
+                        status.textContent = 'Arahkan kamera ke wajah, lalu klik Ambil Gambar';
                     })
                     .catch(function(err) {
-                        alert('Gagal akses kamera: ' + err.message +
-                            '\nGunakan opsi pilih file sebagai cadangan.');
+                        alert('Gagal akses kamera: ' + err.message);
                     });
             } else {
-                alert('Browser tidak mendukung akses kamera. Gunakan opsi pilih file.');
+                alert('Browser tidak mendukung akses kamera.');
             }
         }
 
         function ambilFoto(tipe) {
             const video = document.getElementById('video-' + tipe);
+            const btnSnap = document.getElementById('btn-snap-' + tipe);
             const canvas = document.getElementById('canvas-' + tipe);
             const status = document.getElementById('status-cam-' + tipe);
             const hiddenInput = document.getElementById('foto-base64-' + tipe);
@@ -317,6 +326,7 @@
                 mediaStreams[tipe].getTracks().forEach(t => t.stop());
                 delete mediaStreams[tipe];
                 video.classList.add('hidden');
+                btnSnap.classList.add('hidden');
                 video.srcObject = null;
             }
             btn.textContent = '📷 Buka Kamera';
