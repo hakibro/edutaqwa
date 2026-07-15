@@ -15,6 +15,19 @@
                 <div class="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-800">{{ session('error') }}</div>
             @endif
 
+            {{-- Info Lokasi Absen --}}
+            @if ($lembaga->lokasi_absen || $lembaga->latitude_absen)
+                <div class="mb-4 rounded-lg bg-blue-50 border border-blue-200 p-3 text-sm text-blue-700">
+                    <strong>Lokasi absen:</strong> {{ $lembaga->lokasi_absen ?? 'Titik koordinat' }}
+                    @if ($lembaga->latitude_absen)
+                        · Radius {{ $lembaga->radius_absen_meter }}m
+                    @endif
+                    @if ($lembaga->wajib_selfie)
+                        · <span class="font-semibold">Wajib upload selfie</span>
+                    @endif
+                </div>
+            @endif
+
             {{-- Status Hari Ini --}}
             <div class="mb-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div class="p-6">
@@ -55,18 +68,37 @@
 
                         <div class="flex gap-3">
                             @if ($canCheckIn)
-                                <form action="{{ route('absensi-ptk.check-in') }}" method="POST">
+                                <form action="{{ route('absensi-ptk.check-in') }}" method="POST"
+                                    enctype="multipart/form-data" class="space-y-3">
                                     @csrf
-                                    <button type="submit"
+                                    <input type="hidden" name="latitude" id="lat-in" value="">
+                                    <input type="hidden" name="longitude" id="lng-in" value="">
+                                    <input type="hidden" name="lokasi" id="lokasi-in" value="">
+
+                                    @if ($lembaga->wajib_selfie)
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Foto Selfie <span
+                                                    class="text-red-500">*</span></label>
+                                            <input type="file" name="foto" accept="image/*" capture="environment"
+                                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                        </div>
+                                    @endif
+
+                                    <button type="submit" onclick="ambilLokasi(this.form)"
                                         class="rounded-md bg-green-600 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-green-500">
                                         ✅ Check-in
                                     </button>
                                 </form>
                             @endif
                             @if ($canCheckOut)
-                                <form action="{{ route('absensi-ptk.check-out') }}" method="POST">
+                                <form action="{{ route('absensi-ptk.check-out') }}" method="POST"
+                                    enctype="multipart/form-data" class="space-y-3">
                                     @csrf
-                                    <button type="submit"
+                                    <input type="hidden" name="latitude" id="lat-out" value="">
+                                    <input type="hidden" name="longitude" id="lng-out" value="">
+                                    <input type="hidden" name="lokasi" id="lokasi-out" value="">
+
+                                    <button type="submit" onclick="ambilLokasi(this.form)"
                                         class="rounded-md bg-orange-600 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-orange-500">
                                         ⏏️ Check-out
                                     </button>
@@ -82,10 +114,25 @@
                                 @if ($absensiHariIni->keterlambatan_menit > 0)
                                     (Terlambat {{ $absensiHariIni->keterlambatan_menit }} menit)
                                 @endif
+                                @if ($absensiHariIni->lokasi_check_in)
+                                    · {{ $absensiHariIni->lokasi_check_in }}
+                                @endif
+                                @if ($absensiHariIni->foto_check_in)
+                                    · <a href="{{ asset('storage/' . $absensiHariIni->foto_check_in) }}"
+                                        target="_blank" class="text-indigo-600 underline">Lihat foto</a>
+                                @endif
                             </p>
                         @endif
                         @if ($absensiHariIni && $absensiHariIni->check_out)
-                            <p class="text-xs text-gray-400">Check-out: {{ $absensiHariIni->check_out->format('H:i') }}
+                            <p class="text-xs text-gray-400">Check-out:
+                                {{ $absensiHariIni->check_out->format('H:i') }}
+                                @if ($absensiHariIni->lokasi_check_out)
+                                    · {{ $absensiHariIni->lokasi_check_out }}
+                                @endif
+                                @if ($absensiHariIni->foto_check_out)
+                                    · <a href="{{ asset('storage/' . $absensiHariIni->foto_check_out) }}"
+                                        target="_blank" class="text-indigo-600 underline">Lihat foto</a>
+                                @endif
                             </p>
                         @endif
                     @endif
@@ -159,4 +206,30 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function ambilLokasi(form) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(pos) {
+                        form.querySelector('[id^="lat-"]').value = pos.coords.latitude;
+                        form.querySelector('[id^="lng-"]').value = pos.coords.longitude;
+                        form.querySelector('[id^="lokasi-"]').value =
+                            pos.coords.latitude.toFixed(6) + ',' + pos.coords.longitude.toFixed(6);
+                        form.submit();
+                    },
+                    function(err) {
+                        alert('Gagal mendapatkan lokasi: ' + err.message +
+                            '\nPastikan GPS aktif dan izin lokasi diberikan.');
+                    }, {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                alert('Browser tidak mendukung geolokasi.');
+            }
+        }
+    </script>
 </x-app-layout>

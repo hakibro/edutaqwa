@@ -11,7 +11,9 @@
 
                     @if (!auth()->user()->lembaga_id)
                         <div>
-                            <x-input-label for="lembaga_id" value="Lembaga" />
+                            <x-input-label for="lembaga_id">
+                                <span>Lembaga <span class="text-red-500">*</span></span>
+                            </x-input-label>
                             <select id="lembaga_id" name="lembaga_id"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 required>
@@ -26,7 +28,9 @@
                     @endif
 
                     <div>
-                        <x-input-label for="nama" value="Nama Lengkap" />
+                        <x-input-label for="nama">
+                            <span>Nama Lengkap <span class="text-red-500">*</span></span>
+                        </x-input-label>
                         <x-text-input id="nama" name="nama" type="text" class="mt-1 block w-full"
                             :value="old('nama')" required />
                         <x-input-error :messages="$errors->get('nama')" class="mt-2" />

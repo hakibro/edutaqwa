@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AbsensiPtk;
 use App\Models\Guru;
 use App\Models\JamKerjaLembaga;
+use App\Models\Lembaga;
 use App\Models\LogAktivita;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -20,6 +21,7 @@ class AbsensiPtkController extends Controller
     {
         $user = auth()->user();
         $lembagaId = $user->lembaga_id;
+        $lembaga = Lembaga::findOrFail($lembagaId);
         $guru = Guru::where('lembaga_id', $lembagaId)
             ->where('id', $user->guru_id)
             ->firstOrFail();
@@ -60,6 +62,7 @@ class AbsensiPtkController extends Controller
             'canCheckIn',
             'canCheckOut',
             'guru',
+            'lembaga',
             'bulan'
         ));
     }
@@ -115,6 +118,7 @@ class AbsensiPtkController extends Controller
     {
         $user = auth()->user();
         $lembagaId = $user->lembaga_id;
+        $lembaga = Lembaga::findOrFail($lembagaId);
         $guru = Guru::where('lembaga_id', $lembagaId)
             ->where('id', $user->guru_id)
             ->firstOrFail();
@@ -140,8 +144,35 @@ class AbsensiPtkController extends Controller
             return back()->with('error', 'Anda sudah check-in hari ini.');
         }
 
+        // Validasi lokasi GPS jika lembaga mengatur radius
+        $lokasi = $request->input('lokasi');
+        $lat = $request->input('latitude');
+        $lng = $request->input('longitude');
+
+        if ($lembaga->latitude_absen && $lembaga->longitude_absen && $lat && $lng) {
+            $jarak = $this->hitungJarak(
+                (float) $lembaga->latitude_absen,
+                (float) $lembaga->longitude_absen,
+                (float) $lat,
+                (float) $lng
+            );
+            if ($jarak > $lembaga->radius_absen_meter) {
+                return back()->with('error', "Anda berada di luar radius absen ({$jarak}m dari titik absen, maks {$lembaga->radius_absen_meter}m).");
+            }
+        }
+
+        // Validasi selfie jika wajib
+        if ($lembaga->wajib_selfie && !$request->hasFile('foto')) {
+            return back()->with('error', 'Wajib upload foto selfie untuk check-in.');
+        }
+
+        $fotoPath = null;
+        if ($request->hasFile('foto')) {
+            $fotoPath = $request->file('foto')->store('absensi-ptk/checkin', 'public');
+        }
+
         $now = Carbon::now();
-        $jamMasukStr = substr($jamKerja->jam_masuk, 0, 5); // 'H:i' only
+        $jamMasukStr = substr($jamKerja->jam_masuk, 0, 5);
         $jamMasuk = Carbon::createFromFormat('H:i', $jamMasukStr);
         $batasTepat = $jamMasuk->copy()->addMinutes($jamKerja->toleransi_keterlambatan);
 
@@ -162,8 +193,8 @@ class AbsensiPtkController extends Controller
             'jam_pulang_set' => $jamKerja->jam_pulang,
             'status' => $status,
             'keterlambatan_menit' => $terlambatMenit,
-            'lokasi_check_in' => $request->input('lokasi'),
-            'foto_check_in' => $request->input('foto'),
+            'lokasi_check_in' => $lokasi,
+            'foto_check_in' => $fotoPath,
         ]);
 
         LogAktivita::log('checkin', 'Check-in absensi PTK');
@@ -179,6 +210,7 @@ class AbsensiPtkController extends Controller
     {
         $user = auth()->user();
         $lembagaId = $user->lembaga_id;
+        $lembaga = Lembaga::findOrFail($lembagaId);
         $guru = Guru::where('lembaga_id', $lembagaId)
             ->where('id', $user->guru_id)
             ->firstOrFail();
@@ -197,6 +229,27 @@ class AbsensiPtkController extends Controller
             return back()->with('error', 'Anda sudah check-out hari ini.');
         }
 
+        // Validasi lokasi GPS jika lembaga mengatur radius
+        $lat = $request->input('latitude');
+        $lng = $request->input('longitude');
+
+        if ($lembaga->latitude_absen && $lembaga->longitude_absen && $lat && $lng) {
+            $jarak = $this->hitungJarak(
+                (float) $lembaga->latitude_absen,
+                (float) $lembaga->longitude_absen,
+                (float) $lat,
+                (float) $lng
+            );
+            if ($jarak > $lembaga->radius_absen_meter) {
+                return back()->with('error', "Anda berada di luar radius absen ({$jarak}m dari titik absen, maks {$lembaga->radius_absen_meter}m).");
+            }
+        }
+
+        $fotoPath = $absensi->foto_check_out;
+        if ($request->hasFile('foto')) {
+            $fotoPath = $request->file('foto')->store('absensi-ptk/checkout', 'public');
+        }
+
         $now = Carbon::now();
         $jamPulangStr = substr($absensi->jam_pulang_set, 0, 5);
         $jamPulang = Carbon::createFromFormat('H:i', $jamPulangStr);
@@ -204,7 +257,7 @@ class AbsensiPtkController extends Controller
         $update = [
             'check_out' => $now,
             'lokasi_check_out' => $request->input('lokasi'),
-            'foto_check_out' => $request->input('foto'),
+            'foto_check_out' => $fotoPath,
         ];
 
         // Deteksi pulang awal
@@ -218,5 +271,24 @@ class AbsensiPtkController extends Controller
 
         $msg = $absensi->status === 'pulang_awal' ? 'Check-out berhasil. (Pulang awal)' : 'Check-out berhasil.';
         return redirect()->route('absensi-ptk.index')->with('success', $msg);
+    }
+
+    /**
+     * Hitung jarak dua titik koordinat dengan rumus Haversine (meter).
+     */
+    private function hitungJarak(float $lat1, float $lng1, float $lat2, float $lng2): int
+    {
+        $earthRadius = 6371000; // meter
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLng = deg2rad($lng2 - $lng1);
+
+        $a = sin($dLat / 2) * sin($dLat / 2)
+            + cos(deg2rad($lat1)) * cos(deg2rad($lat2))
+            * sin($dLng / 2) * sin($dLng / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return (int) round($earthRadius * $c);
     }
 }
