@@ -175,7 +175,11 @@
    └── Simpan → jadwal kerja berlaku untuk semua guru
         │
 2. Guru buka menu Absensi PTK
-       │
+   ├── Guru struktural (jenis_ptk_id terisi): wajib absen setiap hari
+   │   └── Dashboard tampilkan banner merah jika belum absen
+   ├── Guru non-struktural: absen opsional
+   │   └── Dashboard tampilkan banner biru/netral
+        │
 3. Check-in (pagi):
    ├── Tombol "Check-in" atau scan QR
    ├── Opsional: foto selfi

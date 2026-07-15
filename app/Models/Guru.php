@@ -80,6 +80,15 @@ class Guru extends Model
     }
 
     /**
+     * Cek apakah guru ini struktural (punya jenis_ptk_id).
+     * Guru struktural wajib absen PTK harian.
+     */
+    public function isStruktural(): bool
+    {
+        return !is_null($this->jenis_ptk_id);
+    }
+
+    /**
      * Generate NIY: YYYYUUNN — tahun TMT + kode lembaga Sisda + nomor urut.
      * Dipanggil saat Admin Yayasan approve guru.
      */
