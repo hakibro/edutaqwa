@@ -110,6 +110,7 @@
 | Fitur                     | Deskripsi                                        |
 | ------------------------- | ------------------------------------------------ |
 | **Konfigurasi Jam Kerja** | Admin Lembaga set jam masuk & pulang per hari    |
+| **Setting Absensi**       | Lokasi absen, radius GPS, toggle wajib selfie    |
 | Check-in                  | Guru check-in saat tiba (QR / tombol)            |
 | Check-out                 | Guru check-out saat pulang                       |
 | Status Kehadiran          | Tepat waktu, Terlambat, Pulang awal, Tidak absen |

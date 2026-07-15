@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\JamKerjaLembaga;
+use App\Models\Lembaga;
 use App\Models\LogAktivita;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ class JamKerjaLembagaController extends Controller
     {
         $user = auth()->user();
         $lembagaId = $user->lembaga_id;
+        $lembaga = Lembaga::findOrFail($lembagaId);
         $hariList = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 
         $jamKerja = JamKerjaLembaga::where('lembaga_id', $lembagaId)
@@ -21,7 +23,7 @@ class JamKerjaLembagaController extends Controller
             ->get()
             ->keyBy('hari');
 
-        return view('jam-kerja.index', compact('jamKerja', 'hariList'));
+        return view('jam-kerja.index', compact('jamKerja', 'hariList', 'lembaga'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -89,5 +91,30 @@ class JamKerjaLembagaController extends Controller
         LogAktivita::log('delete', 'Menghapus jam kerja ' . $hari);
 
         return redirect()->route('jam-kerja.index')->with('success', 'Jam kerja ' . $hari . ' berhasil dihapus.');
+    }
+
+    /**
+     * Update setting absensi lembaga (lokasi, radius, toggle selfie).
+     */
+    public function updateAbsenSettings(Request $request): RedirectResponse
+    {
+        $user = auth()->user();
+        $lembaga = Lembaga::findOrFail($user->lembaga_id);
+
+        $validated = $request->validate([
+            'lokasi_absen' => 'nullable|string|max:255',
+            'latitude_absen' => 'nullable|numeric|between:-90,90',
+            'longitude_absen' => 'nullable|numeric|between:-180,180',
+            'radius_absen_meter' => 'nullable|integer|min:0|max:5000',
+            'wajib_selfie' => 'boolean',
+        ]);
+
+        $validated['wajib_selfie'] = $request->boolean('wajib_selfie');
+        $validated['radius_absen_meter'] = $validated['radius_absen_meter'] ?? 100;
+
+        $lembaga->update($validated);
+        LogAktivita::log('update', 'Mengupdate setting absensi lembaga');
+
+        return redirect()->route('jam-kerja.index')->with('success', 'Setting absensi berhasil diperbarui.');
     }
 }

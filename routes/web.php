@@ -204,6 +204,7 @@ Route::middleware('auth')->group(function () {
     // Jam Kerja Lembaga (Admin Lembaga only)
     Route::middleware('role:super_admin,admin_yayasan,admin_lembaga')->group(function () {
         Route::resource('jam-kerja', JamKerjaLembagaController::class)->except(['show']);
+        Route::put('/jam-kerja/absen-settings', [JamKerjaLembagaController::class, 'updateAbsenSettings'])->name('jam-kerja.absen-settings');
     });
 
     // Absensi PTK — Check-in/Check-out (Guru)

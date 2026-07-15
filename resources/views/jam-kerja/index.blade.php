@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-semibold leading-tight text-gray-800">{{ __('Konfigurasi Jam Kerja Lembaga') }}</h2>
+        <h2 class="text-xl font-semibold leading-tight text-gray-800">{{ __('Konfigurasi Jam Kerja & Absensi') }}</h2>
     </x-slot>
 
     <div class="py-12">
@@ -8,9 +8,69 @@
             @if (session('success'))
                 <div class="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-800">{{ session('success') }}</div>
             @endif
+            @if (session('error'))
+                <div class="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-800">{{ session('error') }}</div>
+            @endif
 
+            {{-- Setting Absensi Lembaga --}}
+            <div class="mb-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Setting Absensi</h3>
+                    <form action="{{ route('jam-kerja.absen-settings') }}" method="POST" class="space-y-4">
+                        @csrf @method('PUT')
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Lokasi Absen</label>
+                                <input type="text" name="lokasi_absen"
+                                    value="{{ old('lokasi_absen', $lembaga->lokasi_absen) }}"
+                                    placeholder="Mis: Ruang Guru Lt. 1" maxlength="255"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm">
+                                <p class="text-xs text-gray-400 mt-1">Nama lokasi / titik absen guru</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Radius Absen (meter)</label>
+                                <input type="number" name="radius_absen_meter"
+                                    value="{{ old('radius_absen_meter', $lembaga->radius_absen_meter) }}" min="0"
+                                    max="5000"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm">
+                                <p class="text-xs text-gray-400 mt-1">Toleransi jarak GPS check-in (0 = nonaktif)</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Latitude</label>
+                                <input type="text" name="latitude_absen"
+                                    value="{{ old('latitude_absen', $lembaga->latitude_absen) }}"
+                                    placeholder="-7.1234567"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Longitude</label>
+                                <input type="text" name="longitude_absen"
+                                    value="{{ old('longitude_absen', $lembaga->longitude_absen) }}"
+                                    placeholder="110.1234567"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm">
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" name="wajib_selfie" id="wajib_selfie" value="1"
+                                {{ old('wajib_selfie', $lembaga->wajib_selfie) ? 'checked' : '' }}
+                                class="rounded border-gray-300 text-indigo-600 shadow-sm">
+                            <label for="wajib_selfie" class="text-sm font-medium text-gray-700">Wajib upload selfie saat
+                                check-in</label>
+                        </div>
+                        <div>
+                            <button type="submit"
+                                class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                                Simpan Setting Absensi
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {{-- Jam Kerja --}}
             <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Jam Kerja Per Hari</h3>
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
@@ -95,9 +155,10 @@
                                                 </div>
                                                 <div>
                                                     <label class="block text-xs font-medium text-gray-500">Toleransi
-                                                        (menit)</label>
-                                                    <input type="number" name="toleransi_keterlambatan" value="15"
-                                                        min="0" max="120"
+                                                        (menit)
+                                                    </label>
+                                                    <input type="number" name="toleransi_keterlambatan"
+                                                        value="15" min="0" max="120"
                                                         class="mt-1 block w-24 rounded-md border-gray-300 shadow-sm text-sm">
                                                 </div>
                                                 <div>

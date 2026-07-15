@@ -11,9 +11,31 @@ class Lembaga extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['yayasan_id', 'nama', 'kode', 'kode_sisda', 'npsn', 'alamat', 'telp', 'email', 'tingkat', 'unit_formal', 'is_active'];
+    protected $fillable = [
+        'yayasan_id',
+        'nama',
+        'kode',
+        'kode_sisda',
+        'npsn',
+        'alamat',
+        'telp',
+        'email',
+        'tingkat',
+        'unit_formal',
+        'is_active',
+        'lokasi_absen',
+        'latitude_absen',
+        'longitude_absen',
+        'radius_absen_meter',
+        'wajib_selfie',
+    ];
 
-    protected $casts = ['is_active' => 'boolean'];
+    protected $casts = [
+        'is_active' => 'boolean',
+        'wajib_selfie' => 'boolean',
+        'latitude_absen' => 'decimal:7',
+        'longitude_absen' => 'decimal:7',
+    ];
 
     public function yayasan(): BelongsTo
     {
