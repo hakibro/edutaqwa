@@ -92,10 +92,6 @@
                                             <canvas id="canvas-checkin" class="hidden"></canvas>
                                             <input type="hidden" name="foto" id="foto-base64-checkin"
                                                 value="">
-                                            <input type="file" name="foto_file" accept="image/*" capture="user"
-                                                onchange="fileToBase64(this, 'checkin')"
-                                                class="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                                            <p class="mt-1 text-xs text-gray-400">Atau pilih dari galeri</p>
                                         </div>
                                     @endif
 
@@ -130,10 +126,6 @@
                                             <canvas id="canvas-checkout" class="hidden"></canvas>
                                             <input type="hidden" name="foto" id="foto-base64-checkout"
                                                 value="">
-                                            <input type="file" name="foto_file" accept="image/*" capture="user"
-                                                onchange="fileToBase64(this, 'checkout')"
-                                                class="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                                            <p class="mt-1 text-xs text-gray-400">Atau pilih dari galeri</p>
                                         </div>
                                     @endif
 
@@ -304,11 +296,20 @@
             const hiddenInput = document.getElementById('foto-base64-' + tipe);
             const btn = document.querySelector(`button[onclick="bukaKamera('${tipe}')"]`);
 
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
+            // Resize to max 400x400 maintaining aspect ratio
+            let w = video.videoWidth;
+            let h = video.videoHeight;
+            const max = 400;
+            if (w > max || h > max) {
+                const ratio = Math.min(max / w, max / h);
+                w = Math.round(w * ratio);
+                h = Math.round(h * ratio);
+            }
+            canvas.width = w;
+            canvas.height = h;
+            canvas.getContext('2d').drawImage(video, 0, 0, w, h);
 
-            const base64 = canvas.toDataURL('image/jpeg', 0.8);
+            const base64 = canvas.toDataURL('image/jpeg', 0.6);
             hiddenInput.value = base64;
 
             // Stop kamera
@@ -320,17 +321,6 @@
             }
             btn.textContent = '📷 Buka Kamera';
             status.textContent = '✅ Foto sudah diambil';
-        }
-
-        function fileToBase64(input, tipe) {
-            const file = input.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('foto-base64-' + tipe).value = e.target.result;
-                document.getElementById('status-cam-' + tipe).textContent = '✅ Foto dari galeri';
-            };
-            reader.readAsDataURL(file);
         }
 
         function ambilLokasi(form) {

@@ -278,15 +278,52 @@ class AbsensiPtkController extends Controller
     }
 
     /**
-     * Simpan base64 foto ke storage.
+     * Simpan base64 foto ke storage, resize ke 400x400 max.
      */
     private function simpanBase64Foto(string $base64, string $path): string
     {
         $base64 = preg_replace('/^data:image\/\w+;base64,/', '', $base64);
         $data = base64_decode($base64);
+
+        $img = imagecreatefromstring($data);
+        if (!$img) {
+            // fallback: simpan asli
+            $filename = uniqid('selfie_') . '.jpg';
+            $relativePath = $path . '/' . $filename;
+            \Illuminate\Support\Facades\Storage::disk('public')->put($relativePath, $data);
+            return $relativePath;
+        }
+
+        $ow = imagesx($img);
+        $oh = imagesy($img);
+        $max = 400;
+        if ($ow <= $max && $oh <= $max) {
+            // sudah kecil
+            $filename = uniqid('selfie_') . '.jpg';
+            $relativePath = $path . '/' . $filename;
+            \Illuminate\Support\Facades\Storage::disk('public')->put($relativePath, $data);
+            imagedestroy($img);
+            return $relativePath;
+        }
+
+        $ratio = min($max / $ow, $max / $oh);
+        $nw = (int) round($ow * $ratio);
+        $nh = (int) round($oh * $ratio);
+
+        $thumb = imagecreatetruecolor($nw, $nh);
+        imagecopyresampled($thumb, $img, 0, 0, 0, 0, $nw, $nh, $ow, $oh);
+
+        ob_start();
+        imagejpeg($thumb, null, 75);
+        $jpeg = ob_get_clean();
+
+        imagedestroy($img);
+        imagedestroy($thumb);
+
         $filename = uniqid('selfie_') . '.jpg';
         $relativePath = $path . '/' . $filename;
-        \Illuminate\Support\Facades\Storage::disk('public')->put($relativePath, $data);
+        \Illuminate\Support\Facades\Storage::disk('public')->put($relativePath, $jpeg);
+
         return $relativePath;
     }
 
