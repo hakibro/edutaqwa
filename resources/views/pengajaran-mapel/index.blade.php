@@ -11,10 +11,6 @@
                     class="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">
                     Import XLSX
                 </button>
-                <a href="{{ route('pengajaran-mapel.create') }}"
-                    class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
-                    + Tambah Penugasan
-                </a>
             </div>
         </div>
     </x-slot>
@@ -84,6 +80,51 @@
 
             <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div class="p-6">
+                    {{-- Inline Add Form (Google Form-style) --}}
+                    <div class="mb-6 rounded-lg border border-dashed border-indigo-300 bg-indigo-50 p-4">
+                        <form action="{{ route('pengajaran-mapel.store') }}" method="POST"
+                            class="flex flex-wrap items-end gap-3">
+                            @csrf
+                            <input type="hidden" name="tahun_ajaran_id"
+                                value="{{ request('tahun_ajaran_id', $tahunAjarans->firstWhere('is_active', true)->id ?? '') }}">
+                            <div class="flex-1 min-w-[180px]">
+                                <label class="block text-xs font-medium text-indigo-700 mb-1">Mapel</label>
+                                <select name="mapel_id"
+                                    class="block w-full rounded-md border-indigo-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm @error('mapel_id') border-red-300 @enderror"
+                                    required>
+                                    <option value="">-- Pilih Mapel --</option>
+                                    @foreach ($mapels as $m)
+                                        <option value="{{ $m->id }}"
+                                            {{ old('mapel_id') == $m->id ? 'selected' : '' }}>
+                                            {{ $m->nama }} ({{ $m->kode ?? '-' }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('mapel_id')
+                                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div class="flex-1 min-w-[180px]">
+                                <label class="block text-xs font-medium text-indigo-700 mb-1">Guru Pengampu</label>
+                                <select name="guru_id"
+                                    class="block w-full rounded-md border-indigo-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    required>
+                                    <option value="">-- Pilih Guru --</option>
+                                    @foreach ($gurus as $g)
+                                        <option value="{{ $g->id }}"
+                                            {{ old('guru_id') == $g->id ? 'selected' : '' }}>
+                                            {{ $g->nama }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <button type="submit"
+                                    class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Tambah</button>
+                            </div>
+                        </form>
+                    </div>
+
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">

@@ -19,10 +19,11 @@ class PengajaranMapelController extends Controller
     public function index(Request $request): View
     {
         $user = auth()->user();
+        $lembagaId = $user->lembaga_id;
         $query = PengajaranMapel::with(['mapel', 'guru', 'tahunAjaran']);
 
-        if ($user->lembaga_id) {
-            $query->whereHas('guru', fn($q) => $q->where('lembaga_id', $user->lembaga_id));
+        if ($lembagaId) {
+            $query->whereHas('guru', fn($q) => $q->where('lembaga_id', $lembagaId));
         } elseif ($user->yayasan_id) {
             $query->whereHas('guru.lembaga', fn($q) => $q->where('yayasan_id', $user->yayasan_id));
         }
@@ -34,7 +35,14 @@ class PengajaranMapelController extends Controller
         $pengajarans = $query->latest()->paginate(10);
         $tahunAjarans = TahunAjaran::when($user->yayasan_id, fn($q) => $q->where('yayasan_id', $user->yayasan_id))->get();
 
-        return view('pengajaran-mapel.index', compact('pengajarans', 'tahunAjarans'));
+        $mapels = Mapel::when($lembagaId, fn($q) => $q->where('lembaga_id', $lembagaId))
+            ->when($user->yayasan_id, fn($q) => $q->whereHas('lembaga', fn($ql) => $ql->where('yayasan_id', $user->yayasan_id)))
+            ->get();
+        $gurus = Guru::when($lembagaId, fn($q) => $q->where('lembaga_id', $lembagaId))
+            ->when($user->yayasan_id, fn($q) => $q->whereHas('lembaga', fn($ql) => $ql->where('yayasan_id', $user->yayasan_id)))
+            ->get();
+
+        return view('pengajaran-mapel.index', compact('pengajarans', 'tahunAjarans', 'mapels', 'gurus'));
     }
 
     public function create(): View
@@ -67,14 +75,17 @@ class PengajaranMapelController extends Controller
             ->exists();
 
         if ($exists) {
-            return back()->withInput()->withErrors(['mapel_id' => 'Guru sudah ditugaskan ke mapel ini untuk tahun ajaran tersebut.']);
+            return redirect()->route('pengajaran-mapel.index', ['tahun_ajaran_id' => $validated['tahun_ajaran_id']])
+                ->withInput()
+                ->withErrors(['mapel_id' => 'Guru sudah ditugaskan ke mapel ini untuk tahun ajaran tersebut.']);
         }
 
         $pengajaran = PengajaranMapel::create($validated);
 
         LogAktivita::log('create', 'Menugaskan guru ke mapel', $pengajaran);
 
-        return redirect()->route('pengajaran-mapel.index')->with('success', 'Penugasan guru berhasil ditambahkan.');
+        return redirect()->route('pengajaran-mapel.index', ['tahun_ajaran_id' => $validated['tahun_ajaran_id']])
+            ->with('success', 'Penugasan guru berhasil ditambahkan.');
     }
 
     public function edit(PengajaranMapel $pengajaranMapel): View

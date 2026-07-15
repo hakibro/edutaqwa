@@ -9,6 +9,7 @@ use App\Models\Kelas;
 use App\Models\Lembaga;
 use App\Models\LogAktivita;
 use App\Models\Mapel;
+use App\Models\PengajaranMapel;
 use App\Models\TahunAjaran;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -208,6 +209,215 @@ class JadwalController extends Controller
         $jadwal->delete();
 
         return redirect()->route('jadwal.index')->with('success', 'Jadwal berhasil dihapus.');
+    }
+
+    // === BATCH STORE (grid editor) ===
+
+    /**
+     * Batch store/update/delete jadwal entries for one kelas.
+     * Returns JSON for AJAX grid editor.
+     */
+    public function storeBatch(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $user = auth()->user();
+        $lembagaId = $user->lembaga_id;
+
+        $validated = $request->validate([
+            'kelas_id' => 'required|exists:kelas,id',
+            'tahun_ajaran_id' => 'required|exists:tahun_ajarans,id',
+            'entries' => 'required|array',
+            'entries.*.hari' => 'required|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
+            'entries.*.jam_ke' => 'required|integer|min:1|max:20',
+            'entries.*.mapel_id' => 'nullable|exists:mapels,id',
+            'entries.*.guru_id' => 'nullable|exists:gurus,id',
+        ]);
+
+        $saved = 0;
+        $deleted = 0;
+        $errors = [];
+
+        foreach ($validated['entries'] as $entry) {
+            $hari = $entry['hari'];
+            $jamKe = (int) $entry['jam_ke'];
+            $mapelId = $entry['mapel_id'] ?? null;
+            $guruId = $entry['guru_id'] ?? null;
+
+            // Validate jam_ke is KBM slot
+            $kbmItems = AkademikSetting::getKbmItems($lembagaId, $hari);
+            if (!isset($kbmItems[$jamKe])) {
+                $errors[] = "{$hari} Jam {$jamKe}: bukan slot KBM valid.";
+                continue;
+            }
+
+            // Delete if both null
+            if (!$mapelId && !$guruId) {
+                $deleted += Jadwal::where('lembaga_id', $lembagaId)
+                    ->where('kelas_id', $validated['kelas_id'])
+                    ->where('hari', $hari)
+                    ->where('jam_ke', $jamKe)
+                    ->delete();
+                continue;
+            }
+
+            // Need both
+            if (!$mapelId || !$guruId) {
+                $errors[] = "{$hari} Jam {$jamKe}: mapel dan guru harus diisi keduanya.";
+                continue;
+            }
+
+            // Check bentrok
+            $existing = Jadwal::where('lembaga_id', $lembagaId)
+                ->where('kelas_id', $validated['kelas_id'])
+                ->where('hari', $hari)
+                ->where('jam_ke', $jamKe)
+                ->first();
+
+            $bentrok = Jadwal::cekBentrok($guruId, $hari, $jamKe, $existing?->id);
+            if ($bentrok) {
+                $errors[] = "{$hari} Jam {$jamKe}: bentrok — {$bentrok}";
+                continue;
+            }
+
+            if ($existing) {
+                $existing->update([
+                    'mapel_id' => $mapelId,
+                    'guru_id' => $guruId,
+                    'tahun_ajaran_id' => $validated['tahun_ajaran_id'],
+                ]);
+            } else {
+                Jadwal::create([
+                    'lembaga_id' => $lembagaId,
+                    'kelas_id' => $validated['kelas_id'],
+                    'mapel_id' => $mapelId,
+                    'guru_id' => $guruId,
+                    'tahun_ajaran_id' => $validated['tahun_ajaran_id'],
+                    'hari' => $hari,
+                    'jam_ke' => $jamKe,
+                ]);
+            }
+            $saved++;
+        }
+
+        LogAktivita::log('update', "Batch jadwal: {$saved} disimpan, {$deleted} dihapus, " . count($errors) . " error.");
+
+        $msg = "{$saved} jadwal disimpan, {$deleted} dihapus.";
+        return response()->json([
+            'success' => true,
+            'message' => $msg,
+            'errors' => $errors,
+        ]);
+    }
+
+    /**
+     * Copy jadwal from one kelas to another.
+     */
+    public function copy(Request $request): RedirectResponse
+    {
+        $user = auth()->user();
+        $lembagaId = $user->lembaga_id;
+
+        $validated = $request->validate([
+            'source_kelas_id' => 'required|exists:kelas,id',
+            'target_kelas_id' => 'required|exists:kelas,id|different:source_kelas_id',
+            'tahun_ajaran_id' => 'required|exists:tahun_ajarans,id',
+        ]);
+
+        $sourceJadwals = Jadwal::where('lembaga_id', $lembagaId)
+            ->where('kelas_id', $validated['source_kelas_id'])
+            ->get();
+
+        if ($sourceJadwals->isEmpty()) {
+            return back()->with('error', 'Kelas sumber tidak memiliki jadwal.');
+        }
+
+        // Delete existing target jadwal (overwrite)
+        Jadwal::where('lembaga_id', $lembagaId)
+            ->where('kelas_id', $validated['target_kelas_id'])
+            ->delete();
+
+        $copied = 0;
+        $skipped = 0;
+        $errors = [];
+
+        foreach ($sourceJadwals as $src) {
+            $bentrok = Jadwal::cekBentrok($src->guru_id, $src->hari, $src->jam_ke);
+            if ($bentrok) {
+                $skipped++;
+                $errors[] = "{$src->hari} Jam {$src->jam_ke}: {$src->mapel->nama} — bentrok guru {$src->guru->nama}, dilewati.";
+                continue;
+            }
+
+            Jadwal::create([
+                'lembaga_id' => $lembagaId,
+                'kelas_id' => $validated['target_kelas_id'],
+                'mapel_id' => $src->mapel_id,
+                'guru_id' => $src->guru_id,
+                'tahun_ajaran_id' => $validated['tahun_ajaran_id'],
+                'hari' => $src->hari,
+                'jam_ke' => $src->jam_ke,
+            ]);
+            $copied++;
+        }
+
+        LogAktivita::log('create', "Copy jadwal: {$copied} dari kelas {$validated['source_kelas_id']} ke {$validated['target_kelas_id']}");
+
+        $msg = "{$copied} jadwal disalin.";
+        if ($errors) {
+            return redirect()->route('jadwal.index', ['grid_kelas_id' => $validated['target_kelas_id']])
+                ->with('success', $msg)
+                ->with('import_errors', $errors);
+        }
+
+        return redirect()->route('jadwal.index', ['grid_kelas_id' => $validated['target_kelas_id']])
+            ->with('success', $msg);
+    }
+
+    /**
+     * JSON endpoint: return pengajaran mapel pairs for a given kelas.
+     * Used by the grid editor inline dropdown.
+     */
+    public function slotSearch(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $user = auth()->user();
+        $lembagaId = $user->lembaga_id;
+
+        $request->validate([
+            'kelas_id' => 'required|exists:kelas,id',
+            'hari' => 'required|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
+        ]);
+
+        // Get pengajaran_mapel for this lembaga (through mapel relation)
+        $pengajaran = PengajaranMapel::with(['mapel', 'guru'])
+            ->whereHas('mapel', fn($q) => $q->where('lembaga_id', $lembagaId))
+            ->get();
+
+        if ($pengajaran->isNotEmpty()) {
+            $slots = $pengajaran->map(fn($p) => [
+                'mapel_id' => $p->mapel_id,
+                'mapel_nama' => $p->mapel->nama,
+                'guru_id' => $p->guru_id,
+                'guru_nama' => $p->guru->nama,
+                'label' => "{$p->mapel->nama} — {$p->guru->nama}",
+            ])->unique(fn($s) => "{$s['mapel_id']}-{$s['guru_id']}")->values();
+        } else {
+            // Fallback: all mapels and all approved gurus in this lembaga
+            $mapels = Mapel::where('lembaga_id', $lembagaId)->get(['id', 'nama']);
+            $gurus = Guru::where('lembaga_id', $lembagaId)->where('is_approved', true)->get(['id', 'nama']);
+            $slots = collect();
+            foreach ($mapels as $m) {
+                foreach ($gurus as $g) {
+                    $slots->push([
+                        'mapel_id' => $m->id,
+                        'mapel_nama' => $m->nama,
+                        'guru_id' => $g->id,
+                        'guru_nama' => $g->nama,
+                        'label' => "{$m->nama} — {$g->nama}",
+                    ]);
+                }
+            }
+        }
+
+        return response()->json(['slots' => $slots]);
     }
 
     // === IMPORT ===

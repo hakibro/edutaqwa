@@ -48,21 +48,23 @@
 
 ### 1.4 Akademik — Kurikulum
 
-| Fitur            | Deskripsi                                                                       |
-| ---------------- | ------------------------------------------------------------------------------- |
-| **Kelola Mapel** |                                                                                 |
-| - Kelompok Mapel | A. Umum, B. Kejuruan, Muatan Lokal, dll                                         |
-| - CRUD Mapel     | Daftar mata pelajaran per lembaga                                               |
-| - Penugasan Guru | Assign guru ke mapel per kelas & tahun ajaran                                   |
-| **CP/TP/ATP**    | (dibuat oleh guru pengampu)                                                     |
-| - CP             | Capaian Pembelajaran per mapel & fase, milik guru                               |
-| - TP             | Tujuan Pembelajaran per CP                                                      |
-| - ATP            | Alur TP (urutan mingguan)                                                       |
-| **Jadwal**       |                                                                                 |
-| - CRUD Jadwal    | Atur jadwal per kelas (hari, jam_ke) — waktu di-resolve dari settings timetable |
-| - Import Jadwal  | Import jadwal dari Excel (kolom: kelas, mapel, guru, hari, jam_ke)              |
-| - Cetak Jadwal   | Cetak jadwal kelas & guru                                                       |
-| - Cek Bentrok    | Validasi bentrok jadwal otomatis (guru + hari + jam_ke)                         |
+| Fitur            | Deskripsi                                                                          |
+| ---------------- | ---------------------------------------------------------------------------------- |
+| **Kelola Mapel** |                                                                                    |
+| - Kelompok Mapel | A. Umum, B. Kejuruan, Muatan Lokal, dll                                            |
+| - CRUD Mapel     | Daftar mata pelajaran per lembaga                                                  |
+| - Penugasan Guru | Assign guru ke mapel per kelas & tahun ajaran                                      |
+| **CP/TP/ATP**    | (dibuat oleh guru pengampu)                                                        |
+| - CP             | Capaian Pembelajaran per mapel & fase, milik guru                                  |
+| - TP             | Tujuan Pembelajaran per CP                                                         |
+| - ATP            | Alur TP (urutan mingguan)                                                          |
+| **Jadwal**       |                                                                                    |
+| - CRUD Jadwal    | Atur jadwal per kelas (hari, jam_ke) — waktu di-resolve dari settings timetable    |
+| - Grid Editor    | Edit jadwal langsung dari grid per kelas — click cell pilih mapel+guru, batch save |
+| - Salin Jadwal   | Copy seluruh jadwal dari kelas lain (overwrite + cek bentrok)                      |
+| - Import Jadwal  | Import jadwal dari Excel (kolom: kelas, mapel, guru, hari, jam_ke)                 |
+| - Cetak Jadwal   | Cetak jadwal kelas & guru                                                          |
+| - Cek Bentrok    | Validasi bentrok jadwal otomatis (guru + hari + jam_ke)                            |
 
 ### 1.5 Kesiswaan
 

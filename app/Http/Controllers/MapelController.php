@@ -196,6 +196,57 @@ class MapelController extends Controller
         }, 'template-import-mapel.xlsx', ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
     }
 
+    /**
+     * Export mapel ke XLSX.
+     */
+    public function export(): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $user = auth()->user();
+        $query = Mapel::with(['lembaga', 'kelompokMapel'])->withCount('pengajaranMapels as guru_count');
+
+        if ($user->lembaga_id) {
+            $query->where('lembaga_id', $user->lembaga_id);
+        } elseif ($user->yayasan_id) {
+            $query->whereHas('lembaga', fn($q) => $q->where('yayasan_id', $user->yayasan_id));
+        }
+
+        $mapels = $query->latest()->get();
+
+        $filename = 'export-mapel-' . now()->format('Ymd-His') . '.xlsx';
+
+        return response()->streamDownload(function () use ($mapels) {
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+
+            $headers = ['No', 'Kode', 'Nama Mapel', 'Kelompok Mapel', 'Lembaga', 'Jumlah Guru', 'Deskripsi'];
+            $sheet->fromArray([$headers], null, 'A1');
+
+            $row = 2;
+            foreach ($mapels as $i => $m) {
+                $sheet->fromArray([
+                    [
+                        $i + 1,
+                        $m->kode,
+                        $m->nama,
+                        $m->kelompokMapel?->nama ?? '-',
+                        $m->lembaga?->nama ?? '-',
+                        $m->guru_count,
+                        $m->deskripsi,
+                    ]
+                ], null, "A{$row}");
+                $row++;
+            }
+
+            // Auto-size columns
+            foreach (range('A', 'G') as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
+    }
+
     protected function getLembagas($user)
     {
         if ($user->lembaga_id) {

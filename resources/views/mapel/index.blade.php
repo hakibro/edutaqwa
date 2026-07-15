@@ -3,6 +3,10 @@
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-semibold leading-tight text-gray-800">{{ __('Mata Pelajaran') }}</h2>
             <div class="flex gap-2">
+                <a href="{{ route('mapel.export') }}"
+                    class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">
+                    Export XLSX
+                </a>
                 <a href="{{ route('mapel.template') }}"
                     class="rounded-md bg-gray-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-400">
                     Download Template

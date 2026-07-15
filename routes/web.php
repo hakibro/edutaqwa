@@ -131,6 +131,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('mapel', MapelController::class)->except(['show']);
         Route::post('mapel/import', [MapelController::class, 'import'])->name('mapel.import');
         Route::get('mapel/template', [MapelController::class, 'template'])->name('mapel.template');
+        Route::get('mapel/export', [MapelController::class, 'export'])->name('mapel.export');
         Route::resource('pengajaran-mapel', PengajaranMapelController::class)->except(['show']);
         Route::post('pengajaran-mapel/import', [PengajaranMapelController::class, 'import'])->name('pengajaran-mapel.import');
         Route::get('pengajaran-mapel/template', [PengajaranMapelController::class, 'template'])->name('pengajaran-mapel.template');
@@ -155,6 +156,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/jadwal-import', [JadwalController::class, 'showImportForm'])->name('jadwal.import.form');
         Route::post('/jadwal-import', [JadwalController::class, 'import'])->name('jadwal.import');
         Route::get('/jadwal-template', [JadwalController::class, 'template'])->name('jadwal.template');
+        // Grid editor & batch operations
+        Route::post('/jadwal/batch-store', [JadwalController::class, 'storeBatch'])->name('jadwal.batch-store');
+        Route::post('/jadwal/copy', [JadwalController::class, 'copy'])->name('jadwal.copy');
+        Route::get('/jadwal/slot-search', [JadwalController::class, 'slotSearch'])->name('jadwal.slot-search');
     });
 
     // === PRESENSI SISWA (Phase 6) ===
