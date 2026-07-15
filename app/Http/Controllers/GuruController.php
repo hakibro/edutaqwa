@@ -415,9 +415,10 @@ class GuruController extends Controller
             ->where('is_approved', false)
             ->whereHas('lembaga', fn($q) => $q->where('yayasan_id', $user->yayasan_id));
 
-        $gurus = $query->latest()->paginate(10);
+        $perPage = (int) request()->get('per_page', 10);
+        $gurus = $query->latest()->paginate($perPage)->withQueryString();
 
-        return view('guru.approval', compact('gurus'));
+        return view('guru.approval', compact('gurus', 'perPage'));
     }
 
     /**
