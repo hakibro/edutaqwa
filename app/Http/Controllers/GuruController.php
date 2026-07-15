@@ -454,7 +454,7 @@ class GuruController extends Controller
         $user = User::where('guru_id', $guru->id)->first();
 
         if (!$user) {
-            $email = $guru->email;
+            $email = $niy . '@daruttaqwa.or.id';
 
             User::create([
                 'guru_id' => $guru->id,
@@ -522,13 +522,15 @@ class GuruController extends Controller
             $user = User::where('guru_id', $guru->id)->first();
 
             if (!$user) {
+                $email = $niy . '@daruttaqwa.or.id';
+
                 User::create([
                     'guru_id' => $guru->id,
                     'lembaga_id' => $guru->lembaga_id,
                     'yayasan_id' => $lembaga->yayasan_id,
                     'name' => $guru->nama,
                     'username' => $niy,
-                    'email' => $guru->email,
+                    'email' => $email,
                     'password' => $niy,
                     'role' => 'guru',
                     'is_active' => true,
