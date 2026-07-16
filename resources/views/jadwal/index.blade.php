@@ -76,7 +76,7 @@
                     }
                 @endphp
 
-                <script id="grid-data" type="application/json">{{ json_encode($gridData) }}</script>
+                <script id="grid-data" type="application/json">{!! json_encode($gridData) !!}</script>
 
                 <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg" x-data="jadwalGrid({{ $gridKelasId }}, {{ $gridTahunAjaranId ?? 'null' }}, {{ json_encode($hariList) }}, {{ json_encode($timetableLabels) }})"
                     x-init="init()">
@@ -160,7 +160,8 @@
                                                             <span class="font-medium text-gray-900"
                                                                 x-text="cellState['{{ $hari }}']?.[{{ $jam }}]?.mapel_nama || 'Kosong'"
                                                                 :class="cellState['{{ $hari }}']?.[
-                                                                        {{ $jam }}] ? '' :
+                                                                        {{ $jam }}
+                                                                    ] ? '' :
                                                                     'italic text-gray-400 text-xs'"></span>
                                                             <span class="text-xs text-gray-500"
                                                                 x-show="cellState['{{ $hari }}']?.[{{ $jam }}]"
@@ -292,9 +293,9 @@
                                             </td>
                                         </tr>
                                     @empty
-                                            <tr>
-                                                <td colspan="6" class="px-6 py-8 text-center text-sm text-gray-500">Belum ada data jadwal.</td>
-                                            </tr>
+                                                <tr>
+                                                    <td colspan="6" class="px-6 py-8 text-center text-sm text-gray-500">Belum ada data jadwal.</td>
+                                                </tr>
      @endforelse
                                                 </tbody>
                                                 </table>
