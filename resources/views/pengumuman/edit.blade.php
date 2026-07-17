@@ -260,7 +260,7 @@
                                                 break;
                                             case 'list':
                                                 h +=
-                                                    `<${b.data.style === 'ordered' ? 'ol' : 'ul'}>${b.data.items.map(i => `<li>${i}</li>`).join('')}</${b.data.style === 'ordered' ? 'ol' : 'ul'}>`;
+                                                    `<${b.data.style === 'ordered' ? 'ol' : 'ul'}>${(function renderItems(items) { return items.map(item => { let li = '<li>' + (typeof item === 'string' ? item : item.content || ''); if (item.items && item.items.length) { li += '<' + (b.data.style === 'ordered' ? 'ol' : 'ul') + '>' + renderItems(item.items) + '</' + (b.data.style === 'ordered' ? 'ol' : 'ul') + '>'; } return li + '</li>'; }).join(''); })(b.data.items)}</${b.data.style === 'ordered' ? 'ol' : 'ul'}>`;
                                                 break;
                                             case 'image':
                                                 h +=
