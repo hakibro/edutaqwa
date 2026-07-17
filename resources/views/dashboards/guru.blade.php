@@ -40,9 +40,9 @@
                 // Total CP yang dibuat
                 $totalCp = $guru ? \App\Models\Cp::where('guru_id', $guru->id)->count() : 0;
 
-                // Agenda selfie minggu ini
-                $agendaMingguIni = $guru
-                    ? \App\Models\AgendaMengajar::where('guru_id', $guru->id)
+                // Jurnal mengajar minggu ini
+                $jurnalMingguIni = $guru
+                    ? \App\Models\JurnalMengajar::where('guru_id', $guru->id)
                         ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
                         ->count()
                     : 0;
@@ -60,7 +60,7 @@
                 </div>
                 <div class="rounded-lg bg-white p-6 shadow-sm">
                     <p class="text-sm text-gray-500">Total Jadwal</p>
-                    <p class="text-3xl font-bold text-gray-900">{{ $totalJadwal }}</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ $jurnalMingguIni }}</p>
                 </div>
                 <div class="rounded-lg bg-white p-6 shadow-sm">
                     <p class="text-sm text-gray-500">CP Dibuat</p>
@@ -202,32 +202,33 @@
                 </div>
             </div>
 
-            <!-- Agenda Selfie Minggu Ini -->
+            <!-- Jurnal Mengajar Minggu Ini -->
             @if ($guru)
                 <div class="mt-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold text-gray-800">Agenda Selfie Minggu Ini</h3>
-                            <a href="{{ route('agenda-mengajar.create') }}"
-                                class="text-sm font-medium text-indigo-600 hover:text-indigo-800">+ Tambah Agenda</a>
+                            <h3 class="text-lg font-semibold text-gray-800">Jurnal Mengajar Minggu Ini</h3>
+                            <a href="{{ route('jurnal-mengajar.create') }}"
+                                class="text-sm font-medium text-indigo-600 hover:text-indigo-800">+ Buat Jurnal</a>
                         </div>
                         @php
-                            $agendaList = \App\Models\AgendaMengajar::where('guru_id', $guru->id)
+                            $jurnalList = \App\Models\JurnalMengajar::where('guru_id', $guru->id)
                                 ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
+                                ->with(['jadwal.mapel', 'jadwal.kelas'])
                                 ->latest()
                                 ->take(5)
                                 ->get();
                         @endphp
-                        @forelse ($agendaList as $a)
+                        @forelse ($jurnalList as $j)
                             <div class="flex items-center gap-3 border-b border-gray-100 pb-2">
-                                <span class="text-xs text-gray-500 w-24">{{ $a->created_at->format('d M H:i') }}</span>
+                                <span class="text-xs text-gray-500 w-24">{{ $j->created_at->format('d M H:i') }}</span>
+                                <span class="text-sm text-gray-900 flex-1">{{ $j->jadwal?->mapel?->nama ?? 'Mapel' }} ·
+                                    {{ $j->jadwal?->kelas?->nama ?? '-' }}</span>
                                 <span
-                                    class="text-sm text-gray-900 flex-1">{{ Str::limit($a->deskripsi ?? 'Agenda mengajar', 60) }}</span>
-                                <span
-                                    class="rounded-full px-2 py-0.5 text-xs font-semibold {{ $a->is_verified ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">{{ $a->is_verified ? 'Verified' : 'Pending' }}</span>
+                                    class="rounded-full px-2 py-0.5 text-xs font-semibold {{ $j->is_verified ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">{{ $j->is_verified ? 'Verified' : 'Pending' }}</span>
                             </div>
                         @empty
-                            <p class="text-gray-500 text-sm">Belum ada agenda minggu ini.</p>
+                            <p class="text-gray-500 text-sm">Belum ada jurnal minggu ini.</p>
                         @endforelse
                     </div>
                 </div>
@@ -237,24 +238,56 @@
             <div class="mt-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div class="p-6">
                     <h3 class="mb-4 text-lg font-semibold text-gray-800">Akses Cepat</h3>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+
+                    {{-- Presensi & Kehadiran --}}
+                    <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">Presensi & Kehadiran
+                    </p>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
                         <a href="{{ route('absensi-ptk.index') }}"
-                            class="block rounded-md bg-indigo-50 p-3 text-indigo-700 hover:bg-indigo-100 text-sm font-medium text-center">Absen
-                            Harian</a>
-                        <a href="{{ route('presensi.index') }}"
-                            class="block rounded-md bg-indigo-50 p-3 text-indigo-700 hover:bg-indigo-100 text-sm font-medium text-center">Presensi
-                            Siswa</a>
-                        <a href="{{ route('agenda-mengajar.index') }}"
-                            class="block rounded-md bg-indigo-50 p-3 text-indigo-700 hover:bg-indigo-100 text-sm font-medium text-center">Agenda
-                            Selfie</a>
+                            class="block rounded-md bg-blue-50 p-3 text-blue-700 hover:bg-blue-100 text-sm font-medium text-center">
+                            <span class="block text-lg mb-0.5">🕐</span>
+                            Absen Harian
+                        </a>
+                        <a href="{{ route('jurnal-mengajar.create') }}"
+                            class="block rounded-md bg-teal-50 p-3 text-teal-700 hover:bg-teal-100 text-sm font-medium text-center">
+                            <span class="block text-lg mb-0.5">📝</span>
+                            Jurnal Mengajar
+                        </a>
+                        <a href="{{ route('jurnal-mengajar.index') }}"
+                            class="block rounded-md bg-teal-50 p-3 text-teal-700 hover:bg-teal-100 text-sm font-medium text-center">
+                            <span class="block text-lg mb-0.5">📋</span>
+                            Riwayat Jurnal
+                        </a>
+                    </div>
+
+                    {{-- Akademik --}}
+                    <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">Akademik</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
                         <a href="{{ route('nilai.index') }}"
-                            class="block rounded-md bg-indigo-50 p-3 text-indigo-700 hover:bg-indigo-100 text-sm font-medium text-center">Input
-                            Nilai</a>
+                            class="block rounded-md bg-green-50 p-3 text-green-700 hover:bg-green-100 text-sm font-medium text-center">
+                            <span class="block text-lg mb-0.5">📊</span>
+                            Input Nilai
+                        </a>
                         <a href="{{ route('cp.index') }}"
-                            class="block rounded-md bg-green-50 p-3 text-green-700 hover:bg-green-100 text-sm font-medium text-center">CP/TP/ATP</a>
+                            class="block rounded-md bg-purple-50 p-3 text-purple-700 hover:bg-purple-100 text-sm font-medium text-center">
+                            <span class="block text-lg mb-0.5">📖</span>
+                            CP / TP / ATP
+                        </a>
+                    </div>
+
+                    {{-- Kesiswaan & Lainnya --}}
+                    <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">Kesiswaan & Lainnya</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <a href="{{ route('kesiswaan.pelanggaran.index') }}"
+                            class="block rounded-md bg-orange-50 p-3 text-orange-700 hover:bg-orange-100 text-sm font-medium text-center">
+                            <span class="block text-lg mb-0.5">⚠️</span>
+                            Catat Pelanggaran
+                        </a>
                         <button type="button" onclick="window.pengumumanInstance?.showLatest()"
-                            class="block rounded-md bg-yellow-50 p-3 text-yellow-700 hover:bg-yellow-100 text-sm font-medium text-center">Lihat
-                            Pengumuman</button>
+                            class="block rounded-md bg-yellow-50 p-3 text-yellow-700 hover:bg-yellow-100 text-sm font-medium text-center">
+                            <span class="block text-lg mb-0.5">📢</span>
+                            Pengumuman
+                        </button>
                     </div>
                 </div>
             </div>
