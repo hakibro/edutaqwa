@@ -33,6 +33,7 @@
 | - Kode Guru               | Kode guru lembaga ditentukan manual oleh admin lembaga saat tambah/edit guru ✓                                                               |
 | - Klasifikasi PTK         | Jenis PTK dari DB (dikelola admin lembaga), Tugas Tambahan (Guru Mapel, BK, Wali Kelas, dll)                                                 |
 | - Upload Dokumen          | Upload ijazah, SK, sertifikat ✓                                                                                                              |
+| - Reset Password Guru     | Admin lembaga bisa reset password user guru (buat akun jika belum ada), guru wajib ganti password saat login pertama ✓                       |
 | **Master Data Siswa**     |                                                                                                                                              |
 | - CRUD Siswa              | Tambah/sunting/hapus data siswa (tombol disembunyikan jika Mode API Sisda ON) ✓                                                              |
 | - Import Siswa            | Import dari Sisda API (otomatis) ✓                                                                                                           |
@@ -48,6 +49,9 @@
 | - Mode API Sisda          | Toggle di form edit lembaga — jika ON, sembunyikan tombol tambah manual siswa/kelas/jurusan, data hanya via sync API ✓                       |
 | **Konfigurasi Jam Kerja** | Atur jam masuk & pulang guru per hari                                                                                                        |
 | **Pengaturan Akademik**   | Atur jam mulai, durasi KBM/istirahat, daftar kegiatan (nama + durasi masing-masing), hari efektif. Susunan per hari via drag-drop timetable. |
+| **Pengumuman**            |                                                                                                                                              |
+| - Kelola Pengumuman       | Admin lembaga membuat/mengedit/menghapus pengumuman menggunakan Editor.js (rich text + gambar).                                              |
+| - Popup Dashboard Guru    | Guru melihat pengumuman aktif sebagai popup saat login, bisa dismiss. Session-based read tracking.                                           |
 
 ### 1.4 Akademik — Kurikulum
 
@@ -100,14 +104,14 @@
 | Cetak Rapor        | PDF rapor format Kurikulum Merdeka   |
 | E-Rapor            | Rapor digital (dibagikan via link)   |
 
-### 1.8 Presensi
+### 1.8 Presensi (DIGABUNG ke 1.11 Jurnal Mengajar)
 
-| Fitur                  | Deskripsi                       |
-| ---------------------- | ------------------------------- |
-| Presensi Per Pertemuan | Guru isi kehadiran per jadwal   |
-| Presensi Harian        | Rekap kehadiran harian siswa    |
-| Laporan Presensi       | Rekap bulanan/semester          |
-| Statistik Presensi     | % kehadiran, keterlambatan, dll |
+| Fitur                  | Deskripsi                                                                   |
+| ---------------------- | --------------------------------------------------------------------------- |
+| Presensi Per Pertemuan | Guru isi kehadiran per jadwal — sekarang bagian dari wizard Jurnal Mengajar |
+| Presensi Harian        | Rekap kehadiran harian siswa — sekarang bagian dari Jurnal Mengajar         |
+| Laporan Presensi       | Rekap bulanan/semester                                                      |
+| Statistik Presensi     | % kehadiran, keterlambatan, dll                                             |
 
 ### 1.9 Absensi PTK (Kehadiran Harian Guru)
 
@@ -123,16 +127,31 @@
 | Laporan Absensi PTK       | Export rekap kehadiran guru                      |
 | Notifikasi                | Peringatan jika lupa check-in/check-out          |
 
-### 1.10 Agenda Mengajar (Selfie)
+### 1.10 Agenda Mengajar (Selfie) — DIGABUNG ke 1.11 Jurnal Mengajar
 
-| Fitur             | Deskripsi                                        |
-| ----------------- | ------------------------------------------------ |
-| **Ambil Selfie**  | Guru foto selfie di depan kelas saat mengajar    |
-| Metadata Otomatis | Timestamp, lokasi GPS, jadwal_id melekat di foto |
-| Verifikasi Jadwal | Selfie hanya bisa saat jam sesuai jadwal         |
-| Galeri Agenda     | Riwayat foto mengajar per guru per pertemuan     |
-| Monitoring        | Kepala Lembaga / Kurikulum lihat bukti mengajar  |
-| Export            | Unduh arsip foto per mapel/periode               |
+| Fitur             | Deskripsi                                            |
+| ----------------- | ---------------------------------------------------- |
+| **Ambil Selfie**  | Sekarang bagian dari wizard Jurnal Mengajar (Step 1) |
+| Metadata Otomatis | Timestamp, lokasi GPS, jadwal_id melekat di foto     |
+| Verifikasi Jadwal | Selfie hanya bisa saat jam sesuai jadwal             |
+| Galeri Agenda     | Riwayat foto mengajar per guru per pertemuan         |
+| Monitoring        | Kepala Lembaga / Kurikulum lihat bukti mengajar      |
+| Export            | Unduh arsip foto per mapel/periode                   |
+
+### 1.11 Jurnal Mengajar (Phase 10 — Gabungan Selfie + Presensi)
+
+| Fitur                | Deskripsi                                                       |
+| -------------------- | --------------------------------------------------------------- |
+| **Wizard 3 Langkah** | Step 1: Selfie, Step 2: Presensi Siswa, Step 3: Materi & Simpan |
+| Camera Capture       | Foto dari kamera depan device (wajib), tanpa upload file        |
+| GPS Otomatis         | Geolokasi auto-fill dari browser, wajib diisi                   |
+| Presensi Cepat       | "Semua Hadir" / "Semua Alpha" button                            |
+| Materi Pertemuan     | Input materi yang diajarkan                                     |
+| Cek Duplikat         | 1 jurnal per jadwal per hari                                    |
+| Edit Jurnal          | Edit materi + presensi untuk jurnal belum diverifikasi          |
+| Monitoring           | Filter guru, tanggal, status verifikasi                         |
+| Verifikasi           | Kurikulum/Kepala Lembaga verifikasi jurnal                      |
+| Backward Compat      | Data lama (agenda_mengajars, presensis) tetap bisa diakses      |
 
 ### 1.11 Dashboard
 

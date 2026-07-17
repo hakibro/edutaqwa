@@ -19,12 +19,11 @@
 ### 2.1 Master Data
 
 | Fitur             | super_admin | admin_yayasan | kepala_lembaga | admin_lembaga | kurikulum | kesiswaan | guru | siswa | orang_tua |
-| ----------------- | :---------: | :-----------: | :------------: | :-----------: | :-------: | :-------: | :--: | :---: | :-------: |
+| ----------------- | :---------: | :-----------: | :------------: | :-----------: | :-------: | :-------: | :--: | :---: | :-------: | --- | ---------- | --- | --- | --- | ---- | --- | --- | --- | --- | --- | --- | --------- | --- | --- | --- | ---- | --- | --- | --- | --- | --- |
 | Kelola User       |    CRUD     |    CRUD\*     |       -        |       -       |     -     |     -     |  -   |   -   |     -     |
 | Lihat Yayasan     |    CRUD     |       R       |       -        |       -       |     -     |     -     |  -   |   -   |     -     |
 | Kelola Lembaga    |    CRUD     |     CRUD      |       R        |       -       |     -     |     -     |  -   |   -   |     -     |
-| Tahun Ajaran      |      -      |     CRUD      |       R        |       -       |     -     |     -     |  -   |   -   |     -     |
-| Data Guru         |      -      |       R       |       R        |     CRUD      |     R     |     R     |  R   |   -   |     -     |
+| Tahun Ajaran      |      -      |     CRUD      |       R        |       -       |     -     |     -     |  -   |   -   |     -     |     | Pengumuman | -   | -   | RU  | CRUD | -   | -   | R   | -   | -   |     | Data Guru | -   | R   | R   | CRUD | R   | R   | R   | -   | -   |
 | Approval Guru     |      -      |     CRUD      |       -        |       -       |     -     |     -     |  -   |   -   |     -     |
 | Jam Kerja Lembaga |      -      |       -       |       R        |     CRUD      |     -     |     -     |  -   |   -   |     -     |
 | Data Siswa        |      -      |       -       |       R        |     CRUD      |     R     |   CRUD    |  R   |   R   |     R     |

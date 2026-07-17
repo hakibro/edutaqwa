@@ -152,31 +152,45 @@
 5. Setelah selesai → cetak jadwal kelas & jadwal guru
 ```
 
-## 6. Alur Presensi
+## 6. Alur Jurnal Mengajar (Selfie + Presensi + Materi) — DIGABUNG
 
 ```
-1. Guru buka menu Presensi
+1. Guru buka menu Jurnal Mengajar
        │
-2. Pilih jadwal hari ini (atau jadwal spesifik)
+2. Lihat jadwal hari ini → pilih jadwal
        │
-3. Tampilkan daftar siswa kelas tersebut
+3. Wizard 3 Langkah:
        │
-4. Guru input kehadiran per siswa:
-   ├── Hadir (default)
-   ├── Sakit
-   ├── Izin
-   ├── Alpha
-   └── Terlambat (opsional input menit)
+   STEP 1 — Selfie:
+   ├── Kamera browser aktif / upload file
+   ├── GPS auto-fill
+   ├── Info jadwal (mapel, kelas, jam ke-)
+   └── Klik "Lanjut ke Presensi"
         │
-5. Guru input materi pertemuan
-       │
-6. Simpan → presensi tersimpan
-       │
-7. Jika siswa alpha > 3 kali berturut-turut:
-   └── Notifikasi ke Wali Kelas, BK, Orang Tua
+   STEP 2 — Presensi Siswa:
+   ├── Daftar siswa kelas tersebut
+   ├── Status default: Hadir
+   ├── Tombol cepat: "Semua Hadir" / "Semua Alpha"
+   ├── Opsi: hadir, sakit, izin, alpha, terlambat
+   └── Klik "Lanjut ke Materi"
+        │
+   STEP 3 — Materi & Simpan:
+   ├── Input materi pertemuan
+   ├── Ringkasan (selfie ✓, jumlah siswa, pertemuan ke-)
+   └── Klik "Simpan Jurnal Mengajar"
+        │
+4. Sistem simpan:
+   ├── Foto ke storage (jika base64 → decode simpan)
+   ├── 1 record di jurnal_mengajars
+   ├── N record di detail_jurnal_siswas (batch insert)
+   └── Log aktivitas
+        │
+5. Monitoring (Kurikulum/Kepala Lembaga/Admin Lembaga):
+   ├── Filter: guru, tanggal, status verifikasi
+   ├── Lihat foto selfie + rekap kehadiran
+   ├── Verifikasi jurnal
+   └── Export laporan
 ```
-
-## 7. Alur Absensi PTK (Kehadiran Harian Guru)
 
 ```
 1. Admin Lembaga set jam kerja lembaga
@@ -213,32 +227,31 @@
    └── Export laporan kehadiran guru bulanan
 ```
 
-## 8. Alur Agenda Mengajar (Selfie)
+## 8. Alur Jurnal Mengajar — Monitoring & Verifikasi
 
 ```
-1. Guru buka jadwal hari ini
+1. Kurikulum / Kepala Lembaga / Admin Lembaga buka Monitoring Jurnal
        │
-2. Pilih jadwal yg sedang berlangsung
-       │
-3. Sebelum/tengah mengajar:
-   ├── Klik "Ambil Selfie"
-   ├── Kamera aktif → guru foto diri di depan kelas
-   ├── Sistem attach metadata:
-   │   ├── Timestamp otomatis
-   │   ├── GPS lokasi
-   │   ├── ID jadwal, mapel, kelas
-   └── Simpan → foto tersimpan di storage
+2. Filter data:
+   ├── Pilih guru
+   ├── Rentang tanggal
+   └── Status verifikasi (semua / pending / terverifikasi)
         │
-4. Sistem verifikasi:
-   ├── Cocokkan waktu selfie dengan jam jadwal
-   ├── Jika di luar jam → peringatan (tetap bisa simpan)
-   └── Jika sesuai → status: 'verified'
+3. Lihat grid jurnal:
+   ├── Foto selfie (thumbnail)
+   ├── Info: guru, mapel, kelas, tanggal, pertemuan
+   ├── Rekap kehadiran siswa (H/S/I/A/T)
+   └── Status verifikasi
         │
-5. Monitoring:
-   ├── Kurikulum / Kepala Lembaga lihat galeri agenda
-   ├── Lihat jumlah selfie per guru per bulan
-   ├── Deteksi jadwal tanpa selfie → notifikasi
-   └── Export arsip foto untuk evaluasi
+4. Klik jurnal → detail:
+   ├── Foto selfie besar
+   ├── Info lengkap
+   ├── Daftar siswa + status kehadiran
+   └── Materi pertemuan
+        │
+5. Verifikasi:
+   ├── Klik "Verifikasi" → is_verified=true
+   └── Tercatat: verified_by + verified_at
 ```
 
 ## 10. Alur Penilaian & Rapor

@@ -17,6 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->appendToGroup('web', \App\Http\Middleware\ForcePasswordChange::class);
+
+        $middleware->validateCsrfTokens(except: [
+            'pengumuman/upload-image',
+            'pengumuman/upload-image-url',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -820,4 +820,61 @@ class GuruController extends Controller
             $writer->save('php://output');
         }, $filename, ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
     }
+
+    /**
+     * Form reset password user guru.
+     */
+    public function resetPasswordForm(Guru $guru): View
+    {
+        $user = User::where('guru_id', $guru->id)->first();
+
+        return view('guru.reset-password', compact('guru', 'user'));
+    }
+
+    /**
+     * Proses reset password user guru.
+     */
+    public function resetPassword(Request $request, Guru $guru): RedirectResponse
+    {
+        $user = User::where('guru_id', $guru->id)->first();
+
+        $validated = $request->validate([
+            'password' => ['required', 'string', 'min:6', 'confirmed'],
+        ]);
+
+        if (!$user) {
+            // Buat akun baru jika belum ada
+            $niy = $guru->niy ?: $guru->kode_guru_lembaga;
+            $email = $niy . '@daruttaqwa.or.id';
+
+            $user = User::create([
+                'guru_id' => $guru->id,
+                'lembaga_id' => $guru->lembaga_id,
+                'yayasan_id' => $guru->lembaga?->yayasan_id,
+                'name' => $guru->nama,
+                'username' => $niy,
+                'email' => $email,
+                'password' => bcrypt($validated['password']),
+                'role' => 'guru',
+                'is_active' => true,
+                'must_change_password' => true,
+            ]);
+
+            LogAktivita::log('create', 'Reset password: akun guru "' . $guru->nama . '" dibuat (sebelumnya belum ada)', $guru);
+
+            return redirect()->route('guru.index')
+                ->with('success', 'Akun user untuk guru "' . $guru->nama . '" berhasil dibuat. Password telah diset.');
+        }
+
+        $user->update([
+            'password' => bcrypt($validated['password']),
+            'must_change_password' => true,
+            'is_active' => true,
+        ]);
+
+        LogAktivita::log('update', 'Reset password user guru "' . $guru->nama . '"', $guru);
+
+        return redirect()->route('guru.index')
+            ->with('success', 'Password user guru "' . $guru->nama . '" berhasil direset.');
+    }
 }

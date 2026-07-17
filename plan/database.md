@@ -392,6 +392,45 @@ CREATE TABLE agenda_mengajars (
     FOREIGN KEY (kelas_id) REFERENCES kelas(id) ON DELETE CASCADE
 );
 
+-- === JURNAL MENGAJAR (Phase 10) — Gabungan Selfie + Presensi ===
+
+CREATE TABLE jurnal_mengajars (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    jadwal_id BIGINT UNSIGNED NOT NULL,
+    guru_id BIGINT UNSIGNED NOT NULL,
+    kelas_id BIGINT UNSIGNED NOT NULL,
+    pertemuan_ke INT NOT NULL,
+    tanggal DATE NOT NULL,
+    jam_mulai TIME NULL,
+    jam_selesai TIME NULL,
+    foto_path VARCHAR(255) NULL,               -- Path foto selfie
+    latitude VARCHAR(50) NULL,
+    longitude VARCHAR(50) NULL,
+    materi TEXT NULL,                            -- Materi pertemuan
+    is_verified BOOLEAN DEFAULT FALSE,
+    verified_at TIMESTAMP NULL,
+    verified_by BIGINT UNSIGNED NULL,
+    metadata JSON NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (jadwal_id) REFERENCES jadwals(id) ON DELETE CASCADE,
+    FOREIGN KEY (guru_id) REFERENCES gurus(id) ON DELETE CASCADE,
+    FOREIGN KEY (kelas_id) REFERENCES kelas(id) ON DELETE CASCADE,
+    FOREIGN KEY (verified_by) REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE (jadwal_id, tanggal)
+);
+
+CREATE TABLE detail_jurnal_siswas (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    jurnal_mengajar_id BIGINT UNSIGNED NOT NULL,
+    siswa_id BIGINT UNSIGNED NOT NULL,
+    status ENUM('hadir', 'sakit', 'izin', 'alpha', 'terlambat') DEFAULT 'hadir',
+    keterangan VARCHAR(255) NULL,
+    FOREIGN KEY (jurnal_mengajar_id) REFERENCES jurnal_mengajars(id) ON DELETE CASCADE,
+    FOREIGN KEY (siswa_id) REFERENCES siswas(id) ON DELETE CASCADE,
+    UNIQUE (jurnal_mengajar_id, siswa_id)
+);
+
 -- === PENILAIAN ===
 
 CREATE TABLE jenis_nilais (
@@ -493,6 +532,26 @@ CREATE TABLE pelanggarans (
 
 -- === USER & AUTH ===
 
+-- === PENGUMUMAN ===
+
+CREATE TABLE pengumumans (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    lembaga_id BIGINT UNSIGNED NOT NULL,
+    created_by BIGINT UNSIGNED NOT NULL,        -- User yang membuat
+    judul VARCHAR(255) NOT NULL,
+    konten TEXT NOT NULL,                       -- HTML dari Editor.js
+    konten_json TEXT NULL,                      -- JSON asli dari Editor.js (utk edit)
+    is_active BOOLEAN DEFAULT TRUE,
+    published_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (lembaga_id) REFERENCES lembagas(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX (lembaga_id, is_active)
+);
+
+> **2026-07-17**: Fitur baru — pengumuman untuk guru (popup di dashboard).
+
 CREATE TABLE users (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     lembaga_id BIGINT UNSIGNED NULL,            -- NULL untuk Super Admin & Admin Yayasan
@@ -531,6 +590,8 @@ CREATE INDEX idx_absensi_ptk_tanggal ON absensi_ptks(guru_id, tanggal);
 CREATE INDEX idx_absensi_ptk_bulan ON absensi_ptks(lembaga_id, tanggal);
 CREATE INDEX idx_agenda_mengajar_jadwal ON agenda_mengajars(jadwal_id, tanggal);
 CREATE INDEX idx_agenda_mengajar_guru ON agenda_mengajars(guru_id, tanggal);
+CREATE INDEX idx_jurnal_jadwal ON jurnal_mengajars(jadwal_id, tanggal);
+CREATE INDEX idx_jurnal_guru ON jurnal_mengajars(guru_id, tanggal);
 ```
 
 ## 3. Multi-Tenant Strategy

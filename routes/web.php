@@ -9,6 +9,7 @@ use App\Http\Controllers\GuruController;
 use App\Http\Controllers\JadwalController;
 use App\Http\Controllers\JamKerjaLembagaController;
 use App\Http\Controllers\JenisPtkController;
+use App\Http\Controllers\JurnalMengajarController;
 use App\Http\Controllers\JurusanController;
 use App\Http\Controllers\KalenderAkademikController;
 use App\Http\Controllers\KelasController;
@@ -28,6 +29,7 @@ use App\Http\Controllers\SiswaController;
 use App\Http\Controllers\SiswaSyncController;
 use App\Http\Controllers\TahunAjaranController;
 use App\Http\Controllers\TpController;
+use App\Http\Controllers\PengumumanController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\YayasanController;
 use Illuminate\Support\Facades\Route;
@@ -121,6 +123,9 @@ Route::middleware('auth')->group(function () {
         Route::post('guru/bulk-update', [GuruController::class, 'bulkUpdate'])->name('guru.bulk-update');
         Route::post('guru/bulk-delete', [GuruController::class, 'bulkDestroy'])->name('guru.bulk-delete');
         Route::get('guru/export', [GuruController::class, 'export'])->name('guru.export');
+        // Reset password user guru
+        Route::get('guru/{guru}/reset-password', [GuruController::class, 'resetPasswordForm'])->name('guru.reset-password');
+        Route::put('guru/{guru}/reset-password', [GuruController::class, 'resetPassword'])->name('guru.reset-password.update');
         Route::resource('siswa', SiswaController::class)->except(['show']);
         Route::resource('kelas', KelasController::class)->except(['show']);
         Route::resource('jurusan', JurusanController::class)->except(['show']);
@@ -145,6 +150,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/akademik-settings/timetable', [AkademikSettingController::class, 'saveTimetable'])->name('akademik-settings.timetable.save');
     });
 
+    // === PENGUMUMAN (Admin Lembaga) ===
+    Route::middleware('role:super_admin,admin_yayasan,kepala_lembaga,admin_lembaga')->group(function () {
+        // Upload routes BEFORE resource to avoid route collision
+        Route::post('/pengumuman/upload-image', [PengumumanController::class, 'uploadImage'])->name('pengumuman.upload-image');
+        Route::post('/pengumuman/upload-image-url', [PengumumanController::class, 'uploadImageByUrl'])->name('pengumuman.upload-image-url');
+        Route::resource('pengumuman', PengumumanController::class)->except(['show']);
+    });
+
     // === AKADEMIK — CP/TP/ATP (Guru + Kurikulum) ===
     Route::middleware('role:super_admin,admin_yayasan,kepala_lembaga,admin_lembaga,kurikulum,guru')->group(function () {
         Route::resource('cp', CpController::class);
@@ -163,7 +176,26 @@ Route::middleware('auth')->group(function () {
         Route::get('/jadwal/slot-search', [JadwalController::class, 'slotSearch'])->name('jadwal.slot-search');
     });
 
-    // === PRESENSI SISWA (Phase 6) ===
+    // === JURNAL MENGAJAR (Phase 10) — gabung Selfie + Presensi ===
+
+    // Jurnal — Guru
+    Route::middleware('role:guru')->group(function () {
+        Route::get('/jurnal-mengajar', [JurnalMengajarController::class, 'index'])->name('jurnal-mengajar.index');
+        Route::get('/jurnal-mengajar/create', [JurnalMengajarController::class, 'create'])->name('jurnal-mengajar.create');
+        Route::post('/jurnal-mengajar', [JurnalMengajarController::class, 'store'])->name('jurnal-mengajar.store');
+        Route::get('/jurnal-mengajar/{jurnal}', [JurnalMengajarController::class, 'show'])->name('jurnal-mengajar.show');
+        Route::get('/jurnal-mengajar/{jurnal}/edit', [JurnalMengajarController::class, 'edit'])->name('jurnal-mengajar.edit');
+        Route::put('/jurnal-mengajar/{jurnal}', [JurnalMengajarController::class, 'update'])->name('jurnal-mengajar.update');
+        Route::delete('/jurnal-mengajar/{jurnal}', [JurnalMengajarController::class, 'destroy'])->name('jurnal-mengajar.destroy');
+    });
+
+    // Jurnal — Monitoring & Verifikasi (Kurikulum, Kepala Lembaga, Admin Lembaga)
+    Route::middleware('role:kurikulum,kepala_lembaga,admin_lembaga')->group(function () {
+        Route::get('/jurnal-mengajar/monitoring', [JurnalMengajarController::class, 'monitoring'])->name('jurnal-mengajar.monitoring');
+        Route::post('/jurnal-mengajar/{jurnal}/verify', [JurnalMengajarController::class, 'verify'])->name('jurnal-mengajar.verify');
+    });
+
+    // === PRESENSI SISWA (Phase 6) === (DIKEEP utk backward compat, redirect ke jurnal)
 
     // Presensi — Guru
     Route::middleware('role:guru')->group(function () {
@@ -266,6 +298,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifikasi/{notifikasi}/mark-read', [App\Http\Controllers\NotifikasiController::class, 'markRead'])->name('notifikasi.mark-read');
     Route::post('/notifikasi/mark-all-read', [App\Http\Controllers\NotifikasiController::class, 'markAllRead'])->name('notifikasi.mark-all-read');
     Route::get('/notifikasi-count', [App\Http\Controllers\NotifikasiController::class, 'count'])->name('notifikasi.count');
+});
+
+// === PENGUMUMAN POPUP (Guru) ===
+Route::middleware(['auth', 'role:guru'])->group(function () {
+    Route::get('/pengumuman-popup', [PengumumanController::class, 'popup'])->name('pengumuman.popup');
+    Route::post('/pengumuman/{pengumuman}/mark-read', [PengumumanController::class, 'markRead'])->name('pengumuman.mark-read');
 });
 
 // === LAPORAN (P9) ===

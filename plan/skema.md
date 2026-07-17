@@ -54,8 +54,7 @@ LEMBAGA (Sekolah/Madrasah)
 | Detail Mapel (CP, TP, ATP)              | Guru                         | 🔴 Tinggi |
 | Jadwal Per Kelas                        | Kurikulum                    | 🔴 Tinggi |
 | Absensi PTK — Check-in/out Harian       | Guru                         | 🔴 Tinggi |
-| Agenda Mengajar (Selfie)                | Guru                         | 🔴 Tinggi |
-| Presensi Siswa                          | Guru                         | 🔴 Tinggi |
+| Jurnal Mengajar (Selfie + Presensi)     | Guru                         | 🔴 Tinggi |
 | Penilaian (Harian, PTS, PAS, UKK)       | Guru                         | 🔴 Tinggi |
 | Rapor (Cetak, E-Rapor)                  | Guru, Kurikulum              | 🔴 Tinggi |
 | Kalender Akademik                       | Admin Yayasan                | 🟡 Sedang |
@@ -70,17 +69,17 @@ LEMBAGA (Sekolah/Madrasah)
 
 ## 4. Matriks Relasi Role
 
-| Role           | Yayasan | Lembaga | Master Data | Mapel | Jadwal | CP/TP/ATP | Presensi | Absensi PTK | Agenda Selfie | Penilaian | Rapor | Kesiswaan | Dashboard | Laporan |
-| -------------- | :-----: | :-----: | :---------: | :---: | :----: | :-------: | :------: | :---------: | :-----------: | :-------: | :---: | :-------: | :-------: | :-----: |
-| Super Admin    |    ✓    |    -    |      -      |   -   |   -    |     -     |    -     |      -      |       -       |     -     |   -   |     -     |     -     |    -    |
-| Admin Yayasan  |    ✓    |    ✓    |      -      |   -   |   -    |     -     |    -     |      -      |       -       |     -     |   -   |     -     |     -     |    ✓    |
-| Kepala Lembaga |    -    |    ✓    |      R      |   R   |   R    |     R     |    R     |      R      |       R       |     R     |   R   |     R     |     ✓     |    ✓    |
-| Admin Lembaga  |    -    |    -    |      ✓      |   -   |   -    |     -     |    -     |      R      |       -       |     -     |   -   |     R     |     -     |    ✓    |
-| Kurikulum      |    -    |    -    |      R      |   ✓   |   ✓    |     -     |    -     |      -      |       R       |     -     |   -   |     -     |     ✓     |    ✓    |
-| Kesiswaan      |    -    |    -    |      R      |   -   |   -    |     -     |    -     |      -      |       -       |     -     |   -   |     ✓     |     ✓     |    ✓    |
-| Guru           |    -    |    -    |      -      |   R   |   R    |     ✓     |    ✓     |      ✓      |       C       |     ✓     |  RU   |     C     |     ✓     |    R    |
-| Siswa          |    -    |    -    |      -      |   R   |   R    |     -     |    R     |      -      |       -       |     R     |   R   |     -     |     ✓     |    -    |
-| Orang Tua      |    -    |    -    |      -      |   -   |   -    |     -     |    R     |      -      |       -       |     R     |   R   |     R     |     ✓     |    -    |
+| Role           | Yayasan | Lembaga | Master Data | Mapel | Jadwal | CP/TP/ATP | Jurnal | Absensi PTK | Penilaian | Rapor | Kesiswaan | Dashboard | Laporan |
+| -------------- | :-----: | :-----: | :---------: | :---: | :----: | :-------: | :----: | :---------: | :-------: | :---: | :-------: | :-------: | :-----: |
+| Super Admin    |    ✓    |    -    |      -      |   -   |   -    |     -     |   -    |      -      |     -     |   -   |     -     |     -     |    -    |
+| Admin Yayasan  |    ✓    |    ✓    |      -      |   -   |   -    |     -     |   -    |      -      |     -     |   -   |     -     |     -     |    ✓    |
+| Kepala Lembaga |    -    |    ✓    |      R      |   R   |   R    |     R     |   R    |      R      |     R     |   R   |     R     |     ✓     |    ✓    |
+| Admin Lembaga  |    -    |    -    |      ✓      |   -   |   -    |     -     |   -    |      R      |     -     |   -   |     R     |     -     |    ✓    |
+| Kurikulum      |    -    |    -    |      R      |   ✓   |   ✓    |     -     |   R    |      -      |     -     |   -   |     -     |     ✓     |    ✓    |
+| Kesiswaan      |    -    |    -    |      R      |   -   |   -    |     -     |   -    |      -      |     -     |   -   |     ✓     |     ✓     |    ✓    |
+| Guru           |    -    |    -    |      -      |   R   |   R    |     ✓     |   ✓    |      ✓      |     ✓     |  RU   |     C     |     ✓     |    R    |
+| Siswa          |    -    |    -    |      -      |   R   |   R    |     -     |   R    |      -      |     R     |   R   |     -     |     ✓     |    -    |
+| Orang Tua      |    -    |    -    |      -      |   -   |   -    |     -     |   R    |      -      |     R     |   R   |     R     |     ✓     |    -    |
 
 **Legend:** ✓ = Kelola Penuh / CRUD | R = Read Only | C = Create only | U = Update only
 
@@ -108,9 +107,9 @@ Yayasan
       ├── Jadwal
       ├── AkademikSetting          (konfigurasi jam mulai, durasi KBM/istirahat/kegiatan, hari efektif, timetable per hari via drag-drop)
       ├── JamKerjaLembaga          (konfigurasi jam masuk/pulang)
-      ├── Presensi
+      ├── JurnalMengajar           (selfie + presensi siswa + materi)
+      │    └── DetailJurnalSiswa   (kehadiran per siswa)
       ├── AbsensiPTK               (check-in/check-out guru harian)
-      ├── AgendaMengajar           (selfie bukti mengajar)
       ├── Penilaian
       │    ├── NilaiHarian
       │    ├── NilaiPTS
@@ -162,18 +161,20 @@ Guru melakukan check-in & check-out setiap hari kerja.
 
 Jam kerja bisa berbeda per hari (Senin-Jumat vs Sabtu) atau per jenis guru (satminkal vs non-satminkal).
 
-### 6.5 Kehadiran Guru di Kelas (Agenda Selfie)
+### 6.5 Jurnal Mengajar (Selfie + Presensi Siswa + Materi)
 
-Bukti visual bahwa guru benar-benar mengajar di kelas.
+Wizard 3 langkah menggabungkan selfie, presensi siswa, dan materi pertemuan dalam satu alur.
 
-| Atribut     | Keterangan                                   |
-| ----------- | -------------------------------------------- |
-| Waktu       | Saat jam pelajaran berlangsung               |
-| Media       | Foto selfie guru di depan kelas              |
-| Metadata    | Otomatis: timestamp, lokasi (GPS), jadwal_id |
-| Verifikasi  | Foto dicocokkan dengan jadwal & wajah guru   |
-| Frekuensi   | Minimal 1x per pertemuan (awal/akhir jam)    |
-| Penyimpanan | File di storage `storage/app/public/agenda/` |
+| Atribut     | Keterangan                                                              |
+| ----------- | ----------------------------------------------------------------------- |
+| Step 1      | Selfie — foto di depan kelas (kamera browser / upload)                  |
+| Step 2      | Presensi Siswa — kehadiran per siswa (hadir/sakit/izin/alpha/terlambat) |
+| Step 3      | Materi Pertemuan — isi materi yang diajarkan                            |
+| Metadata    | Otomatis: timestamp, lokasi (GPS), jadwal_id                            |
+| Verifikasi  | Foto dicocokkan dengan jadwal & wajah guru                              |
+| Frekuensi   | 1x per pertemuan per jadwal                                             |
+| Penyimpanan | File di storage `storage/app/public/agenda/`                            |
+| Duplikat    | Unique constraint (jadwal_id, tanggal)                                  |
 
 ---
 

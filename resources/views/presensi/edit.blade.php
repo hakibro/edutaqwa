@@ -34,45 +34,76 @@
                         </div>
                     </div>
 
-                    <div class="space-y-1">
-                        @foreach ($presensi->detailPresensis as $i => $d)
-                            <div class="flex items-center gap-3 rounded-lg border border-gray-100 p-3 hover:bg-gray-50">
-                                <span class="text-xs text-gray-400 w-8">{{ $i + 1 }}</span>
-                                <div class="flex-1">
-                                    <span class="text-sm font-medium text-gray-900">{{ $d->siswa->nama }}</span>
-                                    <span class="ml-2 text-xs text-gray-400">{{ $d->siswa->nis }}</span>
-                                </div>
-                                <input type="hidden" name="siswa[{{ $i }}][id]"
-                                    value="{{ $d->id }}">
-                                <select name="siswa[{{ $i }}][status]"
-                                    class="rounded-md border-gray-300 text-sm py-1
-                                    {{ $d->status === 'hadir' ? 'bg-green-50 border-green-300' : '' }}
-                                    {{ $d->status === 'alpha' ? 'bg-red-50 border-red-300' : '' }}
-                                    {{ $d->status === 'sakit' ? 'bg-yellow-50 border-yellow-300' : '' }}
-                                    {{ $d->status === 'izin' ? 'bg-orange-50 border-orange-300' : '' }}
-                                    {{ $d->status === 'terlambat' ? 'bg-purple-50 border-purple-300' : '' }}"
-                                    onchange="this.className='rounded-md border-gray-300 text-sm py-1 ' + (this.value==='hadir'?'bg-green-50 border-green-300':this.value==='alpha'?'bg-red-50 border-red-300':this.value==='sakit'?'bg-yellow-50 border-yellow-300':this.value==='izin'?'bg-orange-50 border-orange-300':'bg-purple-50 border-purple-300')">
-                                    <option value="hadir"
-                                        {{ old("siswa.{$i}.status", $d->status) === 'hadir' ? 'selected' : '' }}>Hadir
-                                    </option>
-                                    <option value="sakit"
-                                        {{ old("siswa.{$i}.status", $d->status) === 'sakit' ? 'selected' : '' }}>Sakit
-                                    </option>
-                                    <option value="izin"
-                                        {{ old("siswa.{$i}.status", $d->status) === 'izin' ? 'selected' : '' }}>Izin
-                                    </option>
-                                    <option value="alpha"
-                                        {{ old("siswa.{$i}.status", $d->status) === 'alpha' ? 'selected' : '' }}>Alpha
-                                    </option>
-                                    <option value="terlambat"
-                                        {{ old("siswa.{$i}.status", $d->status) === 'terlambat' ? 'selected' : '' }}>
-                                        Terlambat</option>
-                                </select>
-                                <input type="text" name="siswa[{{ $i }}][keterangan]" placeholder="Ket."
-                                    value="{{ old("siswa.{$i}.keterangan", $d->keterangan) }}"
-                                    class="rounded-md border-gray-300 text-sm py-1 w-32">
-                            </div>
-                        @endforeach
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm">
+                            <thead class="bg-gray-50">
+                                <tr class="border-b">
+                                    <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 w-8">#</th>
+                                    <th class="px-2 py-2 text-left text-xs font-medium text-gray-500">Nama</th>
+                                    <th class="px-2 py-2 text-center text-xs font-medium text-green-700 w-10">H</th>
+                                    <th class="px-2 py-2 text-center text-xs font-medium text-yellow-700 w-10">S</th>
+                                    <th class="px-2 py-2 text-center text-xs font-medium text-orange-700 w-10">I</th>
+                                    <th class="px-2 py-2 text-center text-xs font-medium text-red-700 w-10">A</th>
+                                    <th class="px-2 py-2 text-center text-xs font-medium text-purple-700 w-10">T</th>
+                                    <th class="px-2 py-2 text-xs font-medium text-gray-500 w-28">Ket</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                @foreach ($presensi->detailPresensis as $i => $d)
+                                    @php $curStatus = old("siswa.{$i}.status", $d->status); @endphp
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-2 py-2 text-gray-400">{{ $i + 1 }}</td>
+                                        <td class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap">
+                                            {{ $d->siswa->nama }}
+                                            <span class="ml-1 text-xs text-gray-400">{{ $d->siswa->nis }}</span>
+                                        </td>
+                                        <td class="px-2 py-2 text-center">
+                                            <input type="radio" name="siswa[{{ $i }}][status]"
+                                                value="hadir"
+                                                class="h-4 w-4 text-green-600 focus:ring-green-500 cursor-pointer"
+                                                {{ $curStatus === 'hadir' ? 'checked' : '' }}
+                                                onchange="toggleKet({{ $i }}, this)">
+                                        </td>
+                                        <td class="px-2 py-2 text-center">
+                                            <input type="radio" name="siswa[{{ $i }}][status]"
+                                                value="sakit"
+                                                class="h-4 w-4 text-yellow-600 focus:ring-yellow-500 cursor-pointer"
+                                                {{ $curStatus === 'sakit' ? 'checked' : '' }}
+                                                onchange="toggleKet({{ $i }}, this)">
+                                        </td>
+                                        <td class="px-2 py-2 text-center">
+                                            <input type="radio" name="siswa[{{ $i }}][status]"
+                                                value="izin"
+                                                class="h-4 w-4 text-orange-600 focus:ring-orange-500 cursor-pointer"
+                                                {{ $curStatus === 'izin' ? 'checked' : '' }}
+                                                onchange="toggleKet({{ $i }}, this)">
+                                        </td>
+                                        <td class="px-2 py-2 text-center">
+                                            <input type="radio" name="siswa[{{ $i }}][status]"
+                                                value="alpha"
+                                                class="h-4 w-4 text-red-600 focus:ring-red-500 cursor-pointer"
+                                                {{ $curStatus === 'alpha' ? 'checked' : '' }}
+                                                onchange="toggleKet({{ $i }}, this)">
+                                        </td>
+                                        <td class="px-2 py-2 text-center">
+                                            <input type="radio" name="siswa[{{ $i }}][status]"
+                                                value="terlambat"
+                                                class="h-4 w-4 text-purple-600 focus:ring-purple-500 cursor-pointer"
+                                                {{ $curStatus === 'terlambat' ? 'checked' : '' }}
+                                                onchange="toggleKet({{ $i }}, this)">
+                                        </td>
+                                        <td class="px-2 py-2">
+                                            <input type="hidden" name="siswa[{{ $i }}][id]"
+                                                value="{{ $d->id }}">
+                                            <input type="text" name="siswa[{{ $i }}][keterangan]"
+                                                placeholder="Ket." id="ket-{{ $i }}"
+                                                value="{{ old("siswa.{$i}.keterangan", $d->keterangan) }}"
+                                                class="w-full rounded-md border-gray-300 text-sm py-1 {{ $curStatus === 'hadir' ? 'hidden' : '' }}">
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -92,15 +123,18 @@
 
     <script>
         function setAll(status) {
-            document.querySelectorAll('select[name*="[status]"]').forEach(s => {
-                s.value = status;
-                s.className = 'rounded-md border-gray-300 text-sm py-1 ' +
-                    (status === 'hadir' ? 'bg-green-50 border-green-300' :
-                        status === 'alpha' ? 'bg-red-50 border-red-300' :
-                        status === 'sakit' ? 'bg-yellow-50 border-yellow-300' :
-                        status === 'izin' ? 'bg-orange-50 border-orange-300' :
-                        'bg-purple-50 border-purple-300');
+            document.querySelectorAll('input[type="radio"][name$="[status]"]').forEach(r => {
+                if (r.value === status) r.checked = true;
+                r.dispatchEvent(new Event('change'));
             });
+        }
+
+        function toggleKet(idx, radio) {
+            const ket = document.getElementById('ket-' + idx);
+            if (ket) {
+                ket.classList.toggle('hidden', radio.value === 'hadir');
+                if (radio.value === 'hadir') ket.value = '';
+            }
         }
     </script>
 </x-app-layout>

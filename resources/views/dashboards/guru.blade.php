@@ -252,9 +252,172 @@
                             Nilai</a>
                         <a href="{{ route('cp.index') }}"
                             class="block rounded-md bg-green-50 p-3 text-green-700 hover:bg-green-100 text-sm font-medium text-center">CP/TP/ATP</a>
+                        <button type="button" onclick="window.pengumumanInstance?.showLatest()"
+                            class="block rounded-md bg-yellow-50 p-3 text-yellow-700 hover:bg-yellow-100 text-sm font-medium text-center">Lihat
+                            Pengumuman</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </x-app-layout>
+
+{{-- Pengumuman Popup Modal --}}
+<div x-data="pengumumanPopup()" x-show="show" x-cloak
+    class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50"
+    x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100">
+    <div @click.away="dismiss()"
+        class="relative mx-auto w-full max-w-2xl max-h-[80vh] overflow-y-auto rounded-xl bg-white p-6 shadow-2xl"
+        x-show="show" x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+        <div class="mb-4 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900" x-text="data.judul"></h3>
+            <button @click="dismiss()" class="text-gray-400 hover:text-gray-600">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div class="pengumuman-content text-gray-700 leading-relaxed text-sm" x-html="data.konten"></div>
+        <style>
+            .pengumuman-content h2 {
+                font-size: 1.35em;
+                font-weight: 700;
+                line-height: 1.3;
+                margin: 0.6em 0;
+            }
+
+            .pengumuman-content h3 {
+                font-size: 1.15em;
+                font-weight: 700;
+                line-height: 1.3;
+                margin: 0.5em 0;
+            }
+
+            .pengumuman-content h4 {
+                font-size: 1.05em;
+                font-weight: 700;
+                line-height: 1.3;
+                margin: 0.5em 0;
+            }
+
+            .pengumuman-content p {
+                line-height: 1.6;
+                margin: 0.4em 0;
+            }
+
+            .pengumuman-content ul,
+            .pengumuman-content ol {
+                padding-left: 1.5em;
+                margin: 0.4em 0;
+            }
+
+            .pengumuman-content ul {
+                list-style: disc;
+            }
+
+            .pengumuman-content ol {
+                list-style: decimal;
+            }
+
+            .pengumuman-content li {
+                padding: 0.1em 0;
+            }
+
+            .pengumuman-content figure {
+                margin: 0.8em 0;
+                text-align: center;
+            }
+
+            .pengumuman-content figure img {
+                max-width: 100%;
+                height: auto;
+                border-radius: 6px;
+            }
+
+            .pengumuman-content figcaption {
+                font-size: 0.85em;
+                color: #6b7280;
+                margin-top: 0.3em;
+            }
+
+            .pengumuman-content blockquote {
+                border-left: 4px solid #d1d5db;
+                padding-left: 1em;
+                font-style: italic;
+                color: #4b5563;
+                margin: 0.5em 0;
+            }
+
+            .pengumuman-content hr {
+                margin: 1em 0;
+                border: none;
+                text-align: center;
+            }
+
+            .pengumuman-content hr:after {
+                content: "***";
+                font-size: 1.2em;
+                letter-spacing: 0.2em;
+                color: #9ca3af;
+            }
+        </style>
+        <div class="mt-6 flex items-center justify-end gap-2">
+            <span class="text-xs text-gray-400"
+                x-text="data.published_at ? 'Dibuat ' + data.published_at : ''"></span>
+            <button @click="dismiss()"
+                class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function pengumumanPopup() {
+        return {
+            show: false,
+            data: {},
+            init() {
+                window.pengumumanInstance = this;
+                this.fetchLatest();
+            },
+            fetchLatest() {
+                fetch('{{ route('pengumuman.popup') }}')
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.has_pengumuman) {
+                            this.data = res;
+                            if (!sessionStorage.getItem('pengumuman_read_' + res.id)) {
+                                this.show = true;
+                            }
+                        }
+                    })
+                    .catch(() => {});
+            },
+            showLatest() {
+                fetch('{{ route('pengumuman.popup') }}')
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.has_pengumuman) {
+                            this.data = res;
+                            this.show = true;
+                        }
+                    })
+                    .catch(() => {});
+            },
+            dismiss() {
+                if (this.data.id) {
+                    sessionStorage.setItem('pengumuman_read_' + this.data.id, '1');
+                    fetch('{{ route('pengumuman.mark-read', ['pengumuman' => '__ID__']) }}'.replace('__ID__', this.data
+                        .id), {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    }).catch(() => {});
+                }
+                this.show = false;
+            }
+        }
+    }
+</script>

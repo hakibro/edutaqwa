@@ -77,6 +77,7 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 - [x] Import Guru (XLSX) — support tambah baru & update massal via export-edit-import
 - [x] Upload dokumen guru
 - [x] Bulk Action Guru (aktifkan/nonaktifkan massal via checkbox)
+- [x] Reset Password Guru (admin lembaga reset password user guru, buat akun jika belum ada)
 
 ### 3.2 Admin Yayasan — Approval Guru
 
@@ -130,6 +131,13 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 
 ---
 
+### 4.4 Pengumuman
+
+- [x] CRUD Pengumuman (Admin Lembaga) — Editor.js rich text + gambar
+- [x] Popup dashboard guru (Alpine.js modal, session read tracking)
+
+---
+
 ## P5 — Absensi PTK & Agenda Selfie
 
 ### 5.1 Jam Kerja
@@ -145,30 +153,30 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 - [x] Riwayat absensi per guru
 - [ ] Notifikasi lupa check-in/check-out
 
-### 5.3 Agenda Selfie
+### 5.3 Agenda Selfie (DIGABUNG ke P10 Jurnal Mengajar)
 
-- [x] Ambil selfie + metadata (timestamp, GPS, jadwal_id)
-- [x] Verifikasi jadwal (hanya bisa saat hari sesuai)
-- [x] Galeri agenda per guru
-- [x] Monitoring oleh Kurikulum / Kepala Lembaga
-- [x] Verifikasi agenda (Kurikulum/Kepala Lembaga)
+- [x] ~~Ambil selfie + metadata~~ → digabung ke jurnal mengajar
+- [x] ~~Verifikasi jadwal~~ → digabung ke jurnal mengajar
+- [x] ~~Galeri agenda per guru~~ → digabung ke jurnal mengajar
+- [x] ~~Monitoring oleh Kurikulum / Kepala Lembaga~~ → digabung ke jurnal mengajar
+- [x] ~~Verifikasi agenda~~ → digabung ke jurnal mengajar
 
 ---
 
-## P6 — Presensi Siswa
+## P6 — Presensi Siswa (DIGABUNG ke P10 Jurnal Mengajar)
 
 ### 6.1 Presensi Per Pertemuan
 
-- [x] Guru pilih jadwal → daftar siswa
-- [x] Input kehadiran: hadir, sakit, izin, alpha, terlambat
-- [x] Input materi pertemuan
-- [x] Edit presensi yang sudah ada
+- [x] ~~Guru pilih jadwal → daftar siswa~~ → digabung ke jurnal mengajar
+- [x] ~~Input kehadiran: hadir, sakit, izin, alpha, terlambat~~ → digabung ke jurnal mengajar
+- [x] ~~Input materi pertemuan~~ → digabung ke jurnal mengajar
+- [x] ~~Edit presensi yang sudah ada~~ → old data tetap bisa diakses via route lama
 
 ### 6.2 Rekap & Notifikasi
 
-- [x] Rekap presensi harian/bulanan (Kurikulum/Kepala Lembaga/Admin Lembaga)
+- [x] ~~Rekap presensi harian/bulanan~~ → digabung ke monitoring jurnal
 - [ ] Notifikasi alpha > 3 berturut-turut (P7 notifikasi)
-- [x] Statistik presensi per kelas (summary di rekap)
+- [x] ~~Statistik presensi per kelas~~ → digabung ke monitoring jurnal
 
 ---
 
@@ -230,7 +238,31 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 
 ---
 
-## P10 — Finalisasi
+## P10 — Jurnal Mengajar (Gabungan Selfie + Presensi)
+
+### 10.1 Fitur Baru
+
+- [x] Model JurnalMengajar (menggabungkan selfie + presensi siswa + materi)
+- [x] Model DetailJurnalSiswa (detail kehadiran siswa per jurnal)
+- [x] Wizard 3 langkah: Selfie → Presensi Siswa → Materi & Simpan
+- [x] Camera capture langsung dari browser (base64) atau upload file
+- [x] GPS otomatis dari browser
+- [x] Batch insert detail siswa
+- [x] Cek duplikat (1 jurnal per jadwal per hari)
+- [x] Edit jurnal (materi + presensi) untuk jurnal belum diverifikasi
+- [x] Monitoring + filter (guru, tanggal, status verifikasi)
+- [x] Verifikasi jurnal oleh Kurikulum/Kepala Lembaga
+- [x] Sidebar: "Presensi Siswa" + "Agenda Selfie" diganti "Jurnal Mengajar"
+- [x] Backward compat: route lama masih bisa akses data lama
+
+### 10.2 Database
+
+- [x] Migration `jurnal_mengajars` — jadwal_id, guru_id, kelas_id, pertemuan_ke, tanggal, jam_mulai, foto_path, latitude, longitude, materi, is_verified, verified_at, verified_by, metadata
+- [x] Migration `detail_jurnal_siswas` — jurnal_mengajar_id, siswa_id, status, keterangan
+
+---
+
+## P11 — Finalisasi
 
 - [ ] Bug fixing & polish
 - [ ] Testing (PHPUnit)

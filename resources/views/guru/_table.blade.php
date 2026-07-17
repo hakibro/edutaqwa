@@ -77,7 +77,8 @@
             </span>
         </td>
         <td class="whitespace-nowrap px-6 py-4 text-right text-sm">
-            <a href="{{ route('guru.edit', $g) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+            <a href="{{ route('guru.reset-password', $g) }}" class="text-amber-600 hover:text-amber-900">Reset PW</a>
+            <a href="{{ route('guru.edit', $g) }}" class="ml-2 text-indigo-600 hover:text-indigo-900">Edit</a>
             <form action="{{ route('guru.destroy', $g) }}" method="POST" class="inline"
                 onsubmit="return confirm('Hapus guru ini?')">
                 @csrf @method('DELETE')

@@ -17,6 +17,27 @@
             <span>{{ __('Dashboard') }}</span>
         </x-sidebar-nav-link>
 
+        {{-- Absensi Harian & Kehadiran Guru --}}
+        @if (Auth::user()->isGuru())
+            <div class="pt-4 pb-1 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                Kehadiran & Mengajar
+            </div>
+            <x-sidebar-nav-link :href="route('absensi-ptk.index')" :active="request()->routeIs('absensi-ptk.*')">
+                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{{ __('Absensi Harian') }}</span>
+            </x-sidebar-nav-link>
+            <x-sidebar-nav-link :href="route('jurnal-mengajar.index')" :active="request()->routeIs('jurnal-mengajar.*') && !request()->routeIs('jurnal-mengajar.monitoring*')">
+                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{{ __('Jurnal Mengajar') }}</span>
+            </x-sidebar-nav-link>
+        @endif
+
         @if (Auth::user()->isSuperAdmin())
             <x-sidebar-nav-link :href="route('yayasan.index')" :active="request()->routeIs('yayasan.*')">
                 <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,6 +105,17 @@
                         d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
                 <span>{{ __('Sync Sisda') }}</span>
+            </x-sidebar-nav-link>
+        @endif
+
+        {{-- Pengumuman --}}
+        @if (in_array(Auth::user()->role, ['super_admin', 'admin_yayasan', 'admin_lembaga', 'kepala_lembaga']))
+            <x-sidebar-nav-link :href="route('pengumuman.index')" :active="request()->routeIs('pengumuman.*')">
+                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                </svg>
+                <span>{{ __('Pengumuman') }}</span>
             </x-sidebar-nav-link>
         @endif
 
@@ -218,54 +250,26 @@
             </x-sidebar-nav-link>
         @endif
 
-        {{-- Absensi PTK & Agenda Selfie (Guru) --}}
-        @if (Auth::user()->isGuru())
-            <div class="pt-4 pb-1 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
-                Kehadiran & Mengajar
-            </div>
-            <x-sidebar-nav-link :href="route('presensi.index')" :active="request()->routeIs('presensi.*') && !request()->routeIs('presensi.rekap*')">
-                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>{{ __('Presensi Siswa') }}</span>
-            </x-sidebar-nav-link>
-            <x-sidebar-nav-link :href="route('absensi-ptk.index')" :active="request()->routeIs('absensi-ptk.*')">
-                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>{{ __('Absensi Harian') }}</span>
-            </x-sidebar-nav-link>
-            <x-sidebar-nav-link :href="route('agenda-mengajar.index')" :active="request()->routeIs('agenda-mengajar.*')">
-                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span>{{ __('Agenda Selfie') }}</span>
-            </x-sidebar-nav-link>
-        @endif
-
         {{-- Monitoring (Kurikulum / Kepala Lembaga / Admin Lembaga) --}}
         @if (Auth::user()->isKurikulum() || Auth::user()->isKepalaLembaga() || Auth::user()->isAdminLembaga())
             <div class="pt-4 pb-1 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
                 Monitoring
             </div>
-            <x-sidebar-nav-link :href="route('presensi.rekap')" :active="request()->routeIs('presensi.rekap*')">
+            <x-sidebar-nav-link :href="route('jurnal-mengajar.monitoring')" :active="request()->routeIs('jurnal-mengajar.monitoring*')">
                 <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <span>{{ __('Rekap Presensi') }}</span>
+                <span>{{ __('Rekap Jurnal') }}</span>
             </x-sidebar-nav-link>
-            <x-sidebar-nav-link :href="route('agenda-mengajar.monitoring')" :active="request()->routeIs('agenda-mengajar.monitoring*')">
+            <x-sidebar-nav-link :href="route('jurnal-mengajar.monitoring')" :active="request()->routeIs('jurnal-mengajar.monitoring*')">
                 <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
-                <span>{{ __('Agenda Selfie') }}</span>
+                <span>{{ __('Jurnal Mengajar') }}</span>
             </x-sidebar-nav-link>
             <x-sidebar-nav-link :href="route('absensi-ptk.laporan')" :active="request()->routeIs('absensi-ptk.laporan*')">
                 <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
