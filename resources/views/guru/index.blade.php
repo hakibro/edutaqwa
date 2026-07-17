@@ -7,7 +7,7 @@
             <div class="flex gap-2">
                 <a href="{{ route('guru.template') }}"
                     class="rounded-md bg-gray-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-400">
-                    Download Template CSV
+                    Download Template Excel
                 </a>
                 <a href="{{ route('guru.export', request()->query()) }}"
                     class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">
@@ -15,7 +15,7 @@
                 </a>
                 <button onclick="document.getElementById('importForm').classList.toggle('hidden')"
                     class="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">
-                    Import CSV
+                    Import Excel
                 </button>
                 <a href="{{ route('guru.create') }}"
                     class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
@@ -36,6 +36,13 @@
 
             {{-- Import Form --}}
             <div id="importForm" class="hidden mb-6 p-4 bg-gray-50 border rounded-lg">
+                <p class="text-sm text-gray-600 mb-3">
+                    <strong>Import Baru:</strong> Gunakan <a href="{{ route('guru.template') }}"
+                        class="text-indigo-600 underline">Template Excel</a> untuk menambah guru baru.<br>
+                    <strong>Update Massal:</strong> <a href="{{ route('guru.export', request()->query()) }}"
+                        class="text-indigo-600 underline">Export data</a> → edit di Excel → import kembali. Kolom
+                    <em>ID</em> menentukan data mana yang diupdate.
+                </p>
                 <form action="{{ route('guru.import') }}" method="POST" enctype="multipart/form-data"
                     class="flex items-end gap-4">
                     @csrf

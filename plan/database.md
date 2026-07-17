@@ -26,6 +26,7 @@ CREATE TABLE lembagas (
     nama VARCHAR(255) NOT NULL,
     kode VARCHAR(50) NOT NULL,                  -- Kode singkat di lingkup yayasan
     kode_sisda VARCHAR(10) NULL,                -- Kode dari Sisda API (idunit), utk generate NIY
+    sisda_mode BOOLEAN DEFAULT FALSE,          -- TRUE = hanya sync API, sembunyikan tambah manual siswa/kelas/jurusan
     npsn VARCHAR(20) NULL,
     alamat TEXT NULL,
     telp VARCHAR(50) NULL,
@@ -38,6 +39,8 @@ CREATE TABLE lembagas (
     FOREIGN KEY (yayasan_id) REFERENCES yayasans(id) ON DELETE CASCADE,
     UNIQUE (yayasan_id, kode)
 );
+
+> **2026-07-17**: Tambah `sisda_mode BOOLEAN DEFAULT FALSE` — toggle untuk menyembunyikan tombol tambah manual siswa/kelas/jurusan saat mode API Sisda aktif.
 
 -- === TAHUN AJARAN ===
 
@@ -166,8 +169,8 @@ CREATE TABLE tugas_tambahans (
 CREATE TABLE siswas (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     lembaga_id BIGINT UNSIGNED NOT NULL,
-    external_id VARCHAR(50) NULL UNIQUE,        -- Mapping ke Sisda API idperson
-    nis VARCHAR(50) NOT NULL,                   -- Nomor Induk Siswa (per lembaga)
+    idperson VARCHAR(50) NULL UNIQUE,            -- Mapping ke API Akademik idperson (acuan sync)
+    nis VARCHAR(50) NULL,                       -- Nomor Induk Siswa (diisi manual petugas lembaga)
     nisn VARCHAR(20) NULL,                      -- Nomor Induk Siswa Nasional
     nama VARCHAR(255) NOT NULL,
     tempat_lahir VARCHAR(100) NULL,
@@ -189,9 +192,12 @@ CREATE TABLE siswas (
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL,                   -- Soft delete (sync: siswa hilang dari API)
     FOREIGN KEY (lembaga_id) REFERENCES lembagas(id) ON DELETE CASCADE,
     UNIQUE (lembaga_id, nis)
 );
+
+> **2026-07-17**: Tambah `deleted_at` untuk soft delete. Sync soft-delete + `is_active=false` siswa yang tidak ada di response API. Restore otomatis jika muncul lagi.
 
 -- Riwayat Kelas Siswa per Tahun Ajaran
 CREATE TABLE riwayat_kelas_siswas (

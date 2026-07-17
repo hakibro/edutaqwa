@@ -32,6 +32,14 @@ class PengajaranMapelController extends Controller
             $query->where('tahun_ajaran_id', $request->tahun_ajaran_id);
         }
 
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('guru', fn($qg) => $qg->where('nama', 'like', "%{$search}%"))
+                    ->orWhereHas('mapel', fn($qm) => $qm->where('nama', 'like', "%{$search}%"));
+            });
+        }
+
         $pengajarans = $query->latest()->paginate(10);
         $tahunAjarans = TahunAjaran::when($user->yayasan_id, fn($q) => $q->where('yayasan_id', $user->yayasan_id))->get();
 
@@ -166,6 +174,14 @@ class PengajaranMapelController extends Controller
             $namaTa = trim($row[2] ?? '');
 
             if (empty($namaMapel) || empty($namaGuru) || empty($namaTa)) {
+                $bagian = [];
+                if (empty($namaMapel))
+                    $bagian[] = 'mapel';
+                if (empty($namaGuru))
+                    $bagian[] = 'guru';
+                if (empty($namaTa))
+                    $bagian[] = 'tahun_ajaran';
+                $errors[] = 'Baris dilewati: kolom ' . implode(', ', $bagian) . ' kosong';
                 $skipped++;
                 continue;
             }
@@ -201,6 +217,7 @@ class PengajaranMapelController extends Controller
                 ->exists();
 
             if ($exists) {
+                $errors[] = "Baris dilewati: penugasan {$namaMapel} - {$namaGuru} ({$namaTa}) sudah ada";
                 $skipped++;
                 continue;
             }
@@ -223,6 +240,12 @@ class PengajaranMapelController extends Controller
             LogAktivita::log('import', 'Import penugasan XLSX — ' . $msg . ' Errors: ' . implode('; ', array_slice($errors, 0, 5)));
         } else {
             LogAktivita::log('import', 'Import penugasan XLSX — ' . $msg);
+        }
+
+        if (!empty($errors)) {
+            return redirect()->route('pengajaran-mapel.index')
+                ->with('success', $msg)
+                ->with('import_errors', $errors);
         }
 
         return redirect()->route('pengajaran-mapel.index')->with('success', $msg);

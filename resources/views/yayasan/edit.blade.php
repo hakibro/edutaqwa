@@ -61,6 +61,34 @@
                     </div>
                 </form>
 
+                <!-- Import Lembaga from API Akademik -->
+                <div class="border-t border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">Import Lembaga dari API Akademik</h3>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-4">
+                        Ambil data lembaga dari <code>apiakademik.daruttaqwa.or.id</code> dan buat otomatis.
+                        Lembaga yang sudah ada (berdasarkan <code>kode_sisda</code>) akan dilewati.
+                    </p>
+                    <form action="{{ route('yayasan.import-lembaga', $yayasan) }}" method="POST"
+                        onsubmit="return confirm('Import lembaga dari API Akademik? Lembaga yang sudah ada akan dilewati.')">
+                        @csrf
+                        <x-primary-button type="submit">
+                            <svg class="h-4 w-4 mr-1.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                            Import Lembaga
+                        </x-primary-button>
+                    </form>
+                    @if (session('success'))
+                        <p class="mt-2 text-sm text-green-600">{{ session('success') }}</p>
+                    @endif
+                    @if (session('error'))
+                        <p class="mt-2 text-sm text-red-600">{{ session('error') }}</p>
+                    @endif
+                </div>
+
                 <!-- User Management -->
                 <div class="border-t border-gray-200 p-6">
                     <div class="flex items-center justify-between mb-4">

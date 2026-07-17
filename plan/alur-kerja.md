@@ -41,19 +41,29 @@
 ```
 1. Admin Lembaga / Admin Yayasan buka halaman "Sync Siswa"
        │
-2. Sistem panggil API Sisda: GET https://api.daruttaqwa.or.id/sisda/v1/siswa
-   ├── Response: JSON array siswa dengan UnitFormal, idkelasFormal, KelasFormal, idperson, dll
-   └── Tidak perlu parameter — API mengembalikan semua data
+2. Sistem panggil API Akademik:
+   ├── GET https://apiakademik.daruttaqwa.or.id/api/lembaga/{kode_sisda}/kelas
+   │   └── Response: { "data": [{ "idkelas", "nama", "tingkat", "jurusan", ... }] }
+   └── Per kelas: GET /lembaga/{kode_sisda}/kelas/{idkelas}/siswa
+       └── Response: { "data": [{ "idsiswa", "idperson", "nis", "nisn", "nama", "gender", "tgl_masuk", ... }] }
         │
-3. Sistem filter berdasarkan UnitFormal (cocokkan dengan lembaga.unit_formal):
-   ├── Jurusan → extract dari nama kelas → firstOrCreate
-   ├── Kelas → cocokkan external_id (idkelasFormal) → insert jika baru
-   └── Siswa → cocokkan external_id (idperson) atau nis → update jika ada, insert jika baru
+3. Sistem proses per kelas:
+   ├── Jurusan → firstOrCreate dari field jurusan API
+   ├── Kelas → cocokkan external_id (idkelas) → insert jika baru
+   └── Siswa → cocokkan idperson → update jika ada, insert jika baru
         │
 4. Sistem auto-assign siswa ke kelas via riwayat_kelas_siswas (tahun ajaran aktif)
+   ├── Riwayat.tanggal_masuk diisi dari tgl_masuk API (jika ada)
+   ├── nis dikosongkan — diisi manual oleh petugas lembaga
+   └── Jika siswa pernah dihapus (soft delete) dan muncul lagi → restore otomatis + is_active=true
         │
-5. Tampilkan hasil sync:
-   ├── "Sync selesai. 200 baru, 3 diperbarui, 0 dilewati."
+5. Setelah semua kelas diproses, sistem soft-delete siswa yang tidak muncul di API:
+   ├── Siswa.lembaga_id = lembaga saat ini AND idperson NOT IN daftar idperson dari API
+   ├── Set is_active=false + deleted_at=now()
+   └── Jika siswa muncul lagi di sync berikutnya → restore otomatis
+        │
+6. Tampilkan hasil sync:
+   ├── "Sync selesai. 200 baru, 3 diperbarui, 0 dilewati, 5 dihapus."
    └── Jika error → tampilkan pesan error
 ```
 

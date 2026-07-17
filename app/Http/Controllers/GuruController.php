@@ -102,11 +102,18 @@ class GuruController extends Controller
         $user = auth()->user();
         $lembagaId = $user->lembaga_id ?? $request->lembaga_id;
 
+        // Filter baris kosong dari tugas_tambahan
+        $tugasTambahanRaw = $request->input('tugas_tambahan', []);
+        $tugasTambahanFiltered = array_values(array_filter($tugasTambahanRaw, fn($tt) => !empty($tt['jenis'])));
+        $request->merge(['tugas_tambahan' => $tugasTambahanFiltered]);
+
         $validated = $request->validate([
             'lembaga_id' => $user->lembaga_id ? 'nullable' : 'required|exists:lembagas,id',
             'nama' => 'required|string|max:255',
             'nip' => 'nullable|string|max:30',
             'nuptk' => 'nullable|string|max:30',
+            'kode_guru_lembaga' => 'required|string|max:50|unique:gurus,kode_guru_lembaga',
+            'kode_guru_satminkal' => 'nullable|string|max:50|unique:gurus,kode_guru_satminkal',
             'jenis_ptk_id' => 'nullable|exists:jenis_ptks,id',
             'status_satminkal' => 'boolean',
             'tempat_lahir' => 'nullable|string|max:100',
@@ -126,14 +133,6 @@ class GuruController extends Controller
         $validated['lembaga_id'] = $lembagaId;
         $validated['is_active'] = $request->boolean('is_active');
         $validated['status_satminkal'] = $request->boolean('status_satminkal');
-
-        // Auto-generate kode guru lembaga
-        $validated['kode_guru_lembaga'] = Guru::generateKodeLembaga($lembaga);
-
-        // Jika satminkal, generate kode satminkal juga
-        if ($validated['status_satminkal']) {
-            $validated['kode_guru_satminkal'] = Guru::generateKodeSatminkal($lembaga);
-        }
 
         // Upload dokumen
         $validated['dokumen'] = $this->handleDokumenUpload($request, null);
@@ -198,11 +197,18 @@ class GuruController extends Controller
         $user = auth()->user();
         $lembagaId = $user->lembaga_id ?? $request->lembaga_id;
 
+        // Filter baris kosong dari tugas_tambahan
+        $tugasTambahanRaw = $request->input('tugas_tambahan', []);
+        $tugasTambahanFiltered = array_values(array_filter($tugasTambahanRaw, fn($tt) => !empty($tt['jenis'])));
+        $request->merge(['tugas_tambahan' => $tugasTambahanFiltered]);
+
         $validated = $request->validate([
             'lembaga_id' => $user->lembaga_id ? 'nullable' : 'required|exists:lembagas,id',
             'nama' => 'required|string|max:255',
             'nip' => 'nullable|string|max:30',
             'nuptk' => 'nullable|string|max:30',
+            'kode_guru_lembaga' => 'required|string|max:50|unique:gurus,kode_guru_lembaga,' . $guru->id,
+            'kode_guru_satminkal' => 'nullable|string|max:50|unique:gurus,kode_guru_satminkal,' . $guru->id,
             'jenis_ptk_id' => 'nullable|exists:jenis_ptks,id',
             'status_satminkal' => 'boolean',
             'tempat_lahir' => 'nullable|string|max:100',
@@ -223,36 +229,44 @@ class GuruController extends Controller
         $validated['is_active'] = $request->boolean('is_active');
         $validated['status_satminkal'] = $request->boolean('status_satminkal');
 
-        // Jika baru jadi satminkal & belum punya kode satminkal
-        if ($validated['status_satminkal'] && !$guru->kode_guru_satminkal) {
-            $validated['kode_guru_satminkal'] = Guru::generateKodeSatminkal($lembaga);
-        }
-
         // Upload dokumen
         $validated['dokumen'] = $this->handleDokumenUpload($request, $guru->dokumen);
 
         $tugasTambahan = $request->input('tugas_tambahan', []);
         unset($validated['tugas_tambahan']);
 
-        $guru->update($validated);
+        try {
+            $guru->update($validated);
 
-        // Sync tugas tambahan: hapus lama, simpan baru
-        $guru->tugasTambahans()->delete();
-        foreach ($tugasTambahan as $tt) {
-            if (!empty($tt['jenis'])) {
-                TugasTambahan::create([
-                    'guru_id' => $guru->id,
-                    'jenis' => $tt['jenis'],
-                    'keterangan' => $tt['keterangan'] ?? null,
-                    'tahun_ajaran_id' => $tt['tahun_ajaran_id'],
-                    'is_active' => true,
-                ]);
+            // Sync tugas tambahan: hapus lama, simpan baru
+            $guru->tugasTambahans()->delete();
+            foreach ($tugasTambahan as $tt) {
+                if (!empty($tt['jenis'])) {
+                    TugasTambahan::create([
+                        'guru_id' => $guru->id,
+                        'jenis' => $tt['jenis'],
+                        'keterangan' => $tt['keterangan'] ?? null,
+                        'tahun_ajaran_id' => $tt['tahun_ajaran_id'],
+                        'is_active' => true,
+                    ]);
+                }
             }
+
+            LogAktivita::log('update', 'Mengupdate guru "' . $guru->nama . '"', $guru);
+
+            return redirect()->route('guru.index')->with('success', 'Guru berhasil diperbarui.');
+        } catch (\Exception $e) {
+            // Hapus dokumen yang sudah terupload jika update gagal
+            if (!empty($validated['dokumen'])) {
+                foreach ($validated['dokumen'] as $file) {
+                    \Illuminate\Support\Facades\Storage::delete($file);
+                }
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Gagal memperbarui guru: ' . $e->getMessage());
         }
-
-        LogAktivita::log('update', 'Mengupdate guru "' . $guru->nama . '"', $guru);
-
-        return redirect()->route('guru.index')->with('success', 'Guru berhasil diperbarui.');
     }
 
     public function destroy(Guru $guru): RedirectResponse
@@ -298,8 +312,10 @@ class GuruController extends Controller
     }
 
     /**
-     * Import guru dari file XLSX.
-     * Format XLSX: nama,nip,nuptk,jenis_ptk,status_satminkal,tempat_lahir,tanggal_lahir,tmt,alamat,telp,email
+     * Import / update guru dari file XLSX.
+     * Jika kolom ID (kolom ke-2) berisi ID guru yang valid → update data guru tersebut.
+     * Jika ID kosong → tambah guru baru.
+     * Format XLSX: no, id, kode_lembaga, kode_satminkal, niy, nama, nip, nuptk, lembaga, jenis_ptk, tugas_tambahan, status_satminkal, tempat_lahir, tanggal_lahir, tmt, alamat, telp, email, status
      */
     public function import(Request $request): RedirectResponse
     {
@@ -319,30 +335,86 @@ class GuruController extends Controller
 
         $header = array_shift($rows); // Skip header row
         $created = 0;
+        $updated = 0;
         $skipped = 0;
         $errors = [];
 
         foreach ($rows as $row) {
-            if (count($row) < 2 || empty($row[0]))
-                continue; // Skip baris kosong
-
-            $nama = trim($row[0] ?? '');
+            // Skip empty rows
+            $nama = trim($row[5] ?? $row[4] ?? ''); // nama di kolom 5 (export) atau 0 (template)
             if (empty($nama)) {
                 $skipped++;
                 continue;
             }
 
-            // Cek duplikasi: nama + lembaga
-            $exists = Guru::where('lembaga_id', $lembagaId)->where('nama', $nama)->exists();
-            if ($exists) {
+            $guruId = trim((string) ($row[1] ?? ''));
+
+            // Jika ada ID valid → update
+            if (!empty($guruId) && is_numeric($guruId)) {
+                $guru = Guru::where('id', (int) $guruId)
+                    ->where('lembaga_id', $lembagaId)
+                    ->first();
+
+                if (!$guru) {
+                    $skipped++;
+                    continue;
+                }
+
+                try {
+                    $guru->update([
+                        'kode_guru_lembaga' => trim($row[2] ?? '') ?: null,
+                        'kode_guru_satminkal' => trim($row[3] ?? '') ?: null,
+                        'nama' => $nama,
+                        'nip' => trim($row[6] ?? '') ?: null,
+                        'nuptk' => trim($row[7] ?? '') ?: null,
+                        'jenis_ptk' => trim($row[9] ?? '') ?: null,
+                        'status_satminkal' => str_contains(strtolower(trim($row[11] ?? '')), 'satminkal'),
+                        'tempat_lahir' => trim($row[12] ?? '') ?: null,
+                        'tanggal_lahir' => trim($row[13] ?? '') ?: null,
+                        'tmt' => trim($row[14] ?? '') ?: null,
+                        'alamat' => trim($row[15] ?? '') ?: null,
+                        'telp' => trim($row[16] ?? '') ?: null,
+                        'email' => trim($row[17] ?? '') ?: null,
+                        'is_active' => strtolower(trim($row[18] ?? '')) === 'aktif',
+                    ]);
+                    $updated++;
+                } catch (\Exception $e) {
+                    $errors[] = $nama . ': ' . $e->getMessage();
+                    $skipped++;
+                }
+                continue;
+            }
+
+            // Tidak ada ID → tambah baru (format template lama: 0=nama, 1=nip, 2=nuptk, 3=jenis_ptk, 4=status_satminkal, ..., 11=kode_guru_lembaga, 12=kode_guru_satminkal)
+            $nama = trim($row[0] ?? ''); // override nama dari kolom 0 untuk format template
+            if (empty($nama)) {
                 $skipped++;
                 continue;
+            }
+
+            // Cek duplikasi via kode_guru_lembaga
+            $kodeLembaga = trim($row[11] ?? '') ?: null;
+            if ($kodeLembaga) {
+                $exists = Guru::where('lembaga_id', $lembagaId)
+                    ->where('kode_guru_lembaga', $kodeLembaga)
+                    ->exists();
+                if ($exists) {
+                    $skipped++;
+                    continue;
+                }
+            } else {
+                // Fallback: cek nama + lembaga
+                $exists = Guru::where('lembaga_id', $lembagaId)->where('nama', $nama)->exists();
+                if ($exists) {
+                    $skipped++;
+                    continue;
+                }
             }
 
             try {
                 Guru::create([
                     'lembaga_id' => $lembagaId,
-                    'kode_guru_lembaga' => Guru::generateKodeLembaga($lembaga),
+                    'kode_guru_lembaga' => $kodeLembaga,
                     'nama' => $nama,
                     'nip' => trim($row[1] ?? '') ?: null,
                     'nuptk' => trim($row[2] ?? '') ?: null,
@@ -354,6 +426,7 @@ class GuruController extends Controller
                     'alamat' => trim($row[8] ?? '') ?: null,
                     'telp' => trim($row[9] ?? '') ?: null,
                     'email' => trim($row[10] ?? '') ?: null,
+                    'kode_guru_satminkal' => trim($row[12] ?? '') ?: null,
                 ]);
                 $created++;
             } catch (\Exception $e) {
@@ -362,7 +435,7 @@ class GuruController extends Controller
             }
         }
 
-        $msg = "Import selesai. {$created} guru baru, {$skipped} dilewati.";
+        $msg = "Import selesai. {$created} guru baru, {$updated} diperbarui, {$skipped} dilewati.";
         if (!empty($errors)) {
             LogAktivita::log('import', 'Import guru XLSX — ' . $msg . ' Errors: ' . implode('; ', array_slice($errors, 0, 5)));
         } else {
@@ -377,13 +450,13 @@ class GuruController extends Controller
      */
     public function template(): \Symfony\Component\HttpFoundation\StreamedResponse
     {
-        $headers = ['nama', 'nip', 'nuptk', 'jenis_ptk', 'status_satminkal (Ya/Tidak)', 'tempat_lahir', 'tanggal_lahir (YYYY-MM-DD)', 'tmt (YYYY-MM-DD)', 'alamat', 'telp', 'email'];
+        $headers = ['nama', 'nip', 'nuptk', 'jenis_ptk', 'status_satminkal (Ya/Tidak)', 'tempat_lahir', 'tanggal_lahir (YYYY-MM-DD)', 'tmt (YYYY-MM-DD)', 'alamat', 'telp', 'email', 'kode_guru_lembaga', 'kode_guru_satminkal'];
 
         return response()->streamDownload(function () use ($headers) {
             $spreadsheet = new Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
             $sheet->fromArray([$headers], null, 'A1');
-            $sheet->fromArray([['Ahmad Fauzi', '199001012020011001', '1234567890123456', 'Guru Mapel', 'Ya', 'Jakarta', '1990-01-01', '2026-07-01', 'Jl. Merdeka No. 1', '08123456789', 'ahmad@email.com']], null, 'A2');
+            $sheet->fromArray([['Ahmad Fauzi', '199001012020011001', '1234567890123456', 'Guru Mapel', 'Ya', 'Jakarta', '1990-01-01', '2026-07-01', 'Jl. Merdeka No. 1', '08123456789', 'ahmad@email.com', 'SMA.001', 'YYS.SMA.001']], null, 'A2');
 
             $writer = new Xlsx($spreadsheet);
             $writer->save('php://output');
@@ -463,10 +536,6 @@ class GuruController extends Controller
             $updateData['niy'] = Guru::generateNiy($lembaga, $guru->tmt->format('Y-m-d'));
         }
 
-        if ($guru->status_satminkal && !$guru->kode_guru_satminkal) {
-            $updateData['kode_guru_satminkal'] = Guru::generateKodeSatminkal($lembaga);
-        }
-
         $guru->update($updateData);
 
         // Refresh guru agar niy terbaca
@@ -532,10 +601,6 @@ class GuruController extends Controller
 
             if (!$guru->niy && $guru->tmt) {
                 $updateData['niy'] = Guru::generateNiy($lembaga, $guru->tmt->format('Y-m-d'));
-            }
-
-            if ($guru->status_satminkal && !$guru->kode_guru_satminkal) {
-                $updateData['kode_guru_satminkal'] = Guru::generateKodeSatminkal($lembaga);
             }
 
             $guru->update($updateData);
@@ -693,6 +758,7 @@ class GuruController extends Controller
 
             $headers = [
                 'No',
+                'ID',
                 'Kode Lembaga',
                 'Kode Satminkal',
                 'NIY',
@@ -722,6 +788,7 @@ class GuruController extends Controller
                 $sheet->fromArray([
                     [
                         $i + 1,
+                        $g->id,
                         $g->kode_guru_lembaga,
                         $g->kode_guru_satminkal,
                         $g->niy,
@@ -745,7 +812,7 @@ class GuruController extends Controller
             }
 
             // Auto-size columns
-            foreach (range('A', 'R') as $col) {
+            foreach (range('A', 'S') as $col) {
                 $sheet->getColumnDimension($col)->setAutoSize(true);
             }
 

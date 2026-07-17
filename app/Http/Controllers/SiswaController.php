@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Jurusan;
+use App\Models\Kelas;
 use App\Models\Lembaga;
 use App\Models\LogAktivita;
 use App\Models\Siswa;
@@ -11,20 +13,64 @@ use Illuminate\View\View;
 
 class SiswaController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         $user = auth()->user();
-        $query = Siswa::with('lembaga');
+        $query = Siswa::with('lembaga', 'kelasAktif.jurusan');
 
         if ($user->lembaga_id) {
             $query->where('lembaga_id', $user->lembaga_id);
+            $lembagaId = $user->lembaga_id;
         } elseif ($user->yayasan_id) {
             $query->whereHas('lembaga', fn($q) => $q->where('yayasan_id', $user->yayasan_id));
+            $lembagaId = null;
+        } else {
+            $lembagaId = null;
         }
 
-        $siswas = $query->latest()->paginate(10);
+        // Live search
+        if ($search = $request->get('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                    ->orWhere('nis', 'like', "%{$search}%")
+                    ->orWhere('nisn', 'like', "%{$search}%")
+                    ->orWhere('idperson', 'like', "%{$search}%");
+            });
+        }
 
-        return view('siswa.index', compact('siswas'));
+        // Filter tingkat
+        if ($tingkat = $request->get('tingkat')) {
+            $query->whereHas('kelasAktif', fn($q) => $q->where('tingkat', $tingkat));
+        }
+
+        // Filter jurusan
+        if ($jurusanId = $request->get('jurusan_id')) {
+            $query->whereHas('kelasAktif', fn($q) => $q->where('jurusan_id', $jurusanId));
+        }
+
+        // Filter kelas
+        if ($kelasId = $request->get('kelas_id')) {
+            $query->whereHas('kelasAktif', fn($q) => $q->where('kelas.id', $kelasId));
+        }
+
+        $siswas = $query->latest()->paginate(10)->withQueryString();
+
+        // Data for filter dropdowns
+        $lembaga = $lembagaId ? Lembaga::find($lembagaId) : null;
+        $tingkats = Kelas::when($lembagaId, fn($q) => $q->where('lembaga_id', $lembagaId))
+            ->whereNotNull('tingkat')
+            ->distinct()
+            ->orderBy('tingkat')
+            ->pluck('tingkat')
+            ->map(fn($v) => (string) $v);
+        $jurusans = Jurusan::when($lembagaId, fn($q) => $q->where('lembaga_id', $lembagaId))
+            ->whereHas('lembaga', fn($q) => $q->where('is_active', true))
+            ->orderBy('nama')->get();
+        $kelasList = Kelas::when($lembagaId, fn($q) => $q->where('lembaga_id', $lembagaId))
+            ->with('jurusan')
+            ->orderBy('tingkat')->orderBy('nama')->get();
+
+        return view('siswa.index', compact('siswas', 'tingkats', 'jurusans', 'kelasList'));
     }
 
     public function create(): View

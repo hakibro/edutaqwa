@@ -59,6 +59,16 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
+                            <x-input-label for="kode_guru_lembaga">
+                                <span>Kode Guru Lembaga <span class="text-red-500">*</span></span>
+                            </x-input-label>
+                            <x-text-input id="kode_guru_lembaga" name="kode_guru_lembaga" type="text"
+                                class="mt-1 block w-full" :value="old('kode_guru_lembaga')" required maxlength="50" />
+                            <x-input-error :messages="$errors->get('kode_guru_lembaga')" class="mt-2" />
+                            <p class="mt-1 text-xs text-gray-500">Kode unik per guru, ditentukan admin lembaga. Contoh:
+                                GRU001, SMA-001.</p>
+                        </div>
+                        <div>
                             <x-input-label for="jenis_ptk_id" value="Jenis PTK" />
                             <select id="jenis_ptk_id" name="jenis_ptk_id"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
@@ -82,6 +92,13 @@
                                 <span class="text-sm text-gray-700">Status Satminkal (PTK Tetap)</span>
                             </label>
                             <x-input-error :messages="$errors->get('status_satminkal')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label for="kode_guru_satminkal" value="Kode Guru Satminkal" />
+                            <x-text-input id="kode_guru_satminkal" name="kode_guru_satminkal" type="text"
+                                class="mt-1 block w-full" :value="old('kode_guru_satminkal')" maxlength="50" />
+                            <x-input-error :messages="$errors->get('kode_guru_satminkal')" class="mt-2" />
+                            <p class="mt-1 text-xs text-gray-500">Diisi jika guru berstatus satminkal (PTK Tetap).</p>
                         </div>
                     </div>
 
@@ -124,8 +141,8 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <x-input-label for="tempat_lahir" value="Tempat Lahir" />
-                            <x-text-input id="tempat_lahir" name="tempat_lahir" type="text" class="mt-1 block w-full"
-                                :value="old('tempat_lahir')" />
+                            <x-text-input id="tempat_lahir" name="tempat_lahir" type="text"
+                                class="mt-1 block w-full" :value="old('tempat_lahir')" />
                             <x-input-error :messages="$errors->get('tempat_lahir')" class="mt-2" />
                         </div>
                         <div>

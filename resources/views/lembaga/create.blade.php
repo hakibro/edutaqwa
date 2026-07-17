@@ -113,6 +113,13 @@
                         <x-input-label for="is_active" value="Aktif" />
                     </div>
 
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="sisda_mode" name="sisda_mode" value="1"
+                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
+                        <x-input-label for="sisda_mode"
+                            value="Mode API Sisda (sembunyikan tambah manual siswa/kelas/jurusan)" />
+                    </div>
+
                     @if (auth()->user()->isSuperAdmin() || auth()->user()->isAdminYayasan())
                         <hr class="border-gray-300">
 
@@ -150,23 +157,30 @@
             </div>
         </div>
     </div>
-</x-app-layout>
 
-@push('scripts')
     <script>
-        const API_LEMBAGA = 'https://apiakademik.daruttaqwa.or.id/api/lembaga';
+        (function() {
+            const API_LEMBAGA = 'https://apiakademik.daruttaqwa.or.id/api/lembaga';
+            const unitFormal = document.getElementById('unit_formal');
+            const kodeSisda = document.getElementById('kode_sisda');
+            if (!unitFormal || !kodeSisda) return;
 
-        let lembagaData = [];
-        fetch(API_LEMBAGA)
-            .then(r => r.json())
-            .then(d => {
-                lembagaData = d.data || d;
-            })
-            .catch(() => {});
+            let lembagaData = [];
 
-        document.getElementById('unit_formal')?.addEventListener('change', function() {
-            const match = lembagaData.find(item => item.kode === this.value);
-            document.getElementById('kode_sisda').value = match ? match.idunit : '';
-        });
+            function applyMapping() {
+                const match = lembagaData.find(item => item.kode === unitFormal.value);
+                kodeSisda.value = match ? match.idunit : '';
+            }
+
+            unitFormal.addEventListener('change', applyMapping);
+
+            fetch(API_LEMBAGA)
+                .then(r => r.json())
+                .then(d => {
+                    lembagaData = d.data || d;
+                    applyMapping();
+                })
+                .catch(() => {});
+        })();
     </script>
-@endpush
+</x-app-layout>

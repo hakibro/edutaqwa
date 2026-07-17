@@ -65,6 +65,7 @@ Route::middleware('auth')->group(function () {
 
     // Yayasan CRUD (Super Admin)
     Route::resource('yayasan', YayasanController::class)->except(['show']);
+    Route::post('yayasan/{yayasan}/import-lembaga', [YayasanController::class, 'importLembaga'])->name('yayasan.import-lembaga');
 
     // Lembaga CRUD (Super Admin & Admin Yayasan)
     Route::resource('lembaga', LembagaController::class)->except(['show']);
@@ -107,7 +108,8 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:super_admin,admin_yayasan,admin_lembaga')->group(function () {
         Route::get('/sync-siswa', [SiswaSyncController::class, 'index'])->name('sync-siswa.index');
         Route::post('/sync-siswa', [SiswaSyncController::class, 'sync'])->name('sync-siswa.sync');
-        Route::post('/sync-siswa/kenaikan-kelas', [SiswaSyncController::class, 'kenaikanKelas'])->name('sync-siswa.kenaikan-kelas');
+        // Kenaikan kelas ditangani Sisda Yayasan — route dinonaktifkan
+        // Route::post('/sync-siswa/kenaikan-kelas', [SiswaSyncController::class, 'kenaikanKelas'])->name('sync-siswa.kenaikan-kelas');
     });
 
     // Master Data CRUD (Admin Lembaga, Admin Yayasan, Super Admin)
@@ -158,7 +160,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/jadwal-template', [JadwalController::class, 'template'])->name('jadwal.template');
         // Grid editor & batch operations
         Route::post('/jadwal/batch-store', [JadwalController::class, 'storeBatch'])->name('jadwal.batch-store');
-        Route::post('/jadwal/copy', [JadwalController::class, 'copy'])->name('jadwal.copy');
         Route::get('/jadwal/slot-search', [JadwalController::class, 'slotSearch'])->name('jadwal.slot-search');
     });
 

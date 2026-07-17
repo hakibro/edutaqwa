@@ -16,6 +16,7 @@ class Lembaga extends Model
         'nama',
         'kode',
         'kode_sisda',
+        'sisda_mode',
         'npsn',
         'alamat',
         'telp',
@@ -32,6 +33,7 @@ class Lembaga extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'sisda_mode' => 'boolean',
         'wajib_selfie' => 'boolean',
         'latitude_absen' => 'decimal:7',
         'longitude_absen' => 'decimal:7',

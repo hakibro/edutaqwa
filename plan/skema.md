@@ -93,7 +93,7 @@ Yayasan
  └── Lembaga (punya unit_formal untuk mapping Sisda API)
       ├── TahunAjaran
       ├── Jurusan (auto-create dari import Sisda)
-      ├── Kelas (auto-create dari import Sisda via external_id)
+      ├── Kelas (auto-create dari import API via external_id)
       │    └── Siswa (terdaftar di kelas per tahun ajaran, import via Sisda API)
       ├── Guru
       │    ├── TugasTambahan (Wali Kelas, BK)
@@ -126,8 +126,8 @@ Yayasan
 
 ### 6.1 Kode Guru
 
-- **Kode Guru Lembaga**: Format `[KodeLembaga].[NomorUrut]` — berlaku di internal lembaga.
-- **Kode Guru Satminkal**: Format `[KodeYayasan].[KodeLembaga].[NomorUrut]` — terdaftar resmi di yayasan, disetujui oleh Admin Yayasan.
+- **Kode Guru Lembaga**: Ditentukan manual oleh admin lembaga saat tambah/edit guru. Unik per lembaga. Contoh: GRU001, SMA-001, dsb.
+- **Kode Guru Satminkal**: Ditentukan manual oleh admin lembaga. Diisi jika guru berstatus PTK Tetap. Unik per yayasan.
 
 ### 6.2 Guru — Klasifikasi
 

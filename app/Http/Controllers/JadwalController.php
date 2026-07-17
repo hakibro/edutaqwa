@@ -23,23 +23,8 @@ class JadwalController extends Controller
     {
         $user = auth()->user();
         $lembagaId = $user->lembaga_id;
-        $query = Jadwal::with(['kelas', 'mapel', 'guru', 'tahunAjaran']);
-
-        if ($user->lembaga_id) {
-            $query->where('lembaga_id', $user->lembaga_id);
-        } elseif ($user->yayasan_id) {
-            $query->whereHas('kelas.lembaga', fn($q) => $q->where('yayasan_id', $user->yayasan_id));
-        }
-
-        if ($request->filled('kelas_id')) {
-            $query->where('kelas_id', $request->kelas_id);
-        }
-        if ($request->filled('hari')) {
-            $query->where('hari', $request->hari);
-        }
 
         $hariList = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
-        $jadwals = $query->orderBy('hari')->orderBy('jam_ke')->paginate(20);
 
         // Resolve jam_ke labels from timetable settings (kbm only, 1-based KBM number)
         $timetableLabels = [];
@@ -54,25 +39,94 @@ class JadwalController extends Controller
 
         $kelasList = Kelas::when($user->lembaga_id, fn($q) => $q->where('lembaga_id', $user->lembaga_id))
             ->when($user->yayasan_id, fn($q) => $q->whereHas('lembaga', fn($ql) => $ql->where('yayasan_id', $user->yayasan_id)))
+            ->orderBy('tingkat')
+            ->orderBy('nama')
             ->get();
 
-        // Grid view per kelas
-        $gridKelasId = $request->filled('grid_kelas_id') ? $request->grid_kelas_id : null;
-        $gridView = null;
-        if ($gridKelasId) {
-            $jadwalKelas = Jadwal::with(['mapel', 'guru'])
-                ->where('kelas_id', $gridKelasId)
-                ->where('lembaga_id', $user->lembaga_id)
-                ->get()
-                ->groupBy('hari');
+        $guruList = Guru::when($user->lembaga_id, fn($q) => $q->where('lembaga_id', $user->lembaga_id))
+            ->when($user->yayasan_id, fn($q) => $q->whereHas('lembaga', fn($ql) => $ql->where('yayasan_id', $user->yayasan_id)))
+            ->orderBy('nama')
+            ->get();
 
-            $gridView = [];
-            foreach ($hariList as $hari) {
-                $gridView[$hari] = $jadwalKelas->get($hari, collect())->sortBy('jam_ke');
+        // Default grid kelas: from query param or first kelas
+        $gridKelasId = $request->filled('grid_kelas_id')
+            ? $request->grid_kelas_id
+            : $kelasList->first()?->id;
+
+        // Guru filter: find which kelas_ids this guru teaches (for tab highlighting)
+        $kelasWithGuru = [];
+        $guruNama = null;
+        $guruId = $request->filled('guru_id') ? $request->guru_id : null;
+        if ($guruId) {
+            $guruNama = Guru::find($guruId)?->nama;
+            $yayasanId = $user->yayasan_id ?? Lembaga::find($user->lembaga_id)?->yayasan_id;
+            $tahunAktif = TahunAjaran::where('yayasan_id', $yayasanId)->where('is_active', true)->first();
+            $kelasWithGuru = Jadwal::where('guru_id', $guruId)
+                ->where('lembaga_id', $user->lembaga_id)
+                ->when($tahunAktif, fn($q) => $q->where('tahun_ajaran_id', $tahunAktif->id))
+                ->pluck('kelas_id')
+                ->unique()
+                ->toArray();
+        }
+
+        // Grid view
+        $gridView = [];
+        $bentrokMap = [];
+        $isGuruMode = $request->filled('guru_id');
+
+        if ($gridKelasId) {
+            if ($isGuruMode) {
+                // Guru mode: fetch ALL jadwal for this guru across all kelas
+                $jadwalKelas = Jadwal::with(['mapel', 'guru', 'kelas'])
+                    ->where('guru_id', $guruId)
+                    ->where('lembaga_id', $user->lembaga_id)
+                    ->get()
+                    ->groupBy('hari');
+
+                foreach ($hariList as $hari) {
+                    $gridView[$hari] = $jadwalKelas->get($hari, collect())->sortBy('jam_ke');
+                }
+
+                // Bentrok: all other jadwal in lembaga not taught by this guru
+                $allOtherJadwal = Jadwal::with(['mapel', 'guru', 'kelas'])
+                    ->where('lembaga_id', $user->lembaga_id)
+                    ->where('guru_id', '!=', $guruId)
+                    ->get(['guru_id', 'hari', 'jam_ke', 'mapel_id', 'kelas_id']);
+                foreach ($allOtherJadwal as $j) {
+                    $bentrokMap[$j->guru_id . '|' . $j->hari . '|' . $j->jam_ke] = [
+                        'guru_nama' => $j->guru->nama,
+                        'mapel_nama' => $j->mapel->nama,
+                        'kelas_nama' => $j->kelas->nama,
+                    ];
+                }
+            } else {
+                // Single-kelas mode
+                $jadwalKelas = Jadwal::with(['mapel', 'guru'])
+                    ->where('kelas_id', $gridKelasId)
+                    ->where('lembaga_id', $user->lembaga_id)
+                    ->get()
+                    ->groupBy('hari');
+
+                foreach ($hariList as $hari) {
+                    $gridView[$hari] = $jadwalKelas->get($hari, collect())->sortBy('jam_ke');
+                }
+
+                // Build bentrok lookup: all jadwal lembaga except this kelas
+                $allOtherJadwal = Jadwal::with(['mapel', 'guru', 'kelas'])
+                    ->where('lembaga_id', $user->lembaga_id)
+                    ->where('kelas_id', '!=', $gridKelasId)
+                    ->get(['guru_id', 'hari', 'jam_ke', 'mapel_id', 'kelas_id']);
+                foreach ($allOtherJadwal as $j) {
+                    $bentrokMap[$j->guru_id . '|' . $j->hari . '|' . $j->jam_ke] = [
+                        'guru_nama' => $j->guru->nama,
+                        'mapel_nama' => $j->mapel->nama,
+                        'kelas_nama' => $j->kelas->nama,
+                    ];
+                }
             }
         }
 
-        return view('jadwal.index', compact('jadwals', 'kelasList', 'hariList', 'gridView', 'gridKelasId', 'timetableLabels'));
+        return view('jadwal.index', compact('kelasList', 'guruList', 'hariList', 'gridView', 'gridKelasId', 'timetableLabels', 'bentrokMap', 'kelasWithGuru', 'isGuruMode', 'guruId', 'guruNama'));
     }
 
     public function create(): View
@@ -123,22 +177,22 @@ class JadwalController extends Controller
             return back()->withInput()->withErrors(['jam_ke' => 'Jam ke-' . $validated['jam_ke'] . ' bukan slot KBM yang valid untuk ' . $validated['hari'] . '.']);
         }
 
-        // Cek bentrok
-        $bentrok = Jadwal::cekBentrok(
+        // Cek bentrok (warning only, tetap simpan)
+        $bentrokMsg = Jadwal::cekBentrok(
             $validated['guru_id'],
             $validated['hari'],
             (int) $validated['jam_ke']
         );
 
-        if ($bentrok) {
-            return back()->withInput()->withErrors(['guru_id' => $bentrok]);
-        }
-
         Jadwal::create($validated);
 
         LogAktivita::log('create', 'Menambah jadwal ' . $validated['hari'] . ' Jam ' . $validated['jam_ke']);
 
-        return redirect()->route('jadwal.index')->with('success', 'Jadwal berhasil ditambahkan.');
+        $msg = 'Jadwal berhasil ditambahkan.';
+        if ($bentrokMsg) {
+            $msg .= ' ⚠ ' . $bentrokMsg;
+        }
+        return redirect()->route('jadwal.index')->with('success', $msg);
     }
 
     public function edit(Jadwal $jadwal): View
@@ -184,23 +238,23 @@ class JadwalController extends Controller
             return back()->withInput()->withErrors(['jam_ke' => 'Jam ke-' . $validated['jam_ke'] . ' bukan slot KBM yang valid untuk ' . $validated['hari'] . '.']);
         }
 
-        // Cek bentrok kecuali jadwal ini sendiri
-        $bentrok = Jadwal::cekBentrok(
+        // Cek bentrok (warning only, tetap simpan)
+        $bentrokMsg = Jadwal::cekBentrok(
             $validated['guru_id'],
             $validated['hari'],
             (int) $validated['jam_ke'],
             $jadwal->id
         );
 
-        if ($bentrok) {
-            return back()->withInput()->withErrors(['guru_id' => $bentrok]);
-        }
-
         $jadwal->update($validated);
 
         LogAktivita::log('update', 'Mengupdate jadwal');
 
-        return redirect()->route('jadwal.index')->with('success', 'Jadwal berhasil diperbarui.');
+        $msg = 'Jadwal berhasil diperbarui.';
+        if ($bentrokMsg) {
+            $msg .= ' ⚠ ' . $bentrokMsg;
+        }
+        return redirect()->route('jadwal.index')->with('success', $msg);
     }
 
     public function destroy(Jadwal $jadwal): RedirectResponse
@@ -272,11 +326,7 @@ class JadwalController extends Controller
                 ->where('jam_ke', $jamKe)
                 ->first();
 
-            $bentrok = Jadwal::cekBentrok($guruId, $hari, $jamKe, $existing?->id);
-            if ($bentrok) {
-                $errors[] = "{$hari} Jam {$jamKe}: bentrok — {$bentrok}";
-                continue;
-            }
+            $bentrokMsg = Jadwal::cekBentrok($guruId, $hari, $jamKe, $existing?->id);
 
             if ($existing) {
                 $existing->update([
@@ -296,6 +346,9 @@ class JadwalController extends Controller
                 ]);
             }
             $saved++;
+            if ($bentrokMsg) {
+                $errors[] = "{$hari} Jam {$jamKe}: bentrok — {$bentrokMsg} (tetap disimpan)";
+            }
         }
 
         LogAktivita::log('update', "Batch jadwal: {$saved} disimpan, {$deleted} dihapus, " . count($errors) . " error.");
@@ -306,70 +359,6 @@ class JadwalController extends Controller
             'message' => $msg,
             'errors' => $errors,
         ]);
-    }
-
-    /**
-     * Copy jadwal from one kelas to another.
-     */
-    public function copy(Request $request): RedirectResponse
-    {
-        $user = auth()->user();
-        $lembagaId = $user->lembaga_id;
-
-        $validated = $request->validate([
-            'source_kelas_id' => 'required|exists:kelas,id',
-            'target_kelas_id' => 'required|exists:kelas,id|different:source_kelas_id',
-            'tahun_ajaran_id' => 'required|exists:tahun_ajarans,id',
-        ]);
-
-        $sourceJadwals = Jadwal::where('lembaga_id', $lembagaId)
-            ->where('kelas_id', $validated['source_kelas_id'])
-            ->get();
-
-        if ($sourceJadwals->isEmpty()) {
-            return back()->with('error', 'Kelas sumber tidak memiliki jadwal.');
-        }
-
-        // Delete existing target jadwal (overwrite)
-        Jadwal::where('lembaga_id', $lembagaId)
-            ->where('kelas_id', $validated['target_kelas_id'])
-            ->delete();
-
-        $copied = 0;
-        $skipped = 0;
-        $errors = [];
-
-        foreach ($sourceJadwals as $src) {
-            $bentrok = Jadwal::cekBentrok($src->guru_id, $src->hari, $src->jam_ke);
-            if ($bentrok) {
-                $skipped++;
-                $errors[] = "{$src->hari} Jam {$src->jam_ke}: {$src->mapel->nama} — bentrok guru {$src->guru->nama}, dilewati.";
-                continue;
-            }
-
-            Jadwal::create([
-                'lembaga_id' => $lembagaId,
-                'kelas_id' => $validated['target_kelas_id'],
-                'mapel_id' => $src->mapel_id,
-                'guru_id' => $src->guru_id,
-                'tahun_ajaran_id' => $validated['tahun_ajaran_id'],
-                'hari' => $src->hari,
-                'jam_ke' => $src->jam_ke,
-            ]);
-            $copied++;
-        }
-
-        LogAktivita::log('create', "Copy jadwal: {$copied} dari kelas {$validated['source_kelas_id']} ke {$validated['target_kelas_id']}");
-
-        $msg = "{$copied} jadwal disalin.";
-        if ($errors) {
-            return redirect()->route('jadwal.index', ['grid_kelas_id' => $validated['target_kelas_id']])
-                ->with('success', $msg)
-                ->with('import_errors', $errors);
-        }
-
-        return redirect()->route('jadwal.index', ['grid_kelas_id' => $validated['target_kelas_id']])
-            ->with('success', $msg);
     }
 
     /**
@@ -519,12 +508,10 @@ class JadwalController extends Controller
                 continue;
             }
 
-            // Cek bentrok
+            // Cek bentrok (warning only, tetap simpan)
             $bentrok = Jadwal::cekBentrok($guruId, $hariTitle, $jamKe);
             if ($bentrok) {
-                $skipped++;
-                $errors[] = "Baris $rowNum: bentrok — $bentrok";
-                continue;
+                $errors[] = "Baris $rowNum: bentrok — $bentrok (tetap disimpan)";
             }
 
             // Cek duplikasi identik

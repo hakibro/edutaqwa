@@ -14,13 +14,14 @@
 
 ### 1.2 Manajemen Yayasan (Admin Yayasan)
 
-| Fitur              | Deskripsi                                                        |
-| ------------------ | ---------------------------------------------------------------- |
-| CRUD Lembaga       | Tambah/sunting/hapus lembaga di bawah yayasan                    |
-| Approval Guru Baru | Verifikasi & setujui guru baru sebelum aktif (individual & bulk) |
-| Approval Satminkal | Verifikasi guru satminkal, generate kode satminkal               |
-| Tahun Ajaran       | CRUD tahun ajaran (mencakup Ganjil & Genap)                      |
-| Kalender Akademik  | Hari efektif, libur, jadwal PTS/PAS tingkat yayasan              |
+| Fitur              | Deskripsi                                                                           |
+| ------------------ | ----------------------------------------------------------------------------------- |
+| CRUD Lembaga       | Tambah/sunting/hapus lembaga di bawah yayasan                                       |
+| Import Lembaga     | Ambil data lembaga dari API Akademik (apiakademik /lembaga) di halaman edit yayasan |
+| Approval Guru Baru | Verifikasi & setujui guru baru sebelum aktif (individual & bulk)                    |
+| Approval Satminkal | Verifikasi guru satminkal, kode satminkal ditentukan admin lembaga                  |
+| Tahun Ajaran       | CRUD tahun ajaran (mencakup Ganjil & Genap)                                         |
+| Kalender Akademik  | Hari efektif, libur, jadwal PTS/PAS tingkat yayasan                                 |
 
 ### 1.3 Manajemen Lembaga (Admin Lembaga / TU)
 
@@ -28,21 +29,23 @@
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Master Data Guru**      |                                                                                                                                              |
 | - CRUD Guru               | Tambah/sunting/hapus data guru ✓                                                                                                             |
-| - Import Guru             | Import massal dari XLSX ✓                                                                                                                    |
-| - Kode Guru               | Generate kode guru lembaga otomatis ✓                                                                                                        |
+| - Import Guru             | Import massal dari XLSX + update massal via export-edit-import ✓                                                                             |
+| - Kode Guru               | Kode guru lembaga ditentukan manual oleh admin lembaga saat tambah/edit guru ✓                                                               |
 | - Klasifikasi PTK         | Jenis PTK dari DB (dikelola admin lembaga), Tugas Tambahan (Guru Mapel, BK, Wali Kelas, dll)                                                 |
 | - Upload Dokumen          | Upload ijazah, SK, sertifikat ✓                                                                                                              |
 | **Master Data Siswa**     |                                                                                                                                              |
-| - CRUD Siswa              | Tambah/sunting/hapus data siswa ✓                                                                                                            |
+| - CRUD Siswa              | Tambah/sunting/hapus data siswa (tombol disembunyikan jika Mode API Sisda ON) ✓                                                              |
 | - Import Siswa            | Import dari Sisda API (otomatis) ✓                                                                                                           |
-| - Kenaikan Kelas          | Sync kenaikan kelas via Sisda ✓                                                                                                              |
+| - Kenaikan Kelas          | Ditangani Sisda Yayasan (fitur dinonaktifkan di app)                                                                                         |
 | - Mutasi Siswa            | Nonaktif — ditangani Sisda API                                                                                                               |
 | - Alumni Tracking         | Nonaktif — ditangani Sisda API                                                                                                               |
 | - Upload Foto             | Upload pas foto siswa ✓                                                                                                                      |
 | **Master Data Kelas**     | Auto generate dari import Sisda ✓                                                                                                            |
-| - CRUD Kelas              | Tambah/sunting/hapus manual ✓                                                                                                                |
+| - CRUD Kelas              | Tambah/sunting/hapus manual (tombol disembunyikan jika Mode API Sisda ON) ✓                                                                  |
 | **Master Data Jurusan**   | Auto generate dari import Sisda ✓                                                                                                            |
-| - CRUD Jurusan            | Tambah/sunting/hapus manual ✓                                                                                                                |
+| - CRUD Jurusan            | Tambah/sunting/hapus manual (tombol disembunyikan jika Mode API Sisda ON) ✓                                                                  |
+| **Konfigurasi Sisda**     |                                                                                                                                              |
+| - Mode API Sisda          | Toggle di form edit lembaga — jika ON, sembunyikan tombol tambah manual siswa/kelas/jurusan, data hanya via sync API ✓                       |
 | **Konfigurasi Jam Kerja** | Atur jam masuk & pulang guru per hari                                                                                                        |
 | **Pengaturan Akademik**   | Atur jam mulai, durasi KBM/istirahat, daftar kegiatan (nama + durasi masing-masing), hari efektif. Susunan per hari via drag-drop timetable. |
 
@@ -61,7 +64,6 @@
 | **Jadwal**       |                                                                                    |
 | - CRUD Jadwal    | Atur jadwal per kelas (hari, jam_ke) — waktu di-resolve dari settings timetable    |
 | - Grid Editor    | Edit jadwal langsung dari grid per kelas — click cell pilih mapel+guru, batch save |
-| - Salin Jadwal   | Copy seluruh jadwal dari kelas lain (overwrite + cek bentrok)                      |
 | - Import Jadwal  | Import jadwal dari Excel (kolom: kelas, mapel, guru, hari, jam_ke)                 |
 | - Cetak Jadwal   | Cetak jadwal kelas & guru                                                          |
 | - Cek Bentrok    | Validasi bentrok jadwal otomatis (guru + hari + jam_ke)                            |

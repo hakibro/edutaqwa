@@ -2,10 +2,12 @@
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-semibold leading-tight text-gray-800">{{ __('Data Jurusan') }}</h2>
-            <a href="{{ route('jurusan.create') }}"
-                class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
-                + Tambah Jurusan
-            </a>
+            @if (!auth()->user()->lembaga?->sisda_mode)
+                <a href="{{ route('jurusan.create') }}"
+                    class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                    + Tambah Jurusan
+                </a>
+            @endif
         </div>
     </x-slot>
 

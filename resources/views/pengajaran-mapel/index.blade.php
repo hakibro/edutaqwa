@@ -23,6 +23,16 @@
             @if (session('error'))
                 <div class="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-800">{{ session('error') }}</div>
             @endif
+            @if (session('import_errors'))
+                <div class="mb-4 rounded-md bg-yellow-50 p-4 text-sm text-yellow-800">
+                    <p class="font-medium mb-1">Detail baris yang dilewati:</p>
+                    <ul class="list-disc list-inside space-y-0.5">
+                        @foreach (session('import_errors') as $err)
+                            <li>{{ $err }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
             {{-- Import Form --}}
             <div id="importForm" class="hidden mb-6 p-4 bg-gray-50 border rounded-lg">
@@ -68,6 +78,12 @@
                                 </option>
                             @endforeach
                         </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Cari Guru/Mapel</label>
+                        <input type="text" name="search" value="{{ request('search') }}"
+                            placeholder="Ketik nama guru atau mapel..."
+                            class="mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                     </div>
                     <div>
                         <button type="submit"

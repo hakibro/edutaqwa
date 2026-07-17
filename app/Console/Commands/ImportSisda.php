@@ -8,7 +8,7 @@ use Illuminate\Console\Command;
 class ImportSisda extends Command
 {
     protected $signature = 'sisda:import {--lembaga= : ID lembaga spesifik}';
-    protected $description = 'Import/sync data siswa dari Sisda API';
+    protected $description = 'Import/sync data siswa dari API Akademik';
 
     public function handle(SisdaImportService $service): int
     {
@@ -23,11 +23,12 @@ class ImportSisda extends Command
             $result = $service->syncForLembaga($lembaga);
             $this->info($result['message']);
             if (isset($result['stats'])) {
-                $this->table(['Created', 'Updated', 'Skipped', 'Kelas Baru', 'Jurusan Baru'], [
+                $this->table(['Created', 'Updated', 'Skipped', 'Deleted', 'Kelas Baru', 'Jurusan Baru'], [
                     [
                         $result['stats']['created'],
                         $result['stats']['updated'],
                         $result['stats']['skipped'],
+                        $result['stats']['deleted'],
                         $result['stats']['kelas_created'],
                         $result['stats']['jurusan_created'],
                     ]

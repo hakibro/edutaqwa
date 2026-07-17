@@ -6,13 +6,14 @@ use App\Models\Jurusan;
 use App\Models\Kelas;
 use App\Models\Lembaga;
 use App\Models\LogAktivita;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class KelasController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View|JsonResponse
     {
         $user = auth()->user();
         $query = Kelas::with(['lembaga', 'jurusan'])->withCount('riwayatKelasSiswas as siswa_count');
@@ -23,9 +24,51 @@ class KelasController extends Controller
             $query->whereHas('lembaga', fn($q) => $q->where('yayasan_id', $user->yayasan_id));
         }
 
-        $kelas = $query->latest()->paginate(10);
+        // Filter tingkat
+        if ($tingkat = $request->input('tingkat')) {
+            $query->where('tingkat', $tingkat);
+        }
 
-        return view('kelas.index', compact('kelas'));
+        // Filter jurusan
+        if ($jurusanId = $request->input('jurusan_id')) {
+            $query->where('jurusan_id', $jurusanId);
+        }
+
+        $perPage = (int) $request->input('per_page', 10);
+        if (!in_array($perPage, [10, 25, 50, 100])) {
+            $perPage = 10;
+        }
+
+        $kelas = $query->latest()->paginate($perPage)->appends($request->except('page'));
+
+        // Get filter options
+        $tingkats = Kelas::select('tingkat')
+            ->whereNotNull('tingkat')
+            ->whereIn('lembaga_id', function ($q) use ($user) {
+                if ($user->lembaga_id) {
+                    $q->select('id')->from('lembagas')->where('id', $user->lembaga_id);
+                } elseif ($user->yayasan_id) {
+                    $q->select('id')->from('lembagas')->where('yayasan_id', $user->yayasan_id);
+                } else {
+                    $q->select('id')->from('lembagas')->where('is_active', true);
+                }
+            })
+            ->distinct()->orderBy('tingkat')->pluck('tingkat');
+        $jurusans = collect();
+        if ($user->lembaga_id) {
+            $jurusans = Jurusan::where('lembaga_id', $user->lembaga_id)->orderBy('nama')->get();
+        } elseif ($user->yayasan_id) {
+            $jurusans = Jurusan::whereHas('lembaga', fn($q) => $q->where('yayasan_id', $user->yayasan_id))->orderBy('nama')->get();
+        } else {
+            $jurusans = Jurusan::orderBy('nama')->get();
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            $html = view('kelas._table', compact('kelas'))->render();
+            return response()->json(['html' => $html, 'pagination' => $kelas->links()->toHtml()]);
+        }
+
+        return view('kelas.index', compact('kelas', 'tingkats', 'jurusans'));
     }
 
     public function create(): View

@@ -13,17 +13,17 @@ use Illuminate\Support\Facades\Log;
 
 class SisdaImportService
 {
-    protected string $baseUrl = 'https://api.daruttaqwa.or.id/sisda/v1';
+    protected string $baseUrl = 'https://apiakademik.daruttaqwa.or.id/api';
 
     /**
-     * Sync semua siswa dari Sisda API.
-     * Proses per lembaga: ambil semua lembaga yang punya unit_formal,
-     * lalu tarik data siswa yang UnitFormal-nya cocok.
+     * Sync semua siswa dari API Akademik.
+     * Proses per lembaga: ambil semua lembaga yang punya kode_sisda,
+     * lalu tarik data kelas per lembaga, lalu siswa per kelas.
      */
     public function syncAll(): array
     {
-        $lembagas = Lembaga::whereNotNull('unit_formal')
-            ->where('unit_formal', '!=', '')
+        $lembagas = Lembaga::whereNotNull('kode_sisda')
+            ->where('kode_sisda', '!=', '')
             ->where('is_active', true)
             ->get();
 
@@ -36,133 +36,231 @@ class SisdaImportService
     }
 
     /**
-     * Sync siswa untuk satu lembaga.
+     * Sync siswa untuk satu lembaga via API Akademik.
+     * Iterasi kelas dari GET /lembaga/{kode_sisda}/kelas,
+     * lalu per kelas ambil siswa dari GET /lembaga/{kode_sisda}/kelas/{idkelas}/siswa.
+     * Setelah sync, soft-delete siswa yang tidak ada di API.
      */
     public function syncForLembaga(Lembaga $lembaga): array
     {
-        $response = $this->fetchSiswa();
-        if (!$response || !isset($response['data'])) {
-            return ['success' => false, 'message' => 'Gagal mengambil data dari Sisda API', 'count' => 0];
+        $idunit = $lembaga->kode_sisda;
+        if (!$idunit) {
+            return ['success' => false, 'message' => 'Lembaga tidak punya kode_sisda', 'count' => 0];
         }
 
-        $siswas = collect($response['data'])->filter(function ($item) use ($lembaga) {
-            return strtoupper($item['UnitFormal'] ?? '') === strtoupper($lembaga->unit_formal);
-        });
+        $kelasList = $this->fetchKelas($idunit);
+        if ($kelasList === null) {
+            return ['success' => false, 'message' => 'Gagal mengambil data kelas dari API Akademik', 'count' => 0];
+        }
 
         $tahunAjaranAktif = TahunAjaran::where('yayasan_id', $lembaga->yayasan_id)
             ->where('is_active', true)
             ->first();
 
-        $stats = ['created' => 0, 'updated' => 0, 'skipped' => 0, 'kelas_created' => 0, 'jurusan_created' => 0];
+        $stats = ['created' => 0, 'updated' => 0, 'skipped' => 0, 'kelas_created' => 0, 'jurusan_created' => 0, 'deleted' => 0];
+        $details = ['created' => [], 'updated' => [], 'deleted' => [], 'restored' => []];
+        $totalSiswa = 0;
+        $idpersonDariApi = [];
 
-        foreach ($siswas as $data) {
-            $this->processSiswa($lembaga, $data, $tahunAjaranAktif, $stats);
+        foreach ($kelasList as $kelasData) {
+            $idkelas = $kelasData['idkelas'] ?? null;
+            if (!$idkelas) {
+                continue;
+            }
+
+            $siswaList = $this->fetchSiswaByKelas($idunit, $idkelas);
+            if ($siswaList === null) {
+                continue;
+            }
+
+            foreach ($siswaList as $data) {
+                $data['_kelas'] = $kelasData;
+                $this->processSiswa($lembaga, $data, $tahunAjaranAktif, $stats, $details);
+                $totalSiswa++;
+
+                if ($idperson = $data['idperson'] ?? null) {
+                    $idpersonDariApi[] = $idperson;
+                }
+            }
         }
 
-        Log::info("Sisda sync: lembaga_id={$lembaga->id} unit={$lembaga->unit_formal}", $stats);
+        // Soft-delete siswa lembaga ini yang tidak ada di response API
+        $deletedSiswa = Siswa::where('lembaga_id', $lembaga->id)
+            ->whereNull('deleted_at')
+            ->whereNotIn('idperson', $idpersonDariApi)
+            ->whereNotNull('idperson')
+            ->get();
+
+        $deletedCount = $deletedSiswa->count();
+
+        if ($deletedCount > 0) {
+            foreach ($deletedSiswa as $s) {
+                $details['deleted'][] = "{$s->nama} (NISN: " . ($s->nisn ?? '-') . ")";
+            }
+
+            Siswa::where('lembaga_id', $lembaga->id)
+                ->whereNull('deleted_at')
+                ->whereNotIn('idperson', $idpersonDariApi)
+                ->whereNotNull('idperson')
+                ->update(['is_active' => false]);
+
+            Siswa::where('lembaga_id', $lembaga->id)
+                ->whereNull('deleted_at')
+                ->whereNotIn('idperson', $idpersonDariApi)
+                ->whereNotNull('idperson')
+                ->delete();
+
+            $stats['deleted'] = $deletedCount;
+        }
+
+        Log::info("Sisda sync: lembaga_id={$lembaga->id} kode_sisda={$idunit}", $stats);
 
         return [
             'success' => true,
-            'message' => "Sync selesai. {$stats['created']} baru, {$stats['updated']} diperbarui, {$stats['skipped']} dilewati.",
-            'count' => $siswas->count(),
+            'message' => "Sync selesai. {$stats['created']} baru, {$stats['updated']} diperbarui, {$stats['skipped']} dilewati, {$stats['deleted']} dihapus.",
+            'count' => $totalSiswa,
             'stats' => $stats,
+            'details' => $details,
         ];
     }
 
-    protected function fetchSiswa(): ?array
+    protected function fetchKelas(string $idunit): ?array
     {
-        $url = $this->baseUrl . '/siswa';
+        $url = $this->baseUrl . '/lembaga/' . $idunit . '/kelas';
         try {
             $response = Http::timeout(30)->get($url);
             if ($response->successful()) {
-                return $response->json();
+                $json = $response->json();
+                return $json['data'] ?? null;
             }
-            Log::error('Sisda API error', ['status' => $response->status(), 'body' => $response->body()]);
+            Log::error('API Akademik error (kelas)', ['status' => $response->status(), 'body' => $response->body()]);
             return null;
         } catch (\Exception $e) {
-            Log::error('Sisda API exception', ['message' => $e->getMessage()]);
+            Log::error('API Akademik exception (kelas)', ['message' => $e->getMessage()]);
             return null;
         }
     }
 
-    protected function processSiswa(Lembaga $lembaga, array $data, ?TahunAjaran $tahunAjaran, array &$stats): void
+    protected function fetchSiswaByKelas(string $idunit, string $idkelas): ?array
+    {
+        $url = $this->baseUrl . '/lembaga/' . $idunit . '/kelas/' . $idkelas . '/siswa';
+        try {
+            $response = Http::timeout(30)->get($url);
+            if ($response->successful()) {
+                $json = $response->json();
+                return $json['data'] ?? null;
+            }
+            Log::error('API Akademik error (siswa)', ['status' => $response->status(), 'body' => $response->body()]);
+            return null;
+        } catch (\Exception $e) {
+            Log::error('API Akademik exception (siswa)', ['message' => $e->getMessage()]);
+            return null;
+        }
+    }
+
+    protected function processSiswa(Lembaga $lembaga, array $data, ?TahunAjaran $tahunAjaran, array &$stats, array &$details = []): void
     {
         // Pastikan kelas ada (auto-create)
-        $kelas = $this->resolveKelas($lembaga, $data, $stats);
+        $kelasData = $data['_kelas'] ?? [];
+        $kelas = $this->resolveKelas($lembaga, $kelasData, $stats);
 
-        // Siswa: cari by external_id atau nis (pakai idperson sebagai nis)
+        // Siswa: cari by idperson (acuan sync)
+        $idperson = $data['idperson'] ?? null;
+        if (!$idperson) {
+            $stats['skipped']++;
+            return;
+        }
+
         $siswa = Siswa::where('lembaga_id', $lembaga->id)
-            ->where(function ($q) use ($data) {
-                $q->where('external_id', $data['idperson'])
-                    ->orWhere('nis', $data['idperson']);
-            })
+            ->where('idperson', $idperson)
             ->first();
 
         $siswaData = $this->mapSiswaData($lembaga, $data);
+        $needsRiwayat = false;
+        $namaSiswa = $siswaData['nama'];
+        $nisnSiswa = $siswaData['nisn'] ?? '-';
 
         if ($siswa) {
-            $siswa->update($siswaData);
-            $stats['updated']++;
+            // Jika sebelumnya di-soft-delete, restore
+            if ($siswa->trashed()) {
+                $siswa->restore();
+                $siswa->update(array_merge($siswaData, ['is_active' => true]));
+                $needsRiwayat = true;
+                $stats['created']++;
+                $details['restored'][] = "{$namaSiswa} (NISN: {$nisnSiswa}) — dipulihkan";
+            } else {
+                // Cek apakah ada perubahan nyata
+                $changed = false;
+                $current = $siswa->only(array_keys($siswaData));
+                foreach ($siswaData as $key => $val) {
+                    // Normalize null vs empty string
+                    $currentVal = $current[$key] ?? null;
+                    if ((string) $currentVal !== (string) $val) {
+                        $changed = true;
+                        break;
+                    }
+                }
+
+                if ($changed) {
+                    $siswa->update($siswaData);
+                    $stats['updated']++;
+                    $details['updated'][] = "{$namaSiswa} (NISN: {$nisnSiswa})";
+                } else {
+                    $stats['skipped']++;
+                }
+            }
         } else {
             $siswa = Siswa::create($siswaData);
+            $needsRiwayat = true;
             $stats['created']++;
+            $details['created'][] = "{$namaSiswa} (NISN: {$nisnSiswa})";
         }
 
-        // Assign ke kelas via riwayat_kelas_siswas (bila ada tahun ajaran aktif & kelas ditemukan)
-        if ($kelas && $tahunAjaran && $siswa->wasRecentlyCreated) {
-            $this->assignKelas($siswa, $kelas, $tahunAjaran);
+        // Assign ke kelas via riwayat_kelas_siswas
+        if ($kelas && $tahunAjaran && $needsRiwayat) {
+            $tglMasuk = $data['tgl_masuk'] ?? now()->toDateString();
+            $this->assignKelas($siswa, $kelas, $tahunAjaran, $tglMasuk);
         } elseif ($kelas && $tahunAjaran) {
-            // Update existing: pastikan riwayat kelas terbaru
-            $this->ensureRiwayatKelas($siswa, $kelas, $tahunAjaran);
+            $tglMasuk = $data['tgl_masuk'] ?? now()->toDateString();
+            $this->ensureRiwayatKelas($siswa, $kelas, $tahunAjaran, $tglMasuk);
         }
     }
 
-    protected function resolveKelas(Lembaga $lembaga, array $data, array &$stats): ?Kelas
+    protected function resolveKelas(Lembaga $lembaga, array $kelasData, array &$stats): ?Kelas
     {
-        if (empty($data['idkelasFormal'])) {
+        $idkelas = $kelasData['idkelas'] ?? null;
+        if (!$idkelas) {
             return null;
         }
 
-        $kelas = Kelas::where('external_id', $data['idkelasFormal'])->first();
+        $kelas = Kelas::where('external_id', $idkelas)->first();
         if ($kelas) {
             return $kelas;
         }
 
-        // Cari atau buat jurusan dari nama kelas (misal "11 ALL 1" -> jurusan "ALL")
+        // Resolve jurusan dari field jurusan API
         $jurusan = null;
-        $namaKelas = $data['KelasFormal'] ?? '';
-
-        if ($namaKelas) {
-            // Asumsi format: "TINGKAT JURUSAN NOMOR" misal "11 ALL 1", "XI TKJ 3"
-            $parts = explode(' ', $namaKelas);
-            if (count($parts) >= 2) {
-                $namaJurusan = $parts[1]; // ALL, TKJ, IPA, etc
-                $jurusan = Jurusan::firstOrCreate(
-                    ['lembaga_id' => $lembaga->id, 'nama' => $namaJurusan],
-                    ['kode' => strtoupper($namaJurusan)]
-                );
-                if ($jurusan->wasRecentlyCreated) {
-                    $stats['jurusan_created']++;
-                }
+        $namaJurusan = $kelasData['jurusan'] ?? null;
+        if ($namaJurusan && $namaJurusan !== '-') {
+            $jurusan = Jurusan::firstOrCreate(
+                ['lembaga_id' => $lembaga->id, 'nama' => $namaJurusan],
+                ['kode' => strtoupper($namaJurusan)]
+            );
+            if ($jurusan->wasRecentlyCreated) {
+                $stats['jurusan_created']++;
             }
         }
 
         $kelas = Kelas::create([
             'lembaga_id' => $lembaga->id,
             'jurusan_id' => $jurusan?->id,
-            'nama' => $namaKelas ?: $data['idkelasFormal'],
-            'tingkat' => $this->extractTingkat($namaKelas),
-            'external_id' => $data['idkelasFormal'],
+            'nama' => $kelasData['nama'] ?? $idkelas,
+            'tingkat' => $kelasData['tingkat'] ?? '',
+            'external_id' => $idkelas,
         ]);
         $stats['kelas_created']++;
 
         return $kelas;
-    }
-
-    protected function extractTingkat(string $namaKelas): string
-    {
-        $parts = explode(' ', $namaKelas);
-        return $parts[0] ?? $namaKelas;
     }
 
     protected function mapSiswaData(Lembaga $lembaga, array $data): array
@@ -174,30 +272,26 @@ class SisdaImportService
 
         return [
             'lembaga_id' => $lembaga->id,
-            'external_id' => $data['idperson'],
-            'nis' => $data['idperson'], // pakai idperson sbg NIS
-            'nisn' => null, // Sisda tidak menyediakan NISN
-            'nama' => $data['nama'],
-            'tempat_lahir' => $data['lahirtempat'] ?? null,
-            'tanggal_lahir' => $data['lahirtanggal'] ?? null,
+            'idperson' => $data['idperson'],
+            'nisn' => $data['nisn'] ?? null,
+            'nama' => $data['nama'] ?? '',
             'jenis_kelamin' => $gender,
-            'telp' => $data['phone'] ?? null,
-            'status' => ($data['siswa_status'] ?? '1') === '1' ? 'aktif' : 'keluar',
-            'is_active' => ($data['person_status'] ?? '1') === '1',
+            'status' => 'aktif',
+            'is_active' => true,
         ];
     }
 
-    protected function assignKelas(Siswa $siswa, Kelas $kelas, TahunAjaran $tahunAjaran): void
+    protected function assignKelas(Siswa $siswa, Kelas $kelas, TahunAjaran $tahunAjaran, ?string $tanggalMasuk = null): void
     {
         RiwayatKelasSiswa::create([
             'siswa_id' => $siswa->id,
             'kelas_id' => $kelas->id,
             'tahun_ajaran_id' => $tahunAjaran->id,
-            'tanggal_masuk' => now()->toDateString(),
+            'tanggal_masuk' => $tanggalMasuk ?? now()->toDateString(),
         ]);
     }
 
-    protected function ensureRiwayatKelas(Siswa $siswa, Kelas $kelas, TahunAjaran $tahunAjaran): void
+    protected function ensureRiwayatKelas(Siswa $siswa, Kelas $kelas, TahunAjaran $tahunAjaran, ?string $tanggalMasuk = null): void
     {
         $existing = RiwayatKelasSiswa::where('siswa_id', $siswa->id)
             ->where('tahun_ajaran_id', $tahunAjaran->id)
@@ -205,74 +299,95 @@ class SisdaImportService
             ->first();
 
         if (!$existing) {
-            $this->assignKelas($siswa, $kelas, $tahunAjaran);
+            $this->assignKelas($siswa, $kelas, $tahunAjaran, $tanggalMasuk);
         } elseif ($existing->kelas_id !== $kelas->id) {
             // Pindah kelas: tutup yang lama, buat baru
             $existing->update(['tanggal_keluar' => now()->toDateString()]);
-            $this->assignKelas($siswa, $kelas, $tahunAjaran);
+            $this->assignKelas($siswa, $kelas, $tahunAjaran, $tanggalMasuk);
         }
     }
 
     /**
      * Sync kenaikan kelas: panggil saat tahun ajaran baru aktif.
-     * Ambil data terbaru dari Sisda, update riwayat kelas siswa.
+     * Ambil data terbaru dari API Akademik, update riwayat kelas siswa.
      */
     public function syncKenaikanKelas(Lembaga $lembaga, TahunAjaran $tahunAjaranBaru): array
     {
-        $response = $this->fetchSiswa();
-        if (!$response || !isset($response['data'])) {
-            return ['success' => false, 'message' => 'Gagal mengambil data dari Sisda API'];
+        $idunit = $lembaga->kode_sisda;
+        if (!$idunit) {
+            return ['success' => false, 'message' => 'Lembaga tidak punya kode_sisda'];
         }
 
-        $siswas = collect($response['data'])->filter(function ($item) use ($lembaga) {
-            return strtoupper($item['UnitFormal'] ?? '') === strtoupper($lembaga->unit_formal);
-        });
+        $kelasList = $this->fetchKelas($idunit);
+        if ($kelasList === null) {
+            return ['success' => false, 'message' => 'Gagal mengambil data kelas dari API Akademik'];
+        }
 
         $stats = ['naik_kelas' => 0, 'tetap' => 0, 'tidak_ditemukan' => 0];
 
-        foreach ($siswas as $data) {
-            $siswa = Siswa::where('lembaga_id', $lembaga->id)
-                ->where('external_id', $data['idperson'])
-                ->first();
-
-            if (!$siswa) {
-                $stats['tidak_ditemukan']++;
+        foreach ($kelasList as $kelasData) {
+            $idkelas = $kelasData['idkelas'] ?? null;
+            if (!$idkelas) {
                 continue;
             }
 
-            $kelas = $this->resolveKelas($lembaga, $data, $stats);
-
-            if (!$kelas) {
-                $stats['tidak_ditemukan']++;
+            $siswaList = $this->fetchSiswaByKelas($idunit, $idkelas);
+            if ($siswaList === null) {
                 continue;
             }
 
-            // Cek riwayat tahun ajaran baru
-            $existing = RiwayatKelasSiswa::where('siswa_id', $siswa->id)
-                ->where('tahun_ajaran_id', $tahunAjaranBaru->id)
-                ->first();
-
-            if ($existing) {
-                if ($existing->kelas_id !== $kelas->id) {
-                    $existing->update(['kelas_id' => $kelas->id, 'tanggal_keluar' => null]);
-                    $stats['naik_kelas']++;
-                } else {
-                    $stats['tetap']++;
+            foreach ($siswaList as $data) {
+                $idperson = $data['idperson'] ?? null;
+                if (!$idperson) {
+                    $stats['tidak_ditemukan']++;
+                    continue;
                 }
-            } else {
-                // Tutup riwayat tahun lalu
-                RiwayatKelasSiswa::where('siswa_id', $siswa->id)
-                    ->whereNull('tanggal_keluar')
-                    ->update(['tanggal_keluar' => now()->toDateString()]);
 
-                // Buat riwayat baru
-                RiwayatKelasSiswa::create([
-                    'siswa_id' => $siswa->id,
-                    'kelas_id' => $kelas->id,
-                    'tahun_ajaran_id' => $tahunAjaranBaru->id,
-                    'tanggal_masuk' => now()->toDateString(),
-                ]);
-                $stats['naik_kelas']++;
+                $siswa = Siswa::where('lembaga_id', $lembaga->id)
+                    ->where('idperson', $idperson)
+                    ->first();
+
+                if (!$siswa) {
+                    $stats['tidak_ditemukan']++;
+                    continue;
+                }
+
+                $kelas = $this->resolveKelas($lembaga, $kelasData, $stats);
+
+                if (!$kelas) {
+                    $stats['tidak_ditemukan']++;
+                    continue;
+                }
+
+                // Cek riwayat tahun ajaran baru
+                $existing = RiwayatKelasSiswa::where('siswa_id', $siswa->id)
+                    ->where('tahun_ajaran_id', $tahunAjaranBaru->id)
+                    ->first();
+
+                if ($existing) {
+                    if ($existing->kelas_id !== $kelas->id) {
+                        $existing->update(['kelas_id' => $kelas->id, 'tanggal_keluar' => null]);
+                        $stats['naik_kelas']++;
+                    } else {
+                        $stats['tetap']++;
+                    }
+                } else {
+                    // Tutup riwayat tahun lalu
+                    RiwayatKelasSiswa::where('siswa_id', $siswa->id)
+                        ->whereNull('tanggal_keluar')
+                        ->update(['tanggal_keluar' => now()->toDateString()]);
+
+                    $tglMasuk = $data['tgl_masuk'] ?? now()->toDateString();
+
+                    // Buat riwayat baru
+                    RiwayatKelasSiswa::create([
+                        'siswa_id' => $siswa->id,
+                        'kelas_id' => $kelas->id,
+                        'tahun_ajaran_id' => $tahunAjaranBaru->id,
+                        'tanggal_masuk' => $tglMasuk,
+                    ]);
+                    $stats['naik_kelas']++;
+                }
             }
         }
 

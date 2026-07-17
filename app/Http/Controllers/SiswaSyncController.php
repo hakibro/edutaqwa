@@ -26,14 +26,14 @@ class SiswaSyncController extends Controller
         $tahunAjarans = collect();
 
         if ($user->isAdminYayasan() || $user->isSuperAdmin()) {
-            $lembagas = Lembaga::whereNotNull('unit_formal')
-                ->where('unit_formal', '!=', '')
+            $lembagas = Lembaga::whereNotNull('kode_sisda')
+                ->where('kode_sisda', '!=', '')
                 ->get();
             $tahunAjarans = TahunAjaran::where('yayasan_id', $user->yayasan_id)->get();
         } elseif ($user->lembaga_id) {
             $lembagas = Lembaga::where('id', $user->lembaga_id)
-                ->whereNotNull('unit_formal')
-                ->where('unit_formal', '!=', '')
+                ->whereNotNull('kode_sisda')
+                ->where('kode_sisda', '!=', '')
                 ->get();
             $lembaga = $lembagas->first();
             if ($lembaga) {
@@ -59,6 +59,10 @@ class SiswaSyncController extends Controller
         }
 
         $result = $this->sisdaService->syncForLembaga($lembaga);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json($result);
+        }
 
         return back()->with($result['success'] ? 'success' : 'error', $result['message']);
     }

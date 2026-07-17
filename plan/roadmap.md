@@ -56,10 +56,12 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 ### 2.2 Admin Yayasan
 
 - [x] CRUD Lembaga
+- [x] Auto-fill kode_sisda (idunit) dari API Akademik saat pilih unit_formal di form create/edit lembaga
+- [x] Import Lembaga dari API Akademik (apiakademik /lembaga) di halaman edit yayasan
 - [x] CRUD Tahun Ajaran (set active, nonaktifkan jadwal & riwayat tahun lalu)
 - [x] Approval Guru Baru (daftar pending, setujui/tolak)
 - [x] Bulk Action Approval (setujui/tolak massal via checkbox)
-- [x] Approval Satminkal (generate kode satminkal otomatis saat approve)
+- [x] Approval Satminkal (kode satminkal ditentukan admin lembaga)
 - [x] Kalender Akademik (hari efektif, libur)
 
 ---
@@ -70,9 +72,9 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 
 - [x] CRUD Guru
 - [x] TMT (Tanggal Mulai Tugas) field
-- [x] Kode Guru Lembaga (generate otomatis)
+- [x] Kode Guru Lembaga (ditentukan manual oleh admin lembaga)
 - [x] Klasifikasi PTK (jenis PTK, satminkal/non)
-- [x] Import Guru (XLSX)
+- [x] Import Guru (XLSX) — support tambah baru & update massal via export-edit-import
 - [x] Upload dokumen guru
 - [x] Bulk Action Guru (aktifkan/nonaktifkan massal via checkbox)
 
@@ -87,7 +89,7 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 
 - [x] CRUD Siswa
 - [x] Import dari Sisda API (mapping + deduplikasi)
-- [x] Sync kenaikan kelas via Sisda API (setelah tahun ajaran baru aktif)
+- [x] ~~Sync kenaikan kelas via Sisda API (setelah tahun ajaran baru aktif)~~ — ditangani Sisda Yayasan
 - [x] Upload foto siswa
 - [x] Mutasi siswa: pindah masuk
 - [x] Mutasi siswa: pindah keluar

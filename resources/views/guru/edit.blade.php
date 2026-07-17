@@ -10,6 +10,12 @@
                     enctype="multipart/form-data">
                     @csrf @method('PUT')
 
+                    @if (session('error'))
+                        <div class="rounded-md bg-red-50 p-4 text-sm text-red-700 border border-red-200">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
                     @if (!auth()->user()->lembaga_id)
                         <div>
                             <x-input-label for="lembaga_id" value="Lembaga" />
@@ -69,10 +75,13 @@
                                     @checked(old('status_satminkal', $guru->status_satminkal))>
                                 <span class="text-sm text-gray-700">Status Satminkal (PTK Tetap)</span>
                             </label>
-                            @if ($guru->kode_guru_satminkal)
-                                <p class="mt-1 text-xs text-indigo-600">Kode Satminkal: {{ $guru->kode_guru_satminkal }}
-                                </p>
-                            @endif
+                        </div>
+                        <div>
+                            <x-input-label for="kode_guru_satminkal" value="Kode Guru Satminkal" />
+                            <x-text-input id="kode_guru_satminkal" name="kode_guru_satminkal" type="text"
+                                class="mt-1 block w-full" :value="old('kode_guru_satminkal', $guru->kode_guru_satminkal)" maxlength="50" />
+                            <x-input-error :messages="$errors->get('kode_guru_satminkal')" class="mt-2" />
+                            <p class="mt-1 text-xs text-gray-500">Diisi jika guru berstatus satminkal (PTK Tetap).</p>
                         </div>
                     </div>
 
@@ -121,8 +130,8 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <x-input-label for="tempat_lahir" value="Tempat Lahir" />
-                            <x-text-input id="tempat_lahir" name="tempat_lahir" type="text" class="mt-1 block w-full"
-                                :value="old('tempat_lahir', $guru->tempat_lahir)" />
+                            <x-text-input id="tempat_lahir" name="tempat_lahir" type="text"
+                                class="mt-1 block w-full" :value="old('tempat_lahir', $guru->tempat_lahir)" />
                         </div>
                         <div>
                             <x-input-label for="tanggal_lahir" value="Tanggal Lahir" />
@@ -158,9 +167,10 @@
 
                     <div>
                         <x-input-label for="kode_guru_lembaga" value="Kode Guru Lembaga" />
-                        <x-text-input id="kode_guru_lembaga" type="text" class="mt-1 block w-full bg-gray-100"
-                            :value="$guru->kode_guru_lembaga" disabled />
-                        <p class="mt-1 text-xs text-gray-500">Kode guru lembaga di-generate otomatis.</p>
+                        <x-text-input id="kode_guru_lembaga" name="kode_guru_lembaga" type="text"
+                            class="mt-1 block w-full" :value="old('kode_guru_lembaga', $guru->kode_guru_lembaga)" required maxlength="50" />
+                        <x-input-error :messages="$errors->get('kode_guru_lembaga')" class="mt-2" />
+                        <p class="mt-1 text-xs text-gray-500">Kode unik per guru, ditentukan admin lembaga.</p>
                     </div>
 
                     <div class="flex items-center gap-2">

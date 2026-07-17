@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Lembaga;
 use App\Models\LogAktivita;
 use App\Models\User;
 use App\Models\Yayasan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -85,5 +87,81 @@ class YayasanController extends Controller
         LogAktivita::log('delete', 'Super admin menghapus yayasan "' . $yayasan->nama . '"', $yayasan);
         $yayasan->delete();
         return redirect()->route('yayasan.index')->with('success', 'Yayasan berhasil dihapus.');
+    }
+
+    public function importLembaga(Yayasan $yayasan): RedirectResponse
+    {
+        $url = 'https://apiakademik.daruttaqwa.or.id/api/lembaga';
+
+        try {
+            $response = Http::timeout(30)->get($url);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal menghubungi API Akademik: ' . $e->getMessage());
+        }
+
+        if (!$response->successful()) {
+            return back()->with('error', 'API Akademik merespon dengan status ' . $response->status());
+        }
+
+        $data = $response->json();
+        $allLembaga = $data['data'] ?? [];
+
+        $mapTingkat = [
+            'PAUD' => 'PAUD',
+            'RA' => 'RA',
+            'MI' => 'MI',
+            'MTS' => 'MTS',
+            'MA' => 'MA',
+            'SD' => 'SD',
+            'SMP' => 'SMP',
+            'SMA' => 'SMA',
+            'SMK' => 'SMK',
+        ];
+
+        $imported = 0;
+        $skipped = 0;
+
+        foreach ($allLembaga as $item) {
+            $kodeSisda = $item['idunit'] ?? null;
+            $kode = $item['kode'] ?? null;
+            $nama = $item['nama'] ?? null;
+
+            if (!$kodeSisda || !$kode || !$nama)
+                continue;
+
+            // Cek apakah sudah ada di yayasan ini (by kode_sisda)
+            $exists = Lembaga::where('yayasan_id', $yayasan->id)
+                ->where('kode_sisda', $kodeSisda)
+                ->exists();
+
+            if ($exists) {
+                $skipped++;
+                continue;
+            }
+
+            $tingkat = isset($mapTingkat[$kode]) ? $mapTingkat[$kode] : 'MADIN';
+            $unitFormal = isset($mapTingkat[$kode]) ? $kode : null;
+
+            Lembaga::create([
+                'yayasan_id' => $yayasan->id,
+                'nama' => $nama,
+                'kode' => $kode,
+                'kode_sisda' => $kodeSisda,
+                'tingkat' => $tingkat,
+                'unit_formal' => $unitFormal,
+                'is_active' => true,
+                'sisda_mode' => true,
+            ]);
+
+            $imported++;
+        }
+
+        LogAktivita::log('import', "Import {$imported} lembaga dari API Akademik ke yayasan \"{$yayasan->nama}\" ({$skipped} dilewati)", $yayasan);
+
+        $msg = "Berhasil import {$imported} lembaga dari API Akademik.";
+        if ($skipped > 0)
+            $msg .= " {$skipped} sudah ada dan dilewati.";
+
+        return redirect()->route('yayasan.edit', $yayasan)->with('success', $msg);
     }
 }
