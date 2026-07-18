@@ -203,6 +203,13 @@ Route::middleware('auth')->group(function () {
     // Jadwal Saya — Guru
     Route::middleware('role:guru')->get('/guru/jadwal-saya', [JadwalController::class, 'jadwalSaya'])->name('guru.jadwal-saya');
 
+    // Jurnal — Monitoring & Verifikasi (Kurikulum, Kepala Lembaga, Admin Lembaga)
+    // DILETAKKAN SEBELUM route {jurnal} biar 'monitoring' gak ketangkap sbg parameter wildcard
+    Route::middleware('role:kurikulum,kepala_lembaga,admin_lembaga')->group(function () {
+        Route::get('/jurnal-mengajar/monitoring', [JurnalMengajarController::class, 'monitoring'])->name('jurnal-mengajar.monitoring');
+        Route::post('/jurnal-mengajar/{jurnal}/verify', [JurnalMengajarController::class, 'verify'])->name('jurnal-mengajar.verify');
+    });
+
     // Jurnal — Guru
     Route::middleware('role:guru')->group(function () {
         Route::get('/jurnal-mengajar', [JurnalMengajarController::class, 'index'])->name('jurnal-mengajar.index');
@@ -212,12 +219,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/jurnal-mengajar/{jurnal}/edit', [JurnalMengajarController::class, 'edit'])->name('jurnal-mengajar.edit');
         Route::put('/jurnal-mengajar/{jurnal}', [JurnalMengajarController::class, 'update'])->name('jurnal-mengajar.update');
         Route::delete('/jurnal-mengajar/{jurnal}', [JurnalMengajarController::class, 'destroy'])->name('jurnal-mengajar.destroy');
-    });
-
-    // Jurnal — Monitoring & Verifikasi (Kurikulum, Kepala Lembaga, Admin Lembaga)
-    Route::middleware('role:kurikulum,kepala_lembaga,admin_lembaga')->group(function () {
-        Route::get('/jurnal-mengajar/monitoring', [JurnalMengajarController::class, 'monitoring'])->name('jurnal-mengajar.monitoring');
-        Route::post('/jurnal-mengajar/{jurnal}/verify', [JurnalMengajarController::class, 'verify'])->name('jurnal-mengajar.verify');
     });
 
     // === PRESENSI SISWA (Phase 6) === (DIKEEP utk backward compat, redirect ke jurnal)
