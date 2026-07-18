@@ -6,10 +6,7 @@
                 {{-- Tombol Import Excel --}}
                 <button onclick="document.getElementById('import-modal').classList.remove('hidden')"
                     class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                    </svg>
+                    <x-heroicon-o-arrow-up-tray class="w-4 h-4" />
                     Import Excel
                 </button>
             </div>
@@ -22,20 +19,14 @@
             @if (session('success'))
                 <div
                     class="mb-4 rounded-lg bg-green-50 border border-green-200 p-4 text-sm text-green-800 flex items-center gap-2">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <x-heroicon-o-check-circle class="w-5 h-5 shrink-0" />
                     {{ session('success') }}
                 </div>
             @endif
             @if (session('error'))
                 <div
                     class="mb-4 rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-800 flex items-center gap-2">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <x-heroicon-o-exclamation-circle class="w-5 h-5 shrink-0" />
                     {{ session('error') }}
                 </div>
             @endif
@@ -44,10 +35,7 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex items-center gap-3">
                     <div class="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
-                        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
+                        <x-heroicon-o-document-text class="w-5 h-5 text-indigo-600" />
                     </div>
                     <div>
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">CP</p>
@@ -56,10 +44,7 @@
                 </div>
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex items-center gap-3">
                     <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
-                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                        </svg>
+                        <x-heroicon-o-clipboard-document-check class="w-5 h-5 text-emerald-600" />
                     </div>
                     <div>
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">TP</p>
@@ -68,10 +53,7 @@
                 </div>
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex items-center gap-3">
                     <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
-                        <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
+                        <x-heroicon-o-chart-bar class="w-5 h-5 text-amber-600" />
                     </div>
                     <div>
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">ATP</p>
@@ -80,10 +62,7 @@
                 </div>
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex items-center gap-3">
                     <div class="w-10 h-10 rounded-lg bg-rose-100 flex items-center justify-center shrink-0">
-                        <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                        </svg>
+                        <x-heroicon-o-book-open class="w-5 h-5 text-rose-600" />
                     </div>
                     <div>
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Modul Ajar</p>
@@ -101,10 +80,7 @@
                                 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                             class="flex-1 sm:flex-none px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap">
                             <span class="flex items-center justify-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
+                                <x-heroicon-o-document-text class="w-4 h-4" />
                                 CP
                                 <span
                                     class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold rounded-full"
@@ -116,10 +92,7 @@
                                 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                             class="flex-1 sm:flex-none px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap">
                             <span class="flex items-center justify-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                                </svg>
+                                <x-heroicon-o-clipboard-document-check class="w-4 h-4" />
                                 TP
                                 <span
                                     class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold rounded-full"
@@ -132,10 +105,7 @@
                                 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                             class="flex-1 sm:flex-none px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap">
                             <span class="flex items-center justify-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
+                                <x-heroicon-o-chart-bar class="w-4 h-4" />
                                 ATP
                                 <span
                                     class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold rounded-full"
@@ -147,10 +117,7 @@
                                 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                             class="flex-1 sm:flex-none px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap">
                             <span class="flex items-center justify-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                                </svg>
+                                <x-heroicon-o-book-open class="w-4 h-4" />
                                 Modul Ajar
                                 <span
                                     class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold rounded-full"
@@ -176,18 +143,27 @@
                                         </option>
                                     @endforeach
                                 </select>
+                                @if (auth()->user()->isAdminLembaga())
+                                    <select name="guru_id" onchange="this.form.submit()"
+                                        class="rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-1.5">
+                                        <option value="">Semua Guru</option>
+                                        @foreach ($gurus as $g)
+                                            <option value="{{ $g->id }}"
+                                                {{ request('guru_id') == $g->id ? 'selected' : '' }}>
+                                                {{ $g->nama }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                @endif
                                 <a href="{{ route('perangkat-ajar.index') }}"
-                                    class="text-xs text-gray-400 hover:text-gray-600 {{ request('mapel_id') ? '' : 'invisible' }}">Reset</a>
+                                    class="text-xs text-gray-400 hover:text-gray-600 {{ request('mapel_id') || request('guru_id') ? '' : 'invisible' }}">Reset</a>
                             </form>
                         </div>
                         <div class="flex items-center gap-2">
                             @if (auth()->user()->isGuru())
                                 <button @click="openModal('cp')"
                                     class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 4v16m8-8H4" />
-                                    </svg>
+                                    <x-heroicon-o-plus class="w-4 h-4" />
                                     Tambah CP
                                 </button>
                             @endif
@@ -263,12 +239,7 @@
                                     <tr>
                                         <td colspan="7" class="px-4 py-12 text-center">
                                             <div class="flex flex-col items-center gap-2">
-                                                <svg class="w-12 h-12 text-gray-300" fill="none"
-                                                    stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="1.5"
-                                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                </svg>
+                                                <x-heroicon-o-document-text class="w-12 h-12 text-gray-300" />
                                                 <p class="text-sm text-gray-500">Belum ada data CP.</p>
                                                 @if (auth()->user()->isGuru())
                                                     <button @click="openModal('cp')"
@@ -303,18 +274,27 @@
                                         </option>
                                     @endforeach
                                 </select>
+                                @if (auth()->user()->isAdminLembaga())
+                                    <select name="guru_id" onchange="this.form.submit()"
+                                        class="rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm py-1.5">
+                                        <option value="">Semua Guru</option>
+                                        @foreach ($gurus as $g)
+                                            <option value="{{ $g->id }}"
+                                                {{ request('guru_id') == $g->id ? 'selected' : '' }}>
+                                                {{ $g->nama }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                @endif
                                 <a href="{{ route('perangkat-ajar.index') }}"
-                                    class="text-xs text-gray-400 hover:text-gray-600 {{ request('mapel_id') ? '' : 'invisible' }}">Reset</a>
+                                    class="text-xs text-gray-400 hover:text-gray-600 {{ request('mapel_id') || request('guru_id') ? '' : 'invisible' }}">Reset</a>
                             </form>
                         </div>
                         <div class="flex items-center gap-2">
                             @if (auth()->user()->isGuru())
                                 <button @click="openModal('tp')"
                                     class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 transition">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 4v16m8-8H4" />
-                                    </svg>
+                                    <x-heroicon-o-plus class="w-4 h-4" />
                                     Tambah TP
                                 </button>
                             @endif
@@ -375,12 +355,8 @@
                                     <tr>
                                         <td colspan="5" class="px-4 py-12 text-center">
                                             <div class="flex flex-col items-center gap-2">
-                                                <svg class="w-12 h-12 text-gray-300" fill="none"
-                                                    stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="1.5"
-                                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                                                </svg>
+                                                <x-heroicon-o-clipboard-document-check
+                                                    class="w-12 h-12 text-gray-300" />
                                                 <p class="text-sm text-gray-500">Belum ada data TP.</p>
                                                 @if (auth()->user()->isGuru())
                                                     <button @click="openModal('tp')"
@@ -415,18 +391,27 @@
                                         </option>
                                     @endforeach
                                 </select>
+                                @if (auth()->user()->isAdminLembaga())
+                                    <select name="guru_id" onchange="this.form.submit()"
+                                        class="rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm py-1.5">
+                                        <option value="">Semua Guru</option>
+                                        @foreach ($gurus as $g)
+                                            <option value="{{ $g->id }}"
+                                                {{ request('guru_id') == $g->id ? 'selected' : '' }}>
+                                                {{ $g->nama }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                @endif
                                 <a href="{{ route('perangkat-ajar.index') }}"
-                                    class="text-xs text-gray-400 hover:text-gray-600 {{ request('mapel_id') ? '' : 'invisible' }}">Reset</a>
+                                    class="text-xs text-gray-400 hover:text-gray-600 {{ request('mapel_id') || request('guru_id') ? '' : 'invisible' }}">Reset</a>
                             </form>
                         </div>
                         <div class="flex items-center gap-2">
                             @if (auth()->user()->isGuru())
                                 <button @click="openModal('atp')"
                                     class="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-amber-500 transition">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 4v16m8-8H4" />
-                                    </svg>
+                                    <x-heroicon-o-plus class="w-4 h-4" />
                                     Tambah ATP
                                 </button>
                             @endif
@@ -485,12 +470,7 @@
                                     <tr>
                                         <td colspan="5" class="px-4 py-12 text-center">
                                             <div class="flex flex-col items-center gap-2">
-                                                <svg class="w-12 h-12 text-gray-300" fill="none"
-                                                    stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="1.5"
-                                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                                </svg>
+                                                <x-heroicon-o-chart-bar class="w-12 h-12 text-gray-300" />
                                                 <p class="text-sm text-gray-500">Belum ada data ATP.</p>
                                                 @if (auth()->user()->isGuru())
                                                     <button @click="openModal('atp')"
@@ -525,18 +505,27 @@
                                         </option>
                                     @endforeach
                                 </select>
+                                @if (auth()->user()->isAdminLembaga())
+                                    <select name="guru_id" onchange="this.form.submit()"
+                                        class="rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm py-1.5">
+                                        <option value="">Semua Guru</option>
+                                        @foreach ($gurus as $g)
+                                            <option value="{{ $g->id }}"
+                                                {{ request('guru_id') == $g->id ? 'selected' : '' }}>
+                                                {{ $g->nama }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                @endif
                                 <a href="{{ route('perangkat-ajar.index') }}"
-                                    class="text-xs text-gray-400 hover:text-gray-600 {{ request('mapel_id') ? '' : 'invisible' }}">Reset</a>
+                                    class="text-xs text-gray-400 hover:text-gray-600 {{ request('mapel_id') || request('guru_id') ? '' : 'invisible' }}">Reset</a>
                             </form>
                         </div>
                         <div class="flex items-center gap-2">
                             @if (auth()->user()->isGuru())
                                 <button @click="openModal('modul')"
                                     class="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-rose-500 transition">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 4v16m8-8H4" />
-                                    </svg>
+                                    <x-heroicon-o-plus class="w-4 h-4" />
                                     Tambah Modul
                                 </button>
                             @endif
@@ -604,12 +593,7 @@
                                     <tr>
                                         <td colspan="5" class="px-4 py-12 text-center">
                                             <div class="flex flex-col items-center gap-2">
-                                                <svg class="w-12 h-12 text-gray-300" fill="none"
-                                                    stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="1.5"
-                                                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                                                </svg>
+                                                <x-heroicon-o-book-open class="w-12 h-12 text-gray-300" />
                                                 <p class="text-sm text-gray-500">Belum ada data Modul Ajar.</p>
                                                 @if (auth()->user()->isGuru())
                                                     <button @click="openModal('modul')"

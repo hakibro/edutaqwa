@@ -9,10 +9,13 @@ use App\Models\LogAktivita;
 use App\Models\Siswa;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Services\PerPageTrait;
 use Illuminate\View\View;
 
 class SiswaController extends Controller
 {
+    use PerPageTrait;
+
     public function index(Request $request): View
     {
         $user = auth()->user();
@@ -53,7 +56,7 @@ class SiswaController extends Controller
             $query->whereHas('kelasAktif', fn($q) => $q->where('kelas.id', $kelasId));
         }
 
-        $siswas = $query->latest()->paginate(10)->withQueryString();
+        $siswas = $query->latest()->paginate($this->perPage($request))->withQueryString();
 
         // Data for filter dropdowns
         $lembaga = $lembagaId ? Lembaga::find($lembagaId) : null;

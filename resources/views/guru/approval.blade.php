@@ -125,21 +125,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="mt-4 flex items-center justify-between">
-                        <div class="flex items-center gap-2 text-sm text-gray-600">
-                            <span>Tampilkan</span>
-                            <select name="per_page" form="bulk-form"
-                                onchange="window.location.href='{{ route('guru.approval') }}?per_page='+this.value"
-                                class="rounded border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                @foreach ([10, 25, 50, 100] as $val)
-                                    <option value="{{ $val }}" {{ $perPage == $val ? 'selected' : '' }}>
-                                        {{ $val }}</option>
-                                @endforeach
-                            </select>
-                            <span>baris</span>
-                        </div>
-                        <div>{{ $gurus->links() }}</div>
-                    </div>
+                    <div class="mt-4">{{ $gurus->links() }}</div>
                 </div>
             </div>
         </div>

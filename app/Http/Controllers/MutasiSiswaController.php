@@ -8,12 +8,15 @@ use App\Models\LogAktivita;
 use App\Models\RiwayatKelasSiswa;
 use App\Models\Siswa;
 use App\Models\TahunAjaran;
+use App\Services\PerPageTrait;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class MutasiSiswaController extends Controller
 {
+    use PerPageTrait;
+
     /**
      * Form pindah masuk.
      */
@@ -127,7 +130,7 @@ class MutasiSiswaController extends Controller
     /**
      * Daftar alumni.
      */
-    public function alumni(): View
+    public function alumni(Request $request): View
     {
         $user = auth()->user();
         $query = Siswa::with('lembaga')->where('status', 'alumni');
@@ -138,7 +141,7 @@ class MutasiSiswaController extends Controller
             $query->whereHas('lembaga', fn($q) => $q->where('yayasan_id', $user->yayasan_id));
         }
 
-        $siswas = $query->latest()->paginate(10);
+        $siswas = $query->latest()->paginate($this->perPage($request));
 
         return view('siswa.alumni', compact('siswas'));
     }

@@ -12,6 +12,7 @@ use App\Models\ModulAjar;
 use App\Models\Tp;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Services\PerPageTrait;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -21,6 +22,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PerangkatAjarController extends Controller
 {
+    use PerPageTrait;
+
     // ============================================================
     // INDEX — Halaman utama Perangkat Ajar
     // ============================================================
@@ -72,34 +75,43 @@ class PerangkatAjarController extends Controller
         };
 
         $mapelId = $request->mapel_id;
+        $guruId = $request->guru_id;
 
         // CP
         $cpQuery = Cp::with(['mapel', 'guru'])->withCount('tps');
         $cpScope($cpQuery);
         if ($mapelId)
             $cpQuery->where('mapel_id', $mapelId);
-        $cps = $cpQuery->latest()->paginate(10, ['*'], 'cp_page');
+        if ($guruId)
+            $cpQuery->where('guru_id', $guruId);
+        $cps = $cpQuery->latest()->paginate($this->perPage($request), ['*'], 'cp_page');
 
         // TP
         $tpQuery = Tp::with(['cp.mapel', 'cp.guru'])->withCount('atps');
         $tpScope($tpQuery);
         if ($mapelId)
             $tpQuery->whereHas('cp', fn($q) => $q->where('mapel_id', $mapelId));
-        $tps = $tpQuery->latest()->paginate(10, ['*'], 'tp_page');
+        if ($guruId)
+            $tpQuery->whereHas('cp', fn($q) => $q->where('guru_id', $guruId));
+        $tps = $tpQuery->latest()->paginate($this->perPage($request), ['*'], 'tp_page');
 
         // ATP
         $atpQuery = Atp::with(['tp.cp.mapel', 'tp.cp.guru']);
         $atpScope($atpQuery);
         if ($mapelId)
             $atpQuery->whereHas('tp.cp', fn($q) => $q->where('mapel_id', $mapelId));
-        $atps = $atpQuery->orderBy('minggu_ke')->paginate(20, ['*'], 'atp_page');
+        if ($guruId)
+            $atpQuery->whereHas('tp.cp', fn($q) => $q->where('guru_id', $guruId));
+        $atps = $atpQuery->orderBy('minggu_ke')->paginate($this->perPage($request), ['*'], 'atp_page');
 
         // Modul Ajar
         $modulQuery = ModulAjar::with(['mapel', 'guru']);
         $modulScope($modulQuery);
         if ($mapelId)
             $modulQuery->where('mapel_id', $mapelId);
-        $moduls = $modulQuery->latest()->paginate(10, ['*'], 'modul_page');
+        if ($guruId)
+            $modulQuery->where('guru_id', $guruId);
+        $moduls = $modulQuery->latest()->paginate($this->perPage($request), ['*'], 'modul_page');
 
         // Dropdown mapel — guru hanya lihat mapel yang diampu
         $mapelQuery = Mapel::query();
@@ -111,6 +123,16 @@ class PerangkatAjarController extends Controller
                 ->when($user->yayasan_id, fn($q) => $q->whereHas('lembaga', fn($ql) => $ql->where('yayasan_id', $user->yayasan_id)));
         }
         $mapels = $mapelQuery->orderBy('nama')->get();
+
+        // Dropdown guru untuk admin_lembaga
+        $gurus = collect();
+        if ($user->isAdminLembaga()) {
+            $guruQuery = Guru::where('lembaga_id', $user->lembaga_id);
+            if ($mapelId) {
+                $guruQuery->whereHas('pengajaranMapels', fn($q) => $q->where('mapel_id', $mapelId));
+            }
+            $gurus = $guruQuery->orderBy('nama')->get();
+        }
 
         // Dropdown untuk modal form
         $guruId = $guru?->id;
@@ -133,6 +155,7 @@ class PerangkatAjarController extends Controller
             'atps',
             'moduls',
             'mapels',
+            'gurus',
             'mapelOptions',
             'cpOptions',
             'tpOptions',

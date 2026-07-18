@@ -7,6 +7,7 @@ use App\Models\Guru;
 use App\Models\JamKerjaLembaga;
 use App\Models\Lembaga;
 use App\Models\LogAktivita;
+use App\Services\PerPageTrait;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,8 @@ use Illuminate\View\View;
 
 class AbsensiPtkController extends Controller
 {
+    use PerPageTrait;
+
     /**
      * Riwayat absensi guru yang login.
      */
@@ -86,7 +89,7 @@ class AbsensiPtkController extends Controller
             $query->where('guru_id', $guruId);
         }
 
-        $absensis = $query->orderBy('tanggal')->orderBy('guru_id')->paginate(30);
+        $absensis = $query->orderBy('tanggal')->orderBy('guru_id')->paginate($this->perPage($request));
 
         $gurus = Guru::where('lembaga_id', $lembagaId)
             ->where('is_approved', true)

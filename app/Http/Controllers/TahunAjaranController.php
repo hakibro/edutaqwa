@@ -5,14 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\LogAktivita;
 use App\Models\TahunAjaran;
 use App\Models\Yayasan;
+use App\Services\PerPageTrait;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class TahunAjaranController extends Controller
 {
+    use PerPageTrait;
 
-    public function index(): View
+    public function index(Request $request): View
     {
         $user = auth()->user();
         $query = TahunAjaran::with('yayasan');
@@ -21,7 +23,7 @@ class TahunAjaranController extends Controller
             $query->where('yayasan_id', $user->yayasan_id);
         }
 
-        $tahunAjarans = $query->latest()->paginate(10);
+        $tahunAjarans = $query->latest()->paginate($this->perPage($request));
         $yayasans = Yayasan::where('is_active', true)->get();
 
         return view('tahun-ajaran.index', compact('tahunAjarans', 'yayasans'));

@@ -11,11 +11,14 @@ use App\Models\TahunAjaran;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Services\PerPageTrait;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Storage;
 
 class JurnalMengajarController extends Controller
 {
+    use PerPageTrait;
+
     /**
      * Daftar jurnal guru yang login.
      */
@@ -30,7 +33,7 @@ class JurnalMengajarController extends Controller
             ->when($request->filled('tanggal'), fn($q) => $q->where('tanggal', $request->tanggal))
             ->orderByDesc('tanggal')
             ->orderByDesc('created_at')
-            ->paginate(20);
+            ->paginate($this->perPage($request));
 
         $today = Carbon::today();
         $jadwalHariIni = Jadwal::with(['mapel', 'kelas'])
@@ -281,7 +284,7 @@ class JurnalMengajarController extends Controller
             $query->where('is_verified', $request->verified === '1');
         }
 
-        $jurnals = $query->orderByDesc('tanggal')->orderByDesc('created_at')->paginate(20);
+        $jurnals = $query->orderByDesc('tanggal')->orderByDesc('created_at')->paginate($this->perPage($request));
 
         $gurus = \App\Models\Guru::where('lembaga_id', $lembagaId)
             ->where('is_approved', true)

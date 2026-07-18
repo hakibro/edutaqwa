@@ -12,10 +12,13 @@ use App\Models\Siswa;
 use App\Models\TahunAjaran;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Services\PerPageTrait;
 use Illuminate\View\View;
 
 class PelanggaranController extends Controller
 {
+    use PerPageTrait;
+
     public function index(Request $request): View
     {
         $user = auth()->user();
@@ -28,7 +31,7 @@ class PelanggaranController extends Controller
             ->when($request->filled('tanggal'), fn($q) => $q->where('tanggal', $request->tanggal))
             ->orderByDesc('tanggal')
             ->orderByDesc('id')
-            ->paginate(20);
+            ->paginate($this->perPage($request));
 
         $kategoris = KategoriPelanggaran::where('lembaga_id', $lembagaId)->orderBy('nama')->get();
         $siswas = Siswa::where('lembaga_id', $lembagaId)->where('is_active', true)->orderBy('nama')->get();

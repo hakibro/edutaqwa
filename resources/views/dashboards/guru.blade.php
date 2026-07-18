@@ -282,9 +282,9 @@
         <div class="mb-4 flex items-center justify-between">
             <h3 class="text-lg font-semibold text-gray-900" x-text="data.judul"></h3>
             <button @click="dismiss()" class="text-gray-400 hover:text-gray-600">
-                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <x-heroicon-o-x-mark class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                </x-heroicon-o-x-mark>
             </button>
         </div>
         <div class="pengumuman-content text-gray-700 leading-relaxed text-sm" x-html="data.konten"></div>

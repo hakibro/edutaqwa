@@ -9,17 +9,20 @@ use App\Models\Siswa;
 use App\Models\TahunAjaran;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Services\PerPageTrait;
 use Illuminate\View\View;
 
 class AnggotaEkskulController extends Controller
 {
+    use PerPageTrait;
+
     public function index(Ekskul $ekskul, Request $request): View
     {
         $anggota = AnggotaEkskul::with(['siswa', 'tahunAjaran'])
             ->where('ekskul_id', $ekskul->id)
             ->when($request->filled('search'), fn($q) => $q->whereHas('siswa', fn($sq) => $sq->where('nama', 'like', '%' . $request->search . '%')->orWhere('nis', 'like', '%' . $request->search . '%')))
             ->orderByDesc('id')
-            ->paginate(20);
+            ->paginate($this->perPage($request));
 
         return view('kesiswaan.anggota-ekskul.index', compact('ekskul', 'anggota'));
     }

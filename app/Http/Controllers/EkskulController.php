@@ -7,10 +7,13 @@ use App\Models\Guru;
 use App\Models\LogAktivita;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Services\PerPageTrait;
 use Illuminate\View\View;
 
 class EkskulController extends Controller
 {
+    use PerPageTrait;
+
     public function index(Request $request): View
     {
         $user = auth()->user();
@@ -20,7 +23,7 @@ class EkskulController extends Controller
             ->where('lembaga_id', $lembagaId)
             ->when($request->filled('search'), fn($q) => $q->where('nama', 'like', '%' . $request->search . '%'))
             ->orderBy('nama')
-            ->paginate(20);
+            ->paginate($this->perPage($request));
 
         return view('kesiswaan.ekskul.index', compact('ekskuls'));
     }

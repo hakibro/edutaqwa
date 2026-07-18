@@ -8,11 +8,14 @@ use App\Models\LogAktivita;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Services\PerPageTrait;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Storage;
 
 class AgendaMengajarController extends Controller
 {
+    use PerPageTrait;
+
     /**
      * Riwayat agenda guru yang login.
      */
@@ -27,7 +30,7 @@ class AgendaMengajarController extends Controller
             ->when($request->filled('tanggal'), fn($q) => $q->where('tanggal', $request->tanggal))
             ->orderByDesc('tanggal')
             ->orderByDesc('created_at')
-            ->paginate(20);
+            ->paginate($this->perPage($request));
 
         // Cek jadwal hari ini untuk bisa selfie
         $today = Carbon::today();
@@ -167,7 +170,7 @@ class AgendaMengajarController extends Controller
             $query->where('is_verified', $request->verified === '1');
         }
 
-        $agendas = $query->orderByDesc('tanggal')->orderByDesc('created_at')->paginate(20);
+        $agendas = $query->orderByDesc('tanggal')->orderByDesc('created_at')->paginate($this->perPage($request));
 
         $gurus = \App\Models\Guru::where('lembaga_id', $lembagaId)
             ->where('is_approved', true)

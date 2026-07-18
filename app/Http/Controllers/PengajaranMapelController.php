@@ -11,11 +11,14 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use App\Services\PerPageTrait;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class PengajaranMapelController extends Controller
 {
+    use PerPageTrait;
+
     public function index(Request $request): View
     {
         $user = auth()->user();
@@ -40,7 +43,7 @@ class PengajaranMapelController extends Controller
             });
         }
 
-        $pengajarans = $query->latest()->paginate(10);
+        $pengajarans = $query->latest()->paginate($this->perPage($request));
         $tahunAjarans = TahunAjaran::when($user->yayasan_id, fn($q) => $q->where('yayasan_id', $user->yayasan_id))->get();
 
         $mapels = Mapel::when($lembagaId, fn($q) => $q->where('lembaga_id', $lembagaId))

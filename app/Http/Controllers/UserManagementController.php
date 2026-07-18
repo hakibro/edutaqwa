@@ -8,26 +8,29 @@ use App\Models\Yayasan;
 use App\Models\Lembaga;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Services\PerPageTrait;
 use Illuminate\View\View;
 
 class UserManagementController extends Controller
 {
-    public function indexYayasan(Yayasan $yayasan): View
+    use PerPageTrait;
+
+    public function indexYayasan(Request $request, Yayasan $yayasan): View
     {
         $this->authorizeYayasanAccess($yayasan);
 
         $users = User::where('yayasan_id', $yayasan->id)
             ->whereNull('lembaga_id')
             ->latest()
-            ->paginate(20);
+            ->paginate($this->perPage($request));
         return view('users.index-yayasan', compact('yayasan', 'users'));
     }
 
-    public function indexLembaga(Lembaga $lembaga): View
+    public function indexLembaga(Request $request, Lembaga $lembaga): View
     {
         $this->authorizeLembagaAccess($lembaga);
 
-        $users = User::where('lembaga_id', $lembaga->id)->latest()->paginate(20);
+        $users = User::where('lembaga_id', $lembaga->id)->latest()->paginate($this->perPage($request));
         return view('users.index-lembaga', compact('lembaga', 'users'));
     }
 

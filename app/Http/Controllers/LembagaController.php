@@ -6,14 +6,16 @@ use App\Models\Lembaga;
 use App\Models\LogAktivita;
 use App\Models\User;
 use App\Models\Yayasan;
+use App\Services\PerPageTrait;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class LembagaController extends Controller
 {
+    use PerPageTrait;
 
-    public function index(): View
+    public function index(Request $request): View
     {
         $user = auth()->user();
         $query = Lembaga::with('yayasan')->withCount('gurus', 'siswas');
@@ -22,7 +24,7 @@ class LembagaController extends Controller
             $query->where('yayasan_id', $user->yayasan_id);
         }
 
-        $lembagas = $query->latest()->paginate(10);
+        $lembagas = $query->latest()->paginate($this->perPage($request));
         $yayasans = Yayasan::where('is_active', true)->get();
 
         return view('lembaga.index', compact('lembagas', 'yayasans'));

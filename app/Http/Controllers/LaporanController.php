@@ -14,12 +14,15 @@ use App\Models\Pelanggaran;
 use App\Models\Presensi;
 use App\Models\Siswa;
 use Illuminate\Http\Request;
+use App\Services\PerPageTrait;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class LaporanController extends Controller
 {
+    use PerPageTrait;
+
     protected function lembagaId()
     {
         return auth()->user()->lembaga_id;
@@ -121,7 +124,7 @@ class LaporanController extends Controller
                     ->where('kelas_id', $kelasId)->whereNull('tanggal_keluar'));
             })
             ->latest()
-            ->paginate(20, ['*'], 'pelanggaran_page');
+            ->paginate($this->perPage($request), ['*'], 'pelanggaran_page');
 
         return view('laporan.kesiswaan', compact('kelasList', 'siswaPerKelas', 'pelanggarans', 'kelasId'));
     }
@@ -260,7 +263,7 @@ class LaporanController extends Controller
             ->whereMonth('tanggal', substr($bulan, 5, 2))
             ->whereYear('tanggal', substr($bulan, 0, 4))
             ->latest()
-            ->paginate(20);
+            ->paginate($this->perPage($request));
 
         return view('laporan.absensi-ptk', compact('absensis', 'bulan'));
     }
@@ -316,7 +319,7 @@ class LaporanController extends Controller
             ->whereHas('guru', fn($q) => $q->where('lembaga_id', $lembagaId))
             ->when($guruId, fn($q) => $q->where('guru_id', $guruId))
             ->latest()
-            ->paginate(20);
+            ->paginate($this->perPage($request));
 
         return view('laporan.agenda-mengajar', compact('guruList', 'agendas', 'guruId'));
     }

@@ -5,13 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\Jurusan;
 use App\Models\Lembaga;
 use App\Models\LogAktivita;
+use App\Services\PerPageTrait;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class JurusanController extends Controller
 {
-    public function index(): View
+    use PerPageTrait;
+
+    public function index(Request $request): View
     {
         $user = auth()->user();
         $query = Jurusan::with('lembaga')->withCount('kelas');
@@ -22,7 +25,7 @@ class JurusanController extends Controller
             $query->whereHas('lembaga', fn($q) => $q->where('yayasan_id', $user->yayasan_id));
         }
 
-        $jurusans = $query->latest()->paginate(10);
+        $jurusans = $query->latest()->paginate($this->perPage($request));
 
         return view('jurusan.index', compact('jurusans'));
     }

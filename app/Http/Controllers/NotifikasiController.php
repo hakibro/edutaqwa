@@ -4,15 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\Notifikasi;
 use Illuminate\Http\Request;
+use App\Services\PerPageTrait;
 use Illuminate\Support\Facades\Auth;
 
 class NotifikasiController extends Controller
 {
-    public function index()
+    use PerPageTrait;
+
+    public function index(Request $request)
     {
         $notifikasis = Notifikasi::where('user_id', Auth::id())
             ->latest()
-            ->paginate(20);
+            ->paginate($this->perPage($request));
 
         return view('notifikasi.index', compact('notifikasis'));
     }

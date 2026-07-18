@@ -10,12 +10,15 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use App\Services\PerPageTrait;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class MapelController extends Controller
 {
-    public function index(): View
+    use PerPageTrait;
+
+    public function index(Request $request): View
     {
         $user = auth()->user();
         $query = Mapel::with(['lembaga', 'kelompokMapel'])->withCount('pengajaranMapels as guru_count');
@@ -26,7 +29,7 @@ class MapelController extends Controller
             $query->whereHas('lembaga', fn($q) => $q->where('yayasan_id', $user->yayasan_id));
         }
 
-        $mapels = $query->latest()->paginate(10);
+        $mapels = $query->latest()->paginate($this->perPage($request));
 
         return view('mapel.index', compact('mapels'));
     }

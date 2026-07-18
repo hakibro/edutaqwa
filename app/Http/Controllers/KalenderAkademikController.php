@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\KalenderAkademik;
 use App\Models\LogAktivita;
 use App\Models\Yayasan;
+use App\Services\PerPageTrait;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class KalenderAkademikController extends Controller
 {
+    use PerPageTrait;
 
     public function index(Request $request): View
     {
@@ -22,7 +24,7 @@ class KalenderAkademikController extends Controller
         $kalenders = KalenderAkademik::with('yayasan')
             ->when($yayasanId, fn($q) => $q->where('yayasan_id', $yayasanId))
             ->orderBy('tanggal')
-            ->paginate(15);
+            ->paginate($this->perPage($request));
 
         return view('kalender-akademik.index', compact('kalenders', 'yayasans', 'yayasanId'));
     }

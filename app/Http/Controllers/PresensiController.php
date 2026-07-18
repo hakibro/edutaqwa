@@ -11,10 +11,13 @@ use App\Models\TahunAjaran;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Services\PerPageTrait;
 use Illuminate\View\View;
 
 class PresensiController extends Controller
 {
+    use PerPageTrait;
+
     /**
      * Daftar jadwal hari ini (Guru) + riwayat presensi.
      */
@@ -41,7 +44,7 @@ class PresensiController extends Controller
             ->when($request->filled('jadwal_id'), fn($q) => $q->where('jadwal_id', $request->jadwal_id))
             ->orderByDesc('tanggal')
             ->orderByDesc('pertemuan_ke')
-            ->paginate(20);
+            ->paginate($this->perPage($request));
 
         return view('presensi.index', compact('jadwalHariIni', 'presensis'));
     }
@@ -240,7 +243,7 @@ class PresensiController extends Controller
             $query->whereHas('jadwal', fn($q) => $q->where('mapel_id', $mapelId));
         }
 
-        $presensis = $query->orderByDesc('tanggal')->paginate(20);
+        $presensis = $query->orderByDesc('tanggal')->paginate($this->perPage($request));
 
         $kelas = \App\Models\Kelas::where('lembaga_id', $lembagaId)->orderBy('nama')->get();
         $mapels = \App\Models\Mapel::where('lembaga_id', $lembagaId)->orderBy('nama')->get();

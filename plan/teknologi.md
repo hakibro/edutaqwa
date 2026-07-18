@@ -2,18 +2,19 @@
 
 ## 1. Tech Stack
 
-| Lapisan           | Teknologi                  | Catatan                           |
-| ----------------- | -------------------------- | --------------------------------- |
-| **Backend**       | Laravel 13.x (PHP 8.3+)    | Framework utama                   |
-| **Database**      | MySQL 8.x                  | Relasional                        |
-| **Frontend**      | Blade + Tailwind CSS       | Server-side rendering             |
-| **JavaScript**    | Alpine.js                  | Interaktivitas tanpa SPA berat    |
-| **Build Tool**    | Vite + Laravel Vite Plugin | Sudah terkonfigurasi              |
-| **Auth**          | Laravel Breeze             | Scaffolding auth cepat            |
-| **API**           | Laravel Sanctum            | API token untuk Sisda integration |
-| **Queue**         | Laravel Queue (Database)   | Import Sisda & notifikasi async   |
-| **Task Schedule** | Laravel Scheduler          | Cron job internal                 |
-| **Testing**       | PHPUnit                    | Unit & feature test               |
+| Lapisan           | Teknologi                  | Catatan                                          |
+| ----------------- | -------------------------- | ------------------------------------------------ |
+| **Backend**       | Laravel 13.x (PHP 8.3+)    | Framework utama                                  |
+| **Database**      | MySQL 8.x                  | Relasional                                       |
+| **Frontend**      | Blade + Tailwind CSS v4    | Server-side rendering                            |
+| **JavaScript**    | Alpine.js                  | Interaktivitas tanpa SPA berat                   |
+| **Ikon**          | Blade UI Kit Heroicons     | Komponen Blade `x-icon`, Heroicons outline style |
+| **Build Tool**    | Vite + Laravel Vite Plugin | Sudah terkonfigurasi                             |
+| **Auth**          | Laravel Breeze             | Scaffolding auth cepat                           |
+| **API**           | Laravel Sanctum            | API token untuk Sisda integration                |
+| **Queue**         | Laravel Queue (Database)   | Import Sisda & notifikasi async                  |
+| **Task Schedule** | Laravel Scheduler          | Cron job internal                                |
+| **Testing**       | PHPUnit                    | Unit & feature test                              |
 
 ## 2. Arsitektur Aplikasi
 
@@ -119,3 +120,75 @@ class LembagaScope implements Scope
 | SQL Injection | Eloquent ORM (parameter binding)                                      |
 | Rate Limiting | Laravel throttle middleware                                           |
 | Audit Trail   | Log aktivitas di tabel `activity_log` (jika pakai spatie/activitylog) |
+
+## 6. Tailwind CSS v4
+
+### 6.1 Konfigurasi
+
+Tailwind CSS v4 menggunakan **Vite plugin** (`@tailwindcss/vite`), bukan PostCSS plugin. Tidak perlu `postcss.config.js` dan `tailwind.config.js`.
+
+```js
+// vite.config.js
+import { defineConfig } from "vite";
+import laravel from "laravel-vite-plugin";
+import tailwindcss from "@tailwindcss/vite";
+
+export default defineConfig({
+    plugins: [
+        laravel({
+            input: ["resources/css/app.css", "resources/js/app.js"],
+            refresh: true,
+        }),
+        tailwindcss(),
+    ],
+});
+```
+
+```css
+/* resources/css/app.css */
+@import "tailwindcss";
+@plugin "@tailwindcss/forms";
+
+[x-cloak] {
+    display: none !important;
+}
+```
+
+### 6.2 Kustomisasi Theme
+
+Theme dikonfigurasi via CSS, bukan JS config:
+
+```css
+@import "tailwindcss";
+
+@theme {
+    --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
+}
+```
+
+### 6.3 Ikon: Blade UI Kit Heroicons
+
+**Rekomendasi**: [Blade UI Kit Heroicons](https://github.com/blade-ui-kit/blade-heroicons) — komponen Blade untuk Heroicons, zero JS.
+
+**Alternatif yang dipertimbangkan**:
+
+| Library                            | Kelebihan                               | Kekurangan                         | Status     |
+| ---------------------------------- | --------------------------------------- | ---------------------------------- | ---------- |
+| `@heroicons/vue`                   | Official, tree-shakeable                | Perlu Vue runtime (ga cocok Blade) | ❌         |
+| `@heroicons/react`                 | Official                                | Perlu React (ga cocok Blade)       | ❌         |
+| `@hugeicons/*`                     | Banyak varian                           | Berat, dead code                   | ❌ dihapus |
+| **`blade-ui-kit/blade-heroicons`** | Blade component, ringan, cocok Tailwind | Perlu install tambahan             | ✅ dipilih |
+
+**Pola pakai**:
+
+```blade
+{{-- Sebelum (inline SVG manual) --}}
+<svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5..." />
+</svg>
+
+{{-- Sesudah (Blade UI Kit) --}}
+<x-heroicon-o-academic-cap class="h-5 w-5 shrink-0" />
+```
+
+**Keuntungan**: Kode lebih bersih, semua ikon existing sudah Heroicons outline style (24×24, stroke-width 2), transisi mulus — tinggal ganti inline SVG ke `<x-icon-o-nama />`.

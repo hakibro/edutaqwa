@@ -7,11 +7,14 @@ use App\Models\Lembaga;
 use App\Models\LogAktivita;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Services\PerPageTrait;
 use Illuminate\View\View;
 
 class KelompokMapelController extends Controller
 {
-    public function index(): View
+    use PerPageTrait;
+
+    public function index(Request $request): View
     {
         $user = auth()->user();
         $query = KelompokMapel::with('lembaga')->withCount('mapels');
@@ -22,7 +25,7 @@ class KelompokMapelController extends Controller
             $query->whereHas('lembaga', fn($q) => $q->where('yayasan_id', $user->yayasan_id));
         }
 
-        $kelompokMapels = $query->latest()->paginate(10);
+        $kelompokMapels = $query->latest()->paginate($this->perPage($request));
 
         return view('kelompok-mapel.index', compact('kelompokMapels'));
     }

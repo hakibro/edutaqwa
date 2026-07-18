@@ -7,10 +7,13 @@ use App\Models\Pengumuman;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Services\PerPageTrait;
 use Illuminate\View\View;
 
 class PengumumanController extends Controller
 {
+    use PerPageTrait;
+
     public function index(Request $request): View|JsonResponse
     {
         $user = auth()->user();
@@ -20,11 +23,7 @@ class PengumumanController extends Controller
             ->forLembaga($lembagaId)
             ->latest();
 
-        $perPage = (int) $request->input('per_page', 10);
-        if (!in_array($perPage, [10, 25, 50, 100])) {
-            $perPage = 10;
-        }
-
+        $perPage = $this->perPage($request, 10);
         $pengumumans = $query->paginate($perPage)->appends($request->except('page'));
 
         if ($request->ajax() || $request->wantsJson()) {

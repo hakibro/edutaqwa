@@ -6,6 +6,7 @@ use App\Models\Lembaga;
 use App\Models\LogAktivita;
 use App\Models\User;
 use App\Models\Yayasan;
+use App\Services\PerPageTrait;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -14,10 +15,11 @@ use Illuminate\View\View;
 
 class YayasanController extends Controller
 {
+    use PerPageTrait;
 
-    public function index(): View
+    public function index(Request $request): View
     {
-        $yayasans = Yayasan::withCount('lembagas')->latest()->paginate(10);
+        $yayasans = Yayasan::withCount('lembagas')->latest()->paginate($this->perPage($request));
         return view('yayasan.index', compact('yayasans'));
     }
 

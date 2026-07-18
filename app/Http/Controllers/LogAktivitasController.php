@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\LogAktivita;
 use Illuminate\Http\Request;
+use App\Services\PerPageTrait;
 use Illuminate\View\View;
 
 class LogAktivitasController extends Controller
 {
+    use PerPageTrait;
 
     public function index(Request $request): View
     {
@@ -18,7 +20,11 @@ class LogAktivitasController extends Controller
             $query->where('yayasan_id', $user->yayasan_id);
         }
 
-        $logs = $query->latest()->paginate(25);
+        if ($user->isAdminLembaga()) {
+            $query->where('lembaga_id', $user->lembaga_id);
+        }
+
+        $logs = $query->latest()->paginate($this->perPage($request));
 
         return view('log-aktivitas.index', compact('logs'));
     }

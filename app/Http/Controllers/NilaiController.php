@@ -13,12 +13,15 @@ use App\Models\RiwayatKelasSiswa;
 use App\Models\Siswa;
 use App\Models\TahunAjaran;
 use App\Models\Tp;
+use App\Services\PerPageTrait;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class NilaiController extends Controller
 {
+    use PerPageTrait;
+
     // ─── Jenis Nilai (Kurikulum) ─────────────────────────────
 
     public function jenisNilaiIndex(): View
@@ -117,7 +120,7 @@ class NilaiController extends Controller
             $query->where('jenis_nilai_id', $request->jenis_nilai_id);
         }
 
-        $nilais = $query->latest()->paginate(25);
+        $nilais = $query->latest()->paginate($this->perPage($request));
 
         // Ambil semua kelas dari pengajaran (buat filter dropdown)
         $kelasIds = $pengajaran->pluck('kelas_id')->filter()->unique();
@@ -431,7 +434,7 @@ class NilaiController extends Controller
             $query->where('jenis_nilai_id', $request->jenis_nilai_id);
         }
 
-        $nilais = $query->orderBy('mapel_id')->orderBy('kelas_id')->orderBy('siswa_id')->paginate(50);
+        $nilais = $query->orderBy('mapel_id')->orderBy('kelas_id')->orderBy('siswa_id')->paginate($this->perPage($request));
 
         $mapels = Mapel::where('lembaga_id', $lembagaId)->get();
         $kelass = Kelas::where('lembaga_id', $lembagaId)->get();

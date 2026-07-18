@@ -42,16 +42,6 @@
                             @endforeach
                         </select>
                     </div>
-                    <div>
-                        <x-input-label for="perPage" value="Tampil" />
-                        <select id="perPage"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-                            <option value="10" @selected(request('per_page', 10) == 10)>10</option>
-                            <option value="25" @selected(request('per_page') == 25)>25</option>
-                            <option value="50" @selected(request('per_page') == 50)>50</option>
-                            <option value="100" @selected(request('per_page') == 100)>100</option>
-                        </select>
-                    </div>
                 </div>
             </div>
 
@@ -98,11 +88,9 @@
                 const params = new URLSearchParams();
                 const tingkat = document.getElementById('filterTingkat')?.value;
                 const jurusanId = document.getElementById('filterJurusan')?.value;
-                const perPage = document.getElementById('perPage')?.value;
 
                 if (tingkat) params.set('tingkat', tingkat);
                 if (jurusanId) params.set('jurusan_id', jurusanId);
-                if (perPage) params.set('per_page', perPage);
 
                 fetch(`{{ route('kelas.index') }}?${params.toString()}`, {
                     headers: {

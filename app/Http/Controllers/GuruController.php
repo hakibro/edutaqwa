@@ -9,6 +9,7 @@ use App\Models\LogAktivita;
 use App\Models\TahunAjaran;
 use App\Models\TugasTambahan;
 use App\Models\User;
+use App\Services\PerPageTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,6 +20,8 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class GuruController extends Controller
 {
+    use PerPageTrait;
+
     public function index(Request $request): View|JsonResponse
     {
         $user = auth()->user();
@@ -60,10 +63,7 @@ class GuruController extends Controller
             $query->whereDate('tmt', '<=', $tmtTo);
         }
 
-        $perPage = (int) $request->input('per_page', 10);
-        if (!in_array($perPage, [10, 25, 50, 100]))
-            $perPage = 10;
-
+        $perPage = $this->perPage($request, 10);
         $gurus = $query->latest()->paginate($perPage)->appends($request->except('page'));
 
         $jenisPtks = JenisPtk::whereIn('lembaga_id', $allowedLembagaIds)->where('is_active', true)->get();
@@ -511,7 +511,7 @@ class GuruController extends Controller
             ->where('is_approved', false)
             ->whereHas('lembaga', fn($q) => $q->where('yayasan_id', $user->yayasan_id));
 
-        $perPage = (int) request()->get('per_page', 10);
+        $perPage = $this->perPage(request(), 10);
         $gurus = $query->latest()->paginate($perPage)->withQueryString();
 
         return view('guru.approval', compact('gurus', 'perPage'));

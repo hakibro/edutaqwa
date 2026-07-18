@@ -9,10 +9,13 @@ use App\Models\LogAktivita;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Services\PerPageTrait;
 use Illuminate\View\View;
 
 class KelasController extends Controller
 {
+    use PerPageTrait;
+
     public function index(Request $request): View|JsonResponse
     {
         $user = auth()->user();
@@ -34,11 +37,7 @@ class KelasController extends Controller
             $query->where('jurusan_id', $jurusanId);
         }
 
-        $perPage = (int) $request->input('per_page', 10);
-        if (!in_array($perPage, [10, 25, 50, 100])) {
-            $perPage = 10;
-        }
-
+        $perPage = $this->perPage($request, 10);
         $kelas = $query->latest()->paginate($perPage)->appends($request->except('page'));
 
         // Get filter options

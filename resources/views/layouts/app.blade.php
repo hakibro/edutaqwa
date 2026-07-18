@@ -43,9 +43,9 @@
     <div x-data="{ sidebarOpen: false }" @keydown.window.escape="sidebarOpen = false">
         <button @click="sidebarOpen = true"
             class="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md text-gray-500 bg-white shadow hover:text-gray-700 focus:outline-none">
-            <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+            <x-heroicon-o-bars-3 class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            </x-heroicon-o-bars-3>
         </button>
 
         <div x-show="sidebarOpen" x-cloak class="lg:hidden fixed inset-0 z-40 flex">

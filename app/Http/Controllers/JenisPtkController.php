@@ -6,11 +6,14 @@ use App\Models\JenisPtk;
 use App\Models\Lembaga;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Services\PerPageTrait;
 use Illuminate\View\View;
 
 class JenisPtkController extends Controller
 {
-    public function index(): View
+    use PerPageTrait;
+
+    public function index(Request $request): View
     {
         $user = auth()->user();
         $lembagaId = $user->lembaga_id;
@@ -18,7 +21,7 @@ class JenisPtkController extends Controller
         $jenisPtks = JenisPtk::when($lembagaId, fn($q) => $q->where('lembaga_id', $lembagaId))
             ->with('lembaga')
             ->latest()
-            ->paginate(20);
+            ->paginate($this->perPage($request));
 
         return view('jenis-ptk.index', compact('jenisPtks'));
     }
