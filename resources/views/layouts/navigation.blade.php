@@ -98,7 +98,7 @@
                         <div class="hidden sm:flex sm:items-center sm:ms-6 relative group">
                             <button
                                 class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition duration-150 ease-in-out">
-                                {{ __('CP/TP/ATP') }}
+                                {{ __('Perangkat Ajar') }}
                                 <svg class="ms-1 h-4 w-4 fill-current" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd"
                                         d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
@@ -108,12 +108,8 @@
                             <div
                                 class="absolute top-full left-0 mt-1 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
                                 <div class="py-1">
-                                    <a href="{{ route('cp.index') }}"
-                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('cp.*') ? 'bg-gray-50 font-medium' : '' }}">{{ __('CP') }}</a>
-                                    <a href="{{ route('tp.index') }}"
-                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('tp.*') ? 'bg-gray-50 font-medium' : '' }}">{{ __('TP') }}</a>
-                                    <a href="{{ route('atp.index') }}"
-                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('atp.*') ? 'bg-gray-50 font-medium' : '' }}">{{ __('ATP') }}</a>
+                                    <a href="{{ route('perangkat-ajar.index') }}"
+                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('perangkat-ajar.*') ? 'bg-gray-50 font-medium' : '' }}">{{ __('Perangkat Ajar') }}</a>
                                 </div>
                             </div>
                         </div>
@@ -292,14 +288,8 @@
                     auth()->user()->isAdminLembaga() ||
                     auth()->user()->isSuperAdmin() ||
                     auth()->user()->isAdminYayasan())
-                <x-responsive-nav-link :href="route('cp.index')" :active="request()->routeIs('cp.*')">
-                    {{ __('CP') }}
-                </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('tp.index')" :active="request()->routeIs('tp.*')">
-                    {{ __('TP') }}
-                </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('atp.index')" :active="request()->routeIs('atp.*')">
-                    {{ __('ATP') }}
+                <x-responsive-nav-link :href="route('perangkat-ajar.index')" :active="request()->routeIs('perangkat-ajar.*')">
+                    {{ __('Perangkat Ajar') }}
                 </x-responsive-nav-link>
             @endif
         </div>

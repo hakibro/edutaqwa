@@ -16,7 +16,6 @@
 
                 // Jadwal hari ini
                 $jadwalHariIni = collect();
-                $presensiHariIni = collect();
                 $absensiHariIni = null;
 
                 if ($guru) {
@@ -25,25 +24,23 @@
                         ->where('hari', $todayName)
                         ->get();
 
-                    $presensiHariIni = \App\Models\Presensi::whereIn('jadwal_id', $jadwalHariIni->pluck('id'))
-                        ->whereDate('tanggal', $today)
-                        ->get();
-
                     $absensiHariIni = \App\Models\AbsensiPtk::where('guru_id', $guru->id)
                         ->whereDate('tanggal', $today)
                         ->first();
                 }
 
-                // Total jadwal
-                $totalJadwal = $guru ? \App\Models\Jadwal::where('guru_id', $guru->id)->count() : 0;
-
                 // Total CP yang dibuat
                 $totalCp = $guru ? \App\Models\Cp::where('guru_id', $guru->id)->count() : 0;
+
+                // Jurnal mengajar hari ini
+                $jurnalHariIni = $guru
+                    ? \App\Models\JurnalMengajar::where('guru_id', $guru->id)->whereDate('tanggal', $today)->count()
+                    : 0;
 
                 // Jurnal mengajar minggu ini
                 $jurnalMingguIni = $guru
                     ? \App\Models\JurnalMengajar::where('guru_id', $guru->id)
-                        ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
+                        ->whereBetween('tanggal', [now()->startOfWeek(), now()->endOfWeek()])
                         ->count()
                     : 0;
             @endphp
@@ -55,11 +52,11 @@
                     <p class="text-3xl font-bold text-gray-900">{{ $jadwalHariIni->count() }}</p>
                 </div>
                 <div class="rounded-lg bg-white p-6 shadow-sm">
-                    <p class="text-sm text-gray-500">Presensi Hari Ini</p>
-                    <p class="text-3xl font-bold text-gray-900">{{ $presensiHariIni->count() }}</p>
+                    <p class="text-sm text-gray-500">Jurnal Hari Ini</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ $jurnalHariIni }}</p>
                 </div>
                 <div class="rounded-lg bg-white p-6 shadow-sm">
-                    <p class="text-sm text-gray-500">Total Jadwal</p>
+                    <p class="text-sm text-gray-500">Jurnal Minggu Ini</p>
                     <p class="text-3xl font-bold text-gray-900">{{ $jurnalMingguIni }}</p>
                 </div>
                 <div class="rounded-lg bg-white p-6 shadow-sm">
@@ -137,7 +134,7 @@
                 @endif
             </div>
 
-            <!-- Jadwal Hari Ini & Presensi -->
+            <!-- Jadwal Hari Ini & Jurnal -->
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <!-- Jadwal Hari Ini -->
                 <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
@@ -147,7 +144,9 @@
                             <div class="space-y-2">
                                 @foreach ($jadwalHariIni as $j)
                                     @php
-                                        $sudahPresensi = $presensiHariIni->where('jadwal_id', $j->id)->first();
+                                        $sudahJurnal = \App\Models\JurnalMengajar::where('jadwal_id', $j->id)
+                                            ->whereDate('tanggal', $today)
+                                            ->exists();
                                     @endphp
                                     <div class="flex items-center justify-between border-b border-gray-100 pb-2">
                                         <div>
@@ -156,14 +155,14 @@
                                                 ke-{{ $j->jam_ke }}</p>
                                         </div>
                                         <div>
-                                            @if ($sudahPresensi)
+                                            @if ($sudahJurnal)
                                                 <span
                                                     class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">Sudah
-                                                    Presensi</span>
+                                                    Jurnal</span>
                                             @else
-                                                <a href="{{ route('presensi.create', ['jadwal_id' => $j->id]) }}"
-                                                    class="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-200">Input
-                                                    Presensi</a>
+                                                <a href="{{ route('jurnal-mengajar.create', ['jadwal_id' => $j->id]) }}"
+                                                    class="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-200">Buat
+                                                    Jurnal</a>
                                             @endif
                                         </div>
                                     </div>
@@ -175,64 +174,40 @@
                     </div>
                 </div>
 
-                <!-- Aktivitas Mengajar Terbaru -->
+                <!-- Jurnal Mengajar Terbaru -->
                 <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <h3 class="mb-4 text-lg font-semibold text-gray-800">Aktivitas Mengajar Terbaru</h3>
+                        <h3 class="mb-4 text-lg font-semibold text-gray-800">Jurnal Mengajar Terbaru</h3>
                         @php
-                            $presensiTerbaru = $guru
-                                ? \App\Models\Presensi::whereHas('jadwal', fn($q) => $q->where('guru_id', $guru->id))
+                            $jurnalTerbaru = $guru
+                                ? \App\Models\JurnalMengajar::where('guru_id', $guru->id)
                                     ->with(['jadwal.kelas', 'jadwal.mapel'])
                                     ->latest()
                                     ->take(5)
                                     ->get()
                                 : collect();
                         @endphp
-                        @forelse ($presensiTerbaru as $p)
+                        @forelse ($jurnalTerbaru as $j)
                             <div class="border-b border-gray-100 pb-2 text-sm">
-                                <p class="font-medium text-gray-900">{{ $p->jadwal?->mapel?->nama ?? '-' }} ·
-                                    {{ $p->jadwal?->kelas?->nama ?? '-' }}</p>
-                                <p class="text-gray-500">{{ $p->tanggal->format('d M Y') }} — Pertemuan
-                                    ke-{{ $p->pertemuan_ke }}</p>
+                                <div class="flex items-center justify-between">
+                                    <p class="font-medium text-gray-900">{{ $j->jadwal?->mapel?->nama ?? '-' }} ·
+                                        {{ $j->jadwal?->kelas?->nama ?? '-' }}</p>
+                                    <span
+                                        class="rounded-full px-2 py-0.5 text-xs font-semibold {{ $j->is_verified ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">{{ $j->is_verified ? 'Verified' : 'Pending' }}</span>
+                                </div>
+                                <p class="text-gray-500">{{ \Carbon\Carbon::parse($j->tanggal)->format('d M Y') }} —
+                                    Pertemuan ke-{{ $j->pertemuan_ke }}
+                                    @if ($j->foto_path)
+                                        <span class="text-green-600 ml-1">📷</span>
+                                    @endif
+                                </p>
                             </div>
                         @empty
-                            <p class="text-gray-500 text-sm">Belum ada presensi tercatat.</p>
+                            <p class="text-gray-500 text-sm">Belum ada jurnal tercatat.</p>
                         @endforelse
                     </div>
                 </div>
             </div>
-
-            <!-- Jurnal Mengajar Minggu Ini -->
-            @if ($guru)
-                <div class="mt-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold text-gray-800">Jurnal Mengajar Minggu Ini</h3>
-                            <a href="{{ route('jurnal-mengajar.create') }}"
-                                class="text-sm font-medium text-indigo-600 hover:text-indigo-800">+ Buat Jurnal</a>
-                        </div>
-                        @php
-                            $jurnalList = \App\Models\JurnalMengajar::where('guru_id', $guru->id)
-                                ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
-                                ->with(['jadwal.mapel', 'jadwal.kelas'])
-                                ->latest()
-                                ->take(5)
-                                ->get();
-                        @endphp
-                        @forelse ($jurnalList as $j)
-                            <div class="flex items-center gap-3 border-b border-gray-100 pb-2">
-                                <span class="text-xs text-gray-500 w-24">{{ $j->created_at->format('d M H:i') }}</span>
-                                <span class="text-sm text-gray-900 flex-1">{{ $j->jadwal?->mapel?->nama ?? 'Mapel' }} ·
-                                    {{ $j->jadwal?->kelas?->nama ?? '-' }}</span>
-                                <span
-                                    class="rounded-full px-2 py-0.5 text-xs font-semibold {{ $j->is_verified ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">{{ $j->is_verified ? 'Verified' : 'Pending' }}</span>
-                            </div>
-                        @empty
-                            <p class="text-gray-500 text-sm">Belum ada jurnal minggu ini.</p>
-                        @endforelse
-                    </div>
-                </div>
-            @endif
 
             <!-- Akses Cepat -->
             <div class="mt-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
@@ -268,7 +243,7 @@
                             <span class="block text-lg mb-0.5">📊</span>
                             Input Nilai
                         </a>
-                        <a href="{{ route('cp.index') }}"
+                        <a href="{{ route('perangkat-ajar.index') }}"
                             class="block rounded-md bg-purple-50 p-3 text-purple-700 hover:bg-purple-100 text-sm font-medium text-center">
                             <span class="block text-lg mb-0.5">📖</span>
                             CP / TP / ATP

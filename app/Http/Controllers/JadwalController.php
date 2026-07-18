@@ -129,6 +129,44 @@ class JadwalController extends Controller
         return view('jadwal.index', compact('kelasList', 'guruList', 'hariList', 'gridView', 'gridKelasId', 'timetableLabels', 'bentrokMap', 'kelasWithGuru', 'isGuruMode', 'guruId', 'guruNama'));
     }
 
+    /**
+     * Tampilkan jadwal mengajar guru yang login (Jadwal Saya).
+     */
+    public function jadwalSaya(): View
+    {
+        $user = auth()->user();
+        $guru = \App\Models\Guru::find($user->guru_id);
+
+        abort_if(!$guru, 404, 'Data guru tidak ditemukan.');
+
+        $lembagaId = $user->lembaga_id;
+        $hariList = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+
+        // Timetable labels
+        $timetableLabels = [];
+        if ($lembagaId) {
+            foreach ($hariList as $h) {
+                $kbmItems = \App\Models\AkademikSetting::getKbmItems($lembagaId, $h);
+                foreach ($kbmItems as $n => $item) {
+                    $timetableLabels[$h][$n] = $item['label'] . ' (' . $item['jam_mulai'] . '-' . $item['jam_selesai'] . ')';
+                }
+            }
+        }
+
+        $jadwal = \App\Models\Jadwal::with(['kelas', 'mapel'])
+            ->where('guru_id', $guru->id)
+            ->where('lembaga_id', $lembagaId)
+            ->get()
+            ->groupBy('hari');
+
+        $gridView = [];
+        foreach ($hariList as $hari) {
+            $gridView[$hari] = $jadwal->get($hari, collect())->sortBy('jam_ke');
+        }
+
+        return view('jadwal.saya', compact('guru', 'hariList', 'gridView', 'timetableLabels'));
+    }
+
     public function create(): View
     {
         $user = auth()->user();

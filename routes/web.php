@@ -3,8 +3,6 @@
 use App\Http\Controllers\AbsensiPtkController;
 use App\Http\Controllers\AgendaMengajarController;
 use App\Http\Controllers\AkademikSettingController;
-use App\Http\Controllers\AtpController;
-use App\Http\Controllers\CpController;
 use App\Http\Controllers\GuruController;
 use App\Http\Controllers\JadwalController;
 use App\Http\Controllers\JamKerjaLembagaController;
@@ -23,12 +21,12 @@ use App\Http\Controllers\KategoriPelanggaranController;
 use App\Http\Controllers\NilaiController;
 use App\Http\Controllers\PelanggaranController;
 use App\Http\Controllers\PengajaranMapelController;
+use App\Http\Controllers\PerangkatAjarController;
 use App\Http\Controllers\PresensiController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SiswaController;
 use App\Http\Controllers\SiswaSyncController;
 use App\Http\Controllers\TahunAjaranController;
-use App\Http\Controllers\TpController;
 use App\Http\Controllers\PengumumanController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\YayasanController;
@@ -158,11 +156,35 @@ Route::middleware('auth')->group(function () {
         Route::resource('pengumuman', PengumumanController::class)->except(['show']);
     });
 
-    // === AKADEMIK — CP/TP/ATP (Guru + Kurikulum) ===
+    // === AKADEMIK — Perangkat Ajar (CP/TP/ATP/Modul Ajar) ===
     Route::middleware('role:super_admin,admin_yayasan,kepala_lembaga,admin_lembaga,kurikulum,guru')->group(function () {
-        Route::resource('cp', CpController::class);
-        Route::resource('tp', TpController::class);
-        Route::resource('atp', AtpController::class);
+        Route::get('/perangkat-ajar', [PerangkatAjarController::class, 'index'])->name('perangkat-ajar.index');
+
+        // CRUD CP
+        Route::post('/perangkat-ajar/cp', [PerangkatAjarController::class, 'storeCp'])->name('perangkat-ajar.cp.store');
+        Route::put('/perangkat-ajar/cp/{cp}', [PerangkatAjarController::class, 'updateCp'])->name('perangkat-ajar.cp.update');
+        Route::delete('/perangkat-ajar/cp/{cp}', [PerangkatAjarController::class, 'destroyCp'])->name('perangkat-ajar.cp.destroy');
+
+        // CRUD TP
+        Route::post('/perangkat-ajar/tp', [PerangkatAjarController::class, 'storeTp'])->name('perangkat-ajar.tp.store');
+        Route::put('/perangkat-ajar/tp/{tp}', [PerangkatAjarController::class, 'updateTp'])->name('perangkat-ajar.tp.update');
+        Route::delete('/perangkat-ajar/tp/{tp}', [PerangkatAjarController::class, 'destroyTp'])->name('perangkat-ajar.tp.destroy');
+
+        // CRUD ATP
+        Route::post('/perangkat-ajar/atp', [PerangkatAjarController::class, 'storeAtp'])->name('perangkat-ajar.atp.store');
+        Route::put('/perangkat-ajar/atp/{atp}', [PerangkatAjarController::class, 'updateAtp'])->name('perangkat-ajar.atp.update');
+        Route::delete('/perangkat-ajar/atp/{atp}', [PerangkatAjarController::class, 'destroyAtp'])->name('perangkat-ajar.atp.destroy');
+
+        // CRUD Modul Ajar
+        Route::post('/perangkat-ajar/modul', [PerangkatAjarController::class, 'storeModul'])->name('perangkat-ajar.modul.store');
+        Route::put('/perangkat-ajar/modul/{modulAjar}', [PerangkatAjarController::class, 'updateModul'])->name('perangkat-ajar.modul.update');
+        Route::delete('/perangkat-ajar/modul/{modulAjar}', [PerangkatAjarController::class, 'destroyModul'])->name('perangkat-ajar.modul.destroy');
+        Route::get('/perangkat-ajar/modul/{modulAjar}/download', [PerangkatAjarController::class, 'downloadModul'])->name('perangkat-ajar.modul.download');
+        Route::get('/perangkat-ajar/modul/{modulAjar}/view', [PerangkatAjarController::class, 'viewModul'])->name('perangkat-ajar.modul.view');
+
+        // Import & Template — Komprehensif (CP+TP+ATP sekaligus)
+        Route::post('/perangkat-ajar/import', [PerangkatAjarController::class, 'importKomprehensif'])->name('perangkat-ajar.import');
+        Route::get('/perangkat-ajar/template', [PerangkatAjarController::class, 'templateKomprehensif'])->name('perangkat-ajar.template');
     });
 
     // === AKADEMIK — Jadwal ===
@@ -177,6 +199,9 @@ Route::middleware('auth')->group(function () {
     });
 
     // === JURNAL MENGAJAR (Phase 10) — gabung Selfie + Presensi ===
+
+    // Jadwal Saya — Guru
+    Route::middleware('role:guru')->get('/guru/jadwal-saya', [JadwalController::class, 'jadwalSaya'])->name('guru.jadwal-saya');
 
     // Jurnal — Guru
     Route::middleware('role:guru')->group(function () {

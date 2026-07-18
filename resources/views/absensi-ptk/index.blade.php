@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold leading-tight text-gray-800">{{ __('Absensi PTK (Kehadiran Harian)') }}</h2>
+            <h2 class="text-xl font-semibold leading-tight text-gray-800">{{ __('Absensi GTK (Kehadiran Harian)') }}</h2>
             <span class="text-sm text-gray-500">{{ $guru->nama }}</span>
         </div>
     </x-slot>

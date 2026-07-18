@@ -27,7 +27,14 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>{{ __('Absensi Harian') }}</span>
+                <span>{{ __('Absensi GTK') }}</span>
+            </x-sidebar-nav-link>
+            <x-sidebar-nav-link :href="route('guru.jadwal-saya')" :active="request()->routeIs('guru.jadwal-saya')">
+                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>{{ __('Jadwal Saya') }}</span>
             </x-sidebar-nav-link>
             <x-sidebar-nav-link :href="route('jurnal-mengajar.index')" :active="request()->routeIs('jurnal-mengajar.*') && !request()->routeIs('jurnal-mengajar.monitoring*')">
                 <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,7 +147,8 @@
             </x-sidebar-nav-link>
             <x-sidebar-nav-link :href="route('siswa.index')" :active="request()->routeIs('siswa.*')">
                 <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 14l9-5-9-5-9 5 9 5z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
                 </svg>
@@ -215,7 +223,7 @@
             @endif
         @endif
 
-        {{-- CP/TP/ATP --}}
+        {{-- Perangkat Ajar --}}
         @if (in_array(Auth::user()->role, [
                 'super_admin',
                 'admin_yayasan',
@@ -225,28 +233,14 @@
                 'guru',
             ]))
             <div class="pt-4 pb-1 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
-                CP/TP/ATP
+                Perangkat Ajar
             </div>
-            <x-sidebar-nav-link :href="route('cp.index')" :active="request()->routeIs('cp.*')">
+            <x-sidebar-nav-link :href="route('perangkat-ajar.index')" :active="request()->routeIs('perangkat-ajar.*')">
                 <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <span>{{ __('CP') }}</span>
-            </x-sidebar-nav-link>
-            <x-sidebar-nav-link :href="route('tp.index')" :active="request()->routeIs('tp.*')">
-                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                <span>{{ __('TP') }}</span>
-            </x-sidebar-nav-link>
-            <x-sidebar-nav-link :href="route('atp.index')" :active="request()->routeIs('atp.*')">
-                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                </svg>
-                <span>{{ __('ATP') }}</span>
+                <span>{{ __('Perangkat Ajar') }}</span>
             </x-sidebar-nav-link>
         @endif
 

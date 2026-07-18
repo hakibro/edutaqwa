@@ -55,22 +55,28 @@
 
 ### 1.4 Akademik — Kurikulum
 
-| Fitur            | Deskripsi                                                                          |
-| ---------------- | ---------------------------------------------------------------------------------- |
-| **Kelola Mapel** |                                                                                    |
-| - Kelompok Mapel | A. Umum, B. Kejuruan, Muatan Lokal, dll                                            |
-| - CRUD Mapel     | Daftar mata pelajaran per lembaga                                                  |
-| - Penugasan Guru | Assign guru ke mapel per kelas & tahun ajaran                                      |
-| **CP/TP/ATP**    | (dibuat oleh guru pengampu)                                                        |
-| - CP             | Capaian Pembelajaran per mapel & fase, milik guru                                  |
-| - TP             | Tujuan Pembelajaran per CP                                                         |
-| - ATP            | Alur TP (urutan mingguan)                                                          |
-| **Jadwal**       |                                                                                    |
-| - CRUD Jadwal    | Atur jadwal per kelas (hari, jam_ke) — waktu di-resolve dari settings timetable    |
-| - Grid Editor    | Edit jadwal langsung dari grid per kelas — click cell pilih mapel+guru, batch save |
-| - Import Jadwal  | Import jadwal dari Excel (kolom: kelas, mapel, guru, hari, jam_ke)                 |
-| - Cetak Jadwal   | Cetak jadwal kelas & guru                                                          |
-| - Cek Bentrok    | Validasi bentrok jadwal otomatis (guru + hari + jam_ke)                            |
+| Fitur                       | Deskripsi                                                                                                                                                                                                   |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Kelola Mapel**            |                                                                                                                                                                                                             |
+| - Kelompok Mapel            | A. Umum, B. Kejuruan, Muatan Lokal, dll                                                                                                                                                                     |
+| - CRUD Mapel                | Daftar mata pelajaran per lembaga                                                                                                                                                                           |
+| - Penugasan Guru            | Assign guru ke mapel per kelas & tahun ajaran                                                                                                                                                               |
+| **Perangkat Ajar**          | (CP/TP/ATP/Modul Ajar — 1 halaman dengan 4 tab)                                                                                                                                                             |
+| - CP                        | Capaian Pembelajaran per mapel & fase, milik guru                                                                                                                                                           |
+| - TP                        | Tujuan Pembelajaran per CP                                                                                                                                                                                  |
+| - ATP                       | Alur TP (urutan mingguan)                                                                                                                                                                                   |
+| - Modul Ajar                | Upload dokumen (doc/docx/pdf) per mapel, upload manual via form                                                                                                                                             |
+| - Import Excel Komprehensif | 1 file XLSX, 3 sheet: CP (mapel_kode dropdown, fase, kode, deskripsi), TP (cp_kode, kode, deskripsi), ATP (tp_kode, minggu_ke, materi). Sheet CP & TP wajib, ATP opsional. Kode saling tertaut antar sheet. |
+| - UI: Stat cards            | 4 kartu ringkasan (CP, TP, ATP, Modul Ajar) dengan ikon & warna aksen                                                                                                                                       |
+| - UI: Filter per tab        | Dropdown filter mapel di header setiap tab, auto-submit on change                                                                                                                                           |
+| - UI: Import popup          | Tombol Import Excel di header halaman (sejajar judul), membuka modal popup                                                                                                                                  |
+| - UI: Preview dokumen       | Halaman lihat dokumen dengan preview PDF/HTML, layout konsisten                                                                                                                                             |
+| **Jadwal**                  |                                                                                                                                                                                                             |
+| - CRUD Jadwal               | Atur jadwal per kelas (hari, jam_ke) — waktu di-resolve dari settings timetable                                                                                                                             |
+| - Grid Editor               | Edit jadwal langsung dari grid per kelas — click cell pilih mapel+guru, batch save                                                                                                                          |
+| - Import Jadwal             | Import jadwal dari Excel (kolom: kelas, mapel, guru, hari, jam_ke)                                                                                                                                          |
+| - Cetak Jadwal              | Cetak jadwal kelas & guru                                                                                                                                                                                   |
+| - Cek Bentrok               | Validasi bentrok jadwal otomatis (guru + hari + jam_ke)                                                                                                                                                     |
 
 ### 1.5 Kesiswaan
 
@@ -155,17 +161,17 @@
 
 ### 1.11 Dashboard
 
-| Role           | Konten Dashboard                                                    |
-| -------------- | ------------------------------------------------------------------- |
-| Super Admin    | Jumlah yayasan, lembaga, pengguna aktif, storage                    |
-| Admin Yayasan  | Statistik per lembaga, approval pending, tahun ajaran aktif         |
-| Kepala Lembaga | Grafik kinerja akademik, presensi, absensi PTK, peringkat kelas     |
-| Admin Lembaga  | Jumlah guru/siswa aktif, status import, jadwal hari ini             |
-| Kurikulum      | Progress CP/TP/ATP, jadwal, distribusi mapel                        |
-| Kesiswaan      | Jumlah siswa per kelas, grafik mutasi, statistik pelanggaran        |
-| Guru           | Jadwal mengajar hari ini, daftar kelas, rekap presensi, absensi PTK |
-| Siswa          | Jadwal hari ini, nilai terbaru, notifikasi                          |
-| Orang Tua      | Presensi anak, nilai anak, jadwal, pelanggaran                      |
+| Role           | Konten Dashboard                                                                                |
+| -------------- | ----------------------------------------------------------------------------------------------- |
+| Super Admin    | Jumlah yayasan, lembaga, pengguna aktif, storage                                                |
+| Admin Yayasan  | Statistik per lembaga, approval pending, tahun ajaran aktif                                     |
+| Kepala Lembaga | Grafik kinerja akademik, presensi, absensi PTK, peringkat kelas                                 |
+| Admin Lembaga  | Jumlah guru/siswa aktif, status import, jadwal hari ini                                         |
+| Kurikulum      | Progress CP/TP/ATP, jadwal, distribusi mapel                                                    |
+| Kesiswaan      | Jumlah siswa per kelas, grafik mutasi, statistik pelanggaran                                    |
+| Guru           | Jadwal hari ini (link buat jurnal), jurnal terbaru, rekap jurnal (harian/mingguan), absensi PTK |
+| Siswa          | Jadwal hari ini, nilai terbaru, notifikasi                                                      |
+| Orang Tua      | Presensi anak, nilai anak, jadwal, pelanggaran                                                  |
 
 ### 1.12 Notifikasi
 
@@ -193,3 +199,7 @@
 | **P6 — Kesiswaan**            | Mutasi, Pelanggaran, Ekstrakurikuler, Alumni                                                          |
 | **P7 — Advanced**             | Notifikasi, Dashboard, Kalender Akademik, Laporan-laporan                                             |
 | **P8 — Rapor**                | Generate rapor, cetak PDF, E-Rapor                                                                    |
+
+# Belum Pernah disentuh
+
+-

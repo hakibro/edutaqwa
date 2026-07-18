@@ -114,13 +114,19 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 - [x] Penugasan Guru ke Mapel (per kelas & tahun ajaran)
 - [x] Import Penugasan Guru ke Mapel (XLSX)
 
-### 4.2 CP / TP / ATP (oleh guru pengampu)
+### 4.2 Perangkat Ajar (CP / TP / ATP / Modul Ajar) — 1 halaman dengan 4 tab
 
 - [x] CRUD CP (Capaian Pembelajaran) — milik guru, terikat mapel
 - [x] CRUD TP (Tujuan Pembelajaran) — milik guru
 - [x] CRUD ATP (Alur Tujuan Pembelajaran) — milik guru
+- [x] CRUD Modul Ajar — metadata + upload file dokumen (doc/docx/pdf)
+- [x] Import Excel Komprehensif — 1 file, 3 sheet: CP (mapel_kode dropdown, fase, kode, deskripsi), TP (cp_kode, kode, deskripsi), ATP (tp_kode, minggu_ke, materi). Sheet CP & TP wajib, ATP opsional. Kode saling tertaut antar sheet.
+- [x] Template download dengan dropdown mapel_kode (data validation dari hidden sheet)
 - [x] Isolasi: guru A tidak bisa edit/melihat CP/TP/ATP guru lain
-- [x] Kurikulum & Kepala Lembaga read-only monitoring
+- [x] Kurikulum & Kepala Lembaga bisa CRUD semua
+- [x] Modal inline untuk CRUD (tidak perlu navigasi halaman terpisah)
+- [x] UI enhancement: stat cards, filter mapel di header tiap tab, import excel popup modal di header halaman
+- [x] Lihat dokumen — halaman preview PDF/HTML dengan layout konsisten
 
 ### 4.3 Jadwal
 

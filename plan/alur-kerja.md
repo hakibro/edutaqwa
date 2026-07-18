@@ -108,27 +108,50 @@
    ├── Pilih satu atau lebih guru
    └── Simpan → setiap guru dapat mengelola CP/TP/ATP sendiri
         │
-4. Guru (pengampu) buat CP (Capaian Pembelajaran)
+4. Semua data perangkat ajar (CP/TP/ATP/Modul Ajar) dalam 1 halaman
+   ├── Buka menu "Perangkat Ajar" → lihat 4 tab: CP, TP, ATP, Modul Ajar
+   ├── Lihat 4 kartu statistik di atas tab (total CP, TP, ATP, Modul Ajar)
+   ├── Pilih filter mapel di header tab yang aktif
+   └── Pagination per tab
+        │
+5. Guru buat CP (Capaian Pembelajaran)
    ├── Pilih mapel yang diampu
    ├── Tentukan fase (E, F, dst)
    ├── Deskripsi CP
    └── Simpan → CP terikat ke guru pembuatnya
         │
-5. Guru buat TP (Tujuan Pembelajaran)
+6. Guru buat TP (Tujuan Pembelajaran)
    ├── Pilih CP miliknya
    ├── Kode TP & deskripsi
    └── Simpan
         │
-6. Guru buat ATP (Alur Tujuan Pembelajaran)
+7. Guru buat ATP (Alur Tujuan Pembelajaran)
    ├── Pilih TP miliknya
    ├── Tentukan minggu ke- & materi
    └── Simpan
         │
-7. Kurikulum & Kepala Lembaga bisa lihat semua CP/TP/ATP
-   └── Monitoring tanpa edit
+8. Guru upload Modul Ajar
+   ├── Pilih mapel, judul, deskripsi
+   ├── Upload file dokumen (doc/docx/pdf) — opsional
+   └── Simpan → file tersimpan di storage/app/public/modul-ajar/
+        │
+9. Import Excel Komprehensif (CP/TP/ATP — 1 file, 3 sheet)
+   ├── Klik tombol "Import Excel" di header halaman (sejajar judul)
+   ├── Modal popup muncul: pilih file XLSX + info template + link download template
+   ├── Download template XLSX dari link di modal popup
+   ├── Template punya 3 sheet:
+   │   ├── Sheet CP: mapel_kode (dropdown dari hidden sheet), fase, kode, deskripsi
+   │   ├── Sheet TP: cp_kode (tertaut ke sheet CP), kode, deskripsi
+   │   └── Sheet ATP: tp_kode (tertaut ke sheet TP), minggu_ke, materi
+   ├── Isi sheet CP & TP (wajib), ATP (opsional)
+   ├── Upload file → sistem baca per-sheet, validasi kode tertaut, insert
+   └── Lihat hasil: "CP: X baru, TP: Y baru, ATP: Z baru, N dilewati"
+        │
+10. Kurikulum & Kepala Lembaga bisa CRUD semua perangkat ajar
+   └── Guru hanya CRUD data milik sendiri (guru_id)
 ```
 
-**Catatan**: Satu mapel bisa diampu beberapa guru. Masing-masing guru membuat CP/TP/ATP sendiri. Data CP/TP/ATP diisolasi per guru — guru A tidak bisa mengubah punya guru B. Kurikulum hanya Read.
+**Catatan**: Satu mapel bisa diampu beberapa guru. Masing-masing guru membuat CP/TP/ATP sendiri. Data CP/TP/ATP diisolasi per guru — guru A tidak bisa mengubah punya guru B. Kurikulum & Admin Lembaga bisa CRUD semua.
 
 ## 5. Alur Penjadwalan
 
