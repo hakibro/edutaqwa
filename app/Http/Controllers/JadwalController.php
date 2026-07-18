@@ -447,6 +447,61 @@ class JadwalController extends Controller
         return response()->json(['slots' => $slots]);
     }
 
+    /**
+     * Export semua jadwal lembaga ke Excel (format sama dengan template import).
+     * User bisa export → edit → import ulang.
+     */
+    public function export(): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $user = auth()->user();
+        $lembagaId = $user->lembaga_id;
+
+        $query = Jadwal::with(['kelas', 'mapel', 'guru', 'tahunAjaran'])
+            ->where('lembaga_id', $lembagaId)
+            ->orderBy('kelas_id')
+            ->orderBy('hari')
+            ->orderBy('jam_ke');
+
+        $yayasanId = $user->yayasan_id ?? Lembaga::find($lembagaId)?->yayasan_id;
+        $tahunAktif = TahunAjaran::where('yayasan_id', $yayasanId)->where('is_active', true)->first();
+        if ($tahunAktif) {
+            $query->where('tahun_ajaran_id', $tahunAktif->id);
+        }
+
+        $jadwals = $query->get();
+
+        $filename = 'export-jadwal-' . now()->format('Ymd-His') . '.xlsx';
+
+        return response()->streamDownload(function () use ($jadwals) {
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+
+            // Header — sama dengan template import
+            $sheet->fromArray([['kelas', 'mapel', 'guru', 'hari', 'jam_ke']], null, 'A1');
+
+            $row = 2;
+            foreach ($jadwals as $j) {
+                $sheet->fromArray([
+                    [
+                        $j->kelas?->nama ?? '-',
+                        $j->mapel?->nama ?? '-',
+                        $j->guru?->nama ?? '-',
+                        $j->hari,
+                        $j->jam_ke,
+                    ]
+                ], null, "A{$row}");
+                $row++;
+            }
+
+            foreach (range('A', 'E') as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
+    }
+
     // === IMPORT ===
 
     public function showImportForm(): View
@@ -474,7 +529,6 @@ class JadwalController extends Controller
         $spreadsheet = IOFactory::load($request->file('file')->getRealPath());
         $rows = $spreadsheet->getActiveSheet()->toArray();
 
-        // Skip header row (baris 0)
         $headers = array_map('strtolower', $rows[0] ?? []);
         $imported = 0;
         $skipped = 0;
@@ -485,6 +539,40 @@ class JadwalController extends Controller
         $guruMap = Guru::where('lembaga_id', $lembagaId)->where('is_approved', true)->pluck('id', 'nama')->toArray();
         $hariValid = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'];
 
+        // 1) Backup jurnal sebelum hapus jadwal (cascade hapus jurnal)
+        $jadwalLama = Jadwal::with('jurnalMengajars')
+            ->where('lembaga_id', $lembagaId)
+            ->where('tahun_ajaran_id', $tahunAjaranId)
+            ->get();
+
+        $jurnalBackup = [];
+        foreach ($jadwalLama as $j) {
+            foreach ($j->jurnalMengajars as $jurnal) {
+                $jurnalBackup[] = $jurnal->only([
+                    'guru_id',
+                    'kelas_id',
+                    'pertemuan_ke',
+                    'tanggal',
+                    'jam_mulai',
+                    'jam_selesai',
+                    'foto_path',
+                    'latitude',
+                    'longitude',
+                    'materi',
+                    'is_verified',
+                    'verified_at',
+                    'verified_by',
+                    'metadata',
+                ]);
+            }
+        }
+
+        // 2) Hapus semua jadwal tahun aktif (cascade hapus jurnal)
+        $deleted = Jadwal::where('lembaga_id', $lembagaId)
+            ->where('tahun_ajaran_id', $tahunAjaranId)
+            ->delete();
+
+        // 3) Insert jadwal dari file
         foreach (array_slice($rows, 1) as $i => $row) {
             $rowNum = $i + 2; // baris excel (1-based, skip header)
 
@@ -552,19 +640,6 @@ class JadwalController extends Controller
                 $errors[] = "Baris $rowNum: bentrok — $bentrok (tetap disimpan)";
             }
 
-            // Cek duplikasi identik
-            $exists = Jadwal::where('kelas_id', $kelasId)
-                ->where('mapel_id', $mapelId)
-                ->where('guru_id', $guruId)
-                ->where('tahun_ajaran_id', $tahunAjaranId)
-                ->where('hari', $hariTitle)
-                ->where('jam_ke', $jamKe)
-                ->exists();
-            if ($exists) {
-                $skipped++;
-                continue;
-            }
-
             Jadwal::create([
                 'lembaga_id' => $lembagaId,
                 'kelas_id' => $kelasId,
@@ -578,9 +653,58 @@ class JadwalController extends Controller
             $imported++;
         }
 
-        LogAktivita::log('import', "Import jadwal: $imported berhasil, $skipped dilewati.");
+        // 4) Reassign jurnal ke jadwal baru (cocok berdasarkan guru_id + kelas_id + mapel_id)
+        $reassigned = 0;
+        $jurnalGagal = 0;
 
-        $message = "Import selesai. $imported berhasil, $skipped dilewati.";
+        if (!empty($jurnalBackup)) {
+            $jadwalBaru = Jadwal::where('lembaga_id', $lembagaId)
+                ->where('tahun_ajaran_id', $tahunAjaranId)
+                ->get()
+                ->groupBy(fn($j) => "{$j->guru_id}|{$j->kelas_id}|{$j->mapel_id}");
+
+            foreach ($jurnalBackup as $data) {
+                $oldJadwal = $jadwalLama->first(
+                    fn($j) =>
+                    $j->guru_id == $data['guru_id'] &&
+                    $j->jurnalMengajars->contains('tanggal', $data['tanggal'])
+                );
+                $oldMapelId = $oldJadwal?->mapel_id;
+
+                if (!$oldMapelId) {
+                    $jurnalGagal++;
+                    $errors[] = "Jurnal tanggal {$data['tanggal']} tidak ditemukan jadwal lamanya.";
+                    continue;
+                }
+
+                $key = "{$data['guru_id']}|{$data['kelas_id']}|{$oldMapelId}";
+                $match = $jadwalBaru->get($key)?->first();
+
+                if ($match) {
+                    $data['jadwal_id'] = $match->id;
+                    $exist = \App\Models\JurnalMengajar::where('jadwal_id', $match->id)
+                        ->where('tanggal', $data['tanggal'])
+                        ->exists();
+                    if (!$exist) {
+                        \App\Models\JurnalMengajar::create($data);
+                        $reassigned++;
+                    } else {
+                        $jurnalGagal++;
+                        $errors[] = "Jurnal tanggal {$data['tanggal']} sudah ada di jadwal baru, dilewati.";
+                    }
+                } else {
+                    $jurnalGagal++;
+                    $errors[] = "Jurnal tanggal {$data['tanggal']} (guru_id={$data['guru_id']}, kelas_id={$data['kelas_id']}, mapel_id={$oldMapelId}) tidak cocok dengan jadwal baru.";
+                }
+            }
+        }
+
+        LogAktivita::log('import', "Import jadwal: $imported berhasil, $skipped dilewati, $deleted jadwal lama dihapus, $reassigned jurnal di-reassign, $jurnalGagal jurnal gagal.");
+
+        $message = "Import selesai. $imported berhasil, $skipped dilewati. $reassigned jurnal di-reassign.";
+        if ($jurnalGagal > 0) {
+            $message .= " $jurnalGagal jurnal gagal di-reassign.";
+        }
         if (!empty($errors)) {
             session()->flash('import_errors', $errors);
         }

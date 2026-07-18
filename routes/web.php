@@ -193,6 +193,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/jadwal-import', [JadwalController::class, 'showImportForm'])->name('jadwal.import.form');
         Route::post('/jadwal-import', [JadwalController::class, 'import'])->name('jadwal.import');
         Route::get('/jadwal-template', [JadwalController::class, 'template'])->name('jadwal.template');
+        Route::get('/jadwal/export', [JadwalController::class, 'export'])->name('jadwal.export');
         // Grid editor & batch operations
         Route::post('/jadwal/batch-store', [JadwalController::class, 'storeBatch'])->name('jadwal.batch-store');
         Route::get('/jadwal/slot-search', [JadwalController::class, 'slotSearch'])->name('jadwal.slot-search');

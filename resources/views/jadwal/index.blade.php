@@ -3,6 +3,10 @@
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-semibold leading-tight text-gray-800">{{ __('Jadwal Pelajaran') }}</h2>
             <div class="flex gap-2">
+                <a href="{{ route('jadwal.export') }}"
+                    class="rounded-md bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-amber-500">
+                    Export Excel
+                </a>
                 <a href="{{ route('jadwal.import.form') }}"
                     class="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500">
                     Import Excel

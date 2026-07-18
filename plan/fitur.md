@@ -74,7 +74,8 @@
 | **Jadwal**                  |                                                                                                                                                                                                             |
 | - CRUD Jadwal               | Atur jadwal per kelas (hari, jam_ke) — waktu di-resolve dari settings timetable                                                                                                                             |
 | - Grid Editor               | Edit jadwal langsung dari grid per kelas — click cell pilih mapel+guru, batch save                                                                                                                          |
-| - Import Jadwal             | Import jadwal dari Excel (kolom: kelas, mapel, guru, hari, jam_ke)                                                                                                                                          |
+| - Import Jadwal             | Import jadwal dari Excel (kolom: kelas, mapel, guru, hari, jam_ke) — backup jurnal dulu, hapus & insert ulang, lalu reassign jurnal ke jadwal baru berdasarkan guru_id+kelas_id+mapel_id ✓                  |
+| - Export Jadwal             | Export jadwal ke Excel (format sama template import), siap edit & re-import ✓                                                                                                                               |
 | - Cetak Jadwal              | Cetak jadwal kelas & guru                                                                                                                                                                                   |
 | - Cek Bentrok               | Validasi bentrok jadwal otomatis (guru + hari + jam_ke)                                                                                                                                                     |
 
