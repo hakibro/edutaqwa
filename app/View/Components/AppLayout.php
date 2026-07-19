@@ -12,6 +12,10 @@ class AppLayout extends Component
      */
     public function render(): View
     {
+        if (auth()->check() && auth()->user()->isGuru()) {
+            return view('layouts.guru');
+        }
+
         return view('layouts.app');
     }
 }

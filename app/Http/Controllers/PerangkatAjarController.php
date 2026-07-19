@@ -36,7 +36,8 @@ class PerangkatAjarController extends Controller
         // Scope helpers
         $cpScope = function ($query) use ($user, $guru) {
             if ($user->isGuru() && $guru) {
-                $query->where('guru_id', $guru->id);
+                $mapelIds = $guru->pengajaranMapels()->pluck('mapel_id');
+                $query->whereIn('mapel_id', $mapelIds);
             } elseif ($user->lembaga_id) {
                 $query->whereHas('mapel', fn($q) => $q->where('lembaga_id', $user->lembaga_id));
             } elseif ($user->yayasan_id) {
@@ -46,7 +47,8 @@ class PerangkatAjarController extends Controller
 
         $tpScope = function ($query) use ($user, $guru) {
             if ($user->isGuru() && $guru) {
-                $query->whereHas('cp', fn($q) => $q->where('guru_id', $guru->id));
+                $mapelIds = $guru->pengajaranMapels()->pluck('mapel_id');
+                $query->whereHas('cp.mapel', fn($q) => $q->whereIn('mapel_id', $mapelIds));
             } elseif ($user->lembaga_id) {
                 $query->whereHas('cp.mapel', fn($q) => $q->where('lembaga_id', $user->lembaga_id));
             } elseif ($user->yayasan_id) {
@@ -56,7 +58,8 @@ class PerangkatAjarController extends Controller
 
         $atpScope = function ($query) use ($user, $guru) {
             if ($user->isGuru() && $guru) {
-                $query->whereHas('tp.cp', fn($q) => $q->where('guru_id', $guru->id));
+                $mapelIds = $guru->pengajaranMapels()->pluck('mapel_id');
+                $query->whereHas('tp.cp.mapel', fn($q) => $q->whereIn('mapel_id', $mapelIds));
             } elseif ($user->lembaga_id) {
                 $query->whereHas('tp.cp.mapel', fn($q) => $q->where('lembaga_id', $user->lembaga_id));
             } elseif ($user->yayasan_id) {
@@ -66,7 +69,9 @@ class PerangkatAjarController extends Controller
 
         $modulScope = function ($query) use ($user, $guru) {
             if ($user->isGuru() && $guru) {
-                $query->where('guru_id', $guru->id);
+                // Guru bisa lihat modul ajar dari semua guru di mapel yang sama
+                $mapelIds = $guru->pengajaranMapels()->pluck('mapel_id');
+                $query->whereIn('mapel_id', $mapelIds);
             } elseif ($user->lembaga_id) {
                 $query->where('lembaga_id', $user->lembaga_id);
             } elseif ($user->yayasan_id) {
@@ -124,7 +129,7 @@ class PerangkatAjarController extends Controller
         }
         $mapels = $mapelQuery->orderBy('nama')->get();
 
-        // Dropdown guru untuk admin_lembaga
+        // Dropdown guru — admin_lembaga lihat semua guru lembaga, guru lihat guru lain di mapel yang sama
         $gurus = collect();
         if ($user->isAdminLembaga()) {
             $guruQuery = Guru::where('lembaga_id', $user->lembaga_id);
@@ -132,6 +137,10 @@ class PerangkatAjarController extends Controller
                 $guruQuery->whereHas('pengajaranMapels', fn($q) => $q->where('mapel_id', $mapelId));
             }
             $gurus = $guruQuery->orderBy('nama')->get();
+        } elseif ($user->isGuru() && $guru) {
+            $mapelIds = $guru->pengajaranMapels()->pluck('mapel_id');
+            $gurus = Guru::whereHas('pengajaranMapels', fn($q) => $q->whereIn('mapel_id', $mapelIds))
+                ->orderBy('nama')->get();
         }
 
         // Dropdown untuk modal form

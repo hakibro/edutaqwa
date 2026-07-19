@@ -225,7 +225,7 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 - [x] Dashboard Admin Lembaga
 - [x] Dashboard Kurikulum
 - [x] Dashboard Kesiswaan
-- [x] Dashboard Guru
+- [x] Dashboard Guru (Mobile-first bottom navbar + desktop sidebar)
 - [x] Dashboard Siswa
 - [x] Dashboard Orang Tua
 

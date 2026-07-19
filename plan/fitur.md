@@ -52,6 +52,7 @@
 | **Pengumuman**            |                                                                                                                                              |
 | - Kelola Pengumuman       | Admin lembaga membuat/mengedit/menghapus pengumuman menggunakan Editor.js (rich text + gambar).                                              |
 | - Popup Dashboard Guru    | Guru melihat pengumuman aktif sebagai popup saat login, bisa dismiss. Session-based read tracking.                                           |
+| - Layout Mobile-First      | Dashboard guru pakai layout khusus (guru-layout): bottom navbar 5 item di mobile (`< lg`), sidebar desktop tetap (`lg:`). Nav items: Dashboard, Jurnal, Jadwal, Absensi, Profil. Notifikasi badge di icon Profil. |
 
 ### 1.4 Akademik — Kurikulum
 

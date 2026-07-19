@@ -134,6 +134,36 @@
                 @endif
             </div>
 
+            <!-- Akses Cepat -->
+            <div class="mb-6">
+                <div class="flex flex-wrap gap-2">
+                    <a href="/jurnal-mengajar"
+                        class="inline-flex items-center gap-1.5 rounded-md bg-teal-50 px-3 py-1.5 text-sm font-medium text-teal-700 hover:bg-teal-100">
+                        📝 Jurnal Mengajar
+                    </a>
+                    <a href="{{ route('perangkat-ajar.index') }}"
+                        class="inline-flex items-center gap-1.5 rounded-md bg-purple-50 px-3 py-1.5 text-sm font-medium text-purple-700 hover:bg-purple-100">
+                        📖 Perangkat Ajar
+                    </a>
+                    <a href="/jadwal-saya"
+                        class="inline-flex items-center gap-1.5 rounded-md bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100">
+                        📅 Jadwal Saya
+                    </a>
+                    <button type="button" onclick="window.pengumumanInstance?.showLatest()"
+                        class="inline-flex items-center gap-1.5 rounded-md bg-yellow-50 px-3 py-1.5 text-sm font-medium text-yellow-700 hover:bg-yellow-100">
+                        📢 Pengumuman
+                    </button>
+                    <span
+                        class="inline-flex items-center gap-1.5 rounded-md bg-green-50 px-3 py-1.5 text-sm font-medium text-green-400 cursor-not-allowed opacity-60">
+                        📊 Input Nilai
+                    </span>
+                    <span
+                        class="inline-flex items-center gap-1.5 rounded-md bg-orange-50 px-3 py-1.5 text-sm font-medium text-orange-400 cursor-not-allowed opacity-60">
+                        ⚠️ Catat Pelanggaran
+                    </span>
+                </div>
+            </div>
+
             <!-- Jadwal Hari Ini & Jurnal -->
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <!-- Jadwal Hari Ini -->
@@ -209,63 +239,6 @@
                 </div>
             </div>
 
-            <!-- Akses Cepat -->
-            <div class="mt-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <h3 class="mb-4 text-lg font-semibold text-gray-800">Akses Cepat</h3>
-
-                    {{-- Presensi & Kehadiran --}}
-                    <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">Presensi & Kehadiran
-                    </p>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-                        <a href="{{ route('absensi-ptk.index') }}"
-                            class="block rounded-md bg-blue-50 p-3 text-blue-700 hover:bg-blue-100 text-sm font-medium text-center">
-                            <span class="block text-lg mb-0.5">🕐</span>
-                            Absen Harian
-                        </a>
-                        <a href="{{ route('jurnal-mengajar.create') }}"
-                            class="block rounded-md bg-teal-50 p-3 text-teal-700 hover:bg-teal-100 text-sm font-medium text-center">
-                            <span class="block text-lg mb-0.5">📝</span>
-                            Jurnal Mengajar
-                        </a>
-                        <a href="{{ route('jurnal-mengajar.index') }}"
-                            class="block rounded-md bg-teal-50 p-3 text-teal-700 hover:bg-teal-100 text-sm font-medium text-center">
-                            <span class="block text-lg mb-0.5">📋</span>
-                            Riwayat Jurnal
-                        </a>
-                    </div>
-
-                    {{-- Akademik --}}
-                    <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">Akademik</p>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-                        <a href="{{ route('nilai.index') }}"
-                            class="block rounded-md bg-green-50 p-3 text-green-700 hover:bg-green-100 text-sm font-medium text-center">
-                            <span class="block text-lg mb-0.5">📊</span>
-                            Input Nilai
-                        </a>
-                        <a href="{{ route('perangkat-ajar.index') }}"
-                            class="block rounded-md bg-purple-50 p-3 text-purple-700 hover:bg-purple-100 text-sm font-medium text-center">
-                            <span class="block text-lg mb-0.5">📖</span>
-                            CP / TP / ATP
-                        </a>
-                    </div>
-
-                    {{-- Kesiswaan & Lainnya --}}
-                    <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">Kesiswaan & Lainnya</p>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <a href="{{ route('kesiswaan.pelanggaran.index') }}"
-                            class="block rounded-md bg-orange-50 p-3 text-orange-700 hover:bg-orange-100 text-sm font-medium text-center">
-                            <span class="block text-lg mb-0.5">⚠️</span>
-                            Catat Pelanggaran
-                        </a>
-                        <button type="button" onclick="window.pengumumanInstance?.showLatest()"
-                            class="block rounded-md bg-yellow-50 p-3 text-yellow-700 hover:bg-yellow-100 text-sm font-medium text-center">
-                            <span class="block text-lg mb-0.5">📢</span>
-                            Pengumuman
-                        </button>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </x-app-layout>

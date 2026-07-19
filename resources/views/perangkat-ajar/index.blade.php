@@ -143,7 +143,7 @@
                                         </option>
                                     @endforeach
                                 </select>
-                                @if (auth()->user()->isAdminLembaga())
+                                @if (auth()->user()->isAdminLembaga() || auth()->user()->isGuru())
                                     <select name="guru_id" onchange="this.form.submit()"
                                         class="rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-1.5">
                                         <option value="">Semua Guru</option>
@@ -274,7 +274,7 @@
                                         </option>
                                     @endforeach
                                 </select>
-                                @if (auth()->user()->isAdminLembaga())
+                                @if (auth()->user()->isAdminLembaga() || auth()->user()->isGuru())
                                     <select name="guru_id" onchange="this.form.submit()"
                                         class="rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm py-1.5">
                                         <option value="">Semua Guru</option>
@@ -340,15 +340,20 @@
                                                 class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold {{ $tp->atps_count > 0 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-400' }}">{{ $tp->atps_count }}</span>
                                         </td>
                                         <td class="px-4 py-3 text-right text-sm whitespace-nowrap">
-                                            <button @click="openModal('tp', {{ $tp->id }})"
-                                                class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-900 font-medium">Edit</button>
-                                            <form action="{{ route('perangkat-ajar.tp.destroy', $tp) }}"
-                                                method="POST" class="inline"
-                                                onsubmit="return confirm('Hapus TP ini?')">
-                                                @csrf @method('DELETE')
-                                                <button type="submit"
-                                                    class="inline-flex items-center gap-1 ml-3 text-red-600 hover:text-red-900 font-medium">Hapus</button>
-                                            </form>
+                                            @php $canEditTp = !auth()->user()->isGuru() || auth()->user()->guru_id === $tp->cp->guru_id; @endphp
+                                            @if ($canEditTp)
+                                                <button @click="openModal('tp', {{ $tp->id }})"
+                                                    class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-900 font-medium">Edit</button>
+                                                <form action="{{ route('perangkat-ajar.tp.destroy', $tp) }}"
+                                                    method="POST" class="inline"
+                                                    onsubmit="return confirm('Hapus TP ini?')">
+                                                    @csrf @method('DELETE')
+                                                    <button type="submit"
+                                                        class="inline-flex items-center gap-1 ml-3 text-red-600 hover:text-red-900 font-medium">Hapus</button>
+                                                </form>
+                                            @else
+                                                <span class="text-gray-300">-</span>
+                                            @endif
                                         </td>
                                     </tr>
                                 @empty
@@ -391,7 +396,7 @@
                                         </option>
                                     @endforeach
                                 </select>
-                                @if (auth()->user()->isAdminLembaga())
+                                @if (auth()->user()->isAdminLembaga() || auth()->user()->isGuru())
                                     <select name="guru_id" onchange="this.form.submit()"
                                         class="rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm py-1.5">
                                         <option value="">Semua Guru</option>
@@ -455,15 +460,20 @@
                                         <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
                                             {{ $atp->tp->cp->mapel->nama ?? '-' }}</td>
                                         <td class="px-4 py-3 text-right text-sm whitespace-nowrap">
-                                            <button @click="openModal('atp', {{ $atp->id }})"
-                                                class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-900 font-medium">Edit</button>
-                                            <form action="{{ route('perangkat-ajar.atp.destroy', $atp) }}"
-                                                method="POST" class="inline"
-                                                onsubmit="return confirm('Hapus ATP ini?')">
-                                                @csrf @method('DELETE')
-                                                <button type="submit"
-                                                    class="inline-flex items-center gap-1 ml-3 text-red-600 hover:text-red-900 font-medium">Hapus</button>
-                                            </form>
+                                            @php $canEditAtp = !auth()->user()->isGuru() || auth()->user()->guru_id === $atp->tp->cp->guru_id; @endphp
+                                            @if ($canEditAtp)
+                                                <button @click="openModal('atp', {{ $atp->id }})"
+                                                    class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-900 font-medium">Edit</button>
+                                                <form action="{{ route('perangkat-ajar.atp.destroy', $atp) }}"
+                                                    method="POST" class="inline"
+                                                    onsubmit="return confirm('Hapus ATP ini?')">
+                                                    @csrf @method('DELETE')
+                                                    <button type="submit"
+                                                        class="inline-flex items-center gap-1 ml-3 text-red-600 hover:text-red-900 font-medium">Hapus</button>
+                                                </form>
+                                            @else
+                                                <span class="text-gray-300">-</span>
+                                            @endif
                                         </td>
                                     </tr>
                                 @empty
@@ -505,7 +515,7 @@
                                         </option>
                                     @endforeach
                                 </select>
-                                @if (auth()->user()->isAdminLembaga())
+                                @if (auth()->user()->isAdminLembaga() || auth()->user()->isGuru())
                                     <select name="guru_id" onchange="this.form.submit()"
                                         class="rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm py-1.5">
                                         <option value="">Semua Guru</option>
@@ -578,15 +588,20 @@
                                             @endif
                                         </td>
                                         <td class="px-4 py-3 text-right text-sm whitespace-nowrap">
-                                            <button @click="openModal('modul', {{ $modul->id }})"
-                                                class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-900 font-medium">Edit</button>
-                                            <form action="{{ route('perangkat-ajar.modul.destroy', $modul) }}"
-                                                method="POST" class="inline"
-                                                onsubmit="return confirm('Hapus Modul Ajar ini?')">
-                                                @csrf @method('DELETE')
-                                                <button type="submit"
-                                                    class="inline-flex items-center gap-1 ml-3 text-red-600 hover:text-red-900 font-medium">Hapus</button>
-                                            </form>
+                                            @php $canEditModul = !auth()->user()->isGuru() || auth()->user()->guru_id === $modul->guru_id; @endphp
+                                            @if ($canEditModul)
+                                                <button @click="openModal('modul', {{ $modul->id }})"
+                                                    class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-900 font-medium">Edit</button>
+                                                <form action="{{ route('perangkat-ajar.modul.destroy', $modul) }}"
+                                                    method="POST" class="inline"
+                                                    onsubmit="return confirm('Hapus Modul Ajar ini?')">
+                                                    @csrf @method('DELETE')
+                                                    <button type="submit"
+                                                        class="inline-flex items-center gap-1 ml-3 text-red-600 hover:text-red-900 font-medium">Hapus</button>
+                                                </form>
+                                            @else
+                                                <span class="text-gray-300">-</span>
+                                            @endif
                                         </td>
                                     </tr>
                                 @empty
