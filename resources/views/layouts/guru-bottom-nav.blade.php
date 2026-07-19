@@ -1,4 +1,5 @@
-<nav class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
+<nav
+    class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
     <div class="grid grid-cols-6 h-16 max-w-lg mx-auto">
         {{-- Dashboard --}}
         <a href="{{ route('guru.dashboard') }}"
