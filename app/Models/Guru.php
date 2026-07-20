@@ -95,6 +95,65 @@ class Guru extends Model
     }
 
     /**
+     * Cek apakah guru adalah Wali Kelas di tahun ajaran tertentu.
+     */
+    public function isWaliKelas(?int $tahunAjaranId = null): bool
+    {
+        return $this->tugasTambahans()
+            ->where('jenis', 'Wali Kelas')
+            ->where('is_active', true)
+            ->when($tahunAjaranId, fn($q) => $q->where('tahun_ajaran_id', $tahunAjaranId))
+            ->exists();
+    }
+
+    /**
+     * Ambil data tugas tambahan Wali Kelas aktif.
+     */
+    public function waliKelasAktif(?int $tahunAjaranId = null): ?TugasTambahan
+    {
+        return $this->tugasTambahans()
+            ->where('jenis', 'Wali Kelas')
+            ->where('is_active', true)
+            ->when($tahunAjaranId, fn($q) => $q->where('tahun_ajaran_id', $tahunAjaranId))
+            ->first();
+    }
+
+    /**
+     * Ambil kelas yang diwalikan (jika guru adalah Wali Kelas).
+     */
+    public function kelasWali(?int $tahunAjaranId = null): ?Kelas
+    {
+        $tt = $this->waliKelasAktif($tahunAjaranId);
+        return $tt?->kelas;
+    }
+
+    /**
+     * Cek apakah guru adalah BK.
+     */
+    public function isBK(?int $tahunAjaranId = null): bool
+    {
+        return $this->tugasTambahans()
+            ->where('jenis', 'BK')
+            ->where('is_active', true)
+            ->when($tahunAjaranId, fn($q) => $q->where('tahun_ajaran_id', $tahunAjaranId))
+            ->exists();
+    }
+
+    /**
+     * Ambil kelas yang diajar guru di tahun ajaran tertentu.
+     */
+    public function getKelasDiajar(?int $tahunAjaranId = null): \Illuminate\Support\Collection
+    {
+        return $this->pengajaranMapels()
+            ->when($tahunAjaranId, fn($q) => $q->where('tahun_ajaran_id', $tahunAjaranId))
+            ->with('kelas')
+            ->get()
+            ->pluck('kelas')
+            ->unique('id')
+            ->values();
+    }
+
+    /**
      * Generate NIY: YYYYUUNN — tahun TMT + kode lembaga Sisda + nomor urut.
      * Dipanggil saat Admin Yayasan approve guru.
      */

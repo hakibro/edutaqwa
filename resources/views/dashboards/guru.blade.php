@@ -66,8 +66,8 @@
             </div>
 
             <!-- Absensi Status -->
-            <div class="mb-6">
-                @if ($guru && $guru->isStruktural())
+            @if ($guru && $guru->isStruktural())
+                <div class="mb-6">
                     {{-- Guru struktural: wajib absen --}}
                     @if ($absensiHariIni)
                         @if ($absensiHariIni->check_out)
@@ -101,38 +101,8 @@
                             </div>
                         </div>
                     @endif
-                @elseif ($guru && !$guru->isStruktural())
-                    {{-- Guru non-struktural: opsional --}}
-                    @if ($absensiHariIni)
-                        @if ($absensiHariIni->check_out)
-                            <div class="rounded-lg bg-green-50 border border-green-200 p-4">
-                                <p class="text-green-700 font-medium">Absensi hari ini sudah lengkap.</p>
-                                <p class="text-sm text-green-600">Check-in:
-                                    {{ $absensiHariIni->check_in?->format('H:i') }}
-                                    — Check-out: {{ $absensiHariIni->check_out?->format('H:i') }} — Status:
-                                    {{ $absensiHariIni->status }}</p>
-                            </div>
-                        @else
-                            <div class="rounded-lg bg-blue-50 border border-blue-200 p-4">
-                                <p class="text-blue-700 font-medium">Sudah check-in, jangan lupa check-out!</p>
-                                <div class="mt-2">
-                                    <a href="{{ route('absensi-ptk.index') }}"
-                                        class="text-blue-600 underline text-sm font-medium">Check-out sekarang →</a>
-                                </div>
-                            </div>
-                        @endif
-                    @else
-                        <div class="rounded-lg bg-blue-50 border border-blue-200 p-4">
-                            <div class="flex items-center justify-between">
-                                <p class="text-blue-700 font-medium">Absensi harian (opsional)</p>
-                                <a href="{{ route('absensi-ptk.index') }}"
-                                    class="inline-block rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">Absen
-                                    Sekarang</a>
-                            </div>
-                        </div>
-                    @endif
-                @endif
-            </div>
+                </div>
+            @endif
 
             <!-- Akses Cepat -->
             <div class="mb-6">
@@ -345,8 +315,7 @@
             }
         </style>
         <div class="mt-6 flex items-center justify-end gap-2">
-            <span class="text-xs text-gray-400"
-                x-text="data.published_at ? 'Dibuat ' + data.published_at : ''"></span>
+            <span class="text-xs text-gray-400" x-text="data.published_at ? 'Dibuat ' + data.published_at : ''"></span>
             <button @click="dismiss()"
                 class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500">Tutup</button>
         </div>

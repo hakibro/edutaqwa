@@ -29,6 +29,8 @@ use App\Http\Controllers\SiswaSyncController;
 use App\Http\Controllers\TahunAjaranController;
 use App\Http\Controllers\PengumumanController;
 use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\WaliKelasController;
+use App\Http\Controllers\BkController;
 use App\Http\Controllers\YayasanController;
 use Illuminate\Support\Facades\Route;
 
@@ -60,6 +62,12 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin_yayasan')->get('/admin-yayasan', fn() => view('dashboards.admin-yayasan'))->name('admin-yayasan.dashboard');
     Route::middleware('role:kepala_lembaga,admin_lembaga,kurikulum,kesiswaan')->get('/lembaga/dashboard', fn() => view('dashboards.lembaga'))->name('lembaga.dashboard');
     Route::middleware('role:guru')->get('/guru/dashboard', fn() => view('dashboards.guru'))->name('guru.dashboard');
+
+    // Wali Kelas & BK — menu khusus guru dengan tugas tambahan
+    Route::middleware('role:guru')->group(function () {
+        Route::get('/guru/wali-kelas', [WaliKelasController::class, 'index'])->name('guru.wali-kelas');
+        Route::get('/guru/bk', [BkController::class, 'index'])->name('guru.bk');
+    });
     Route::middleware('role:siswa')->get('/siswa/dashboard', fn() => view('dashboards.siswa'))->name('siswa.dashboard');
     Route::middleware('role:orang_tua')->get('/orang-tua/dashboard', fn() => view('dashboards.orang-tua'))->name('orang-tua.dashboard');
 
@@ -346,8 +354,8 @@ Route::middleware('auth')->prefix('laporan')->name('laporan.')->group(function (
     Route::get('/kesiswaan/export', [App\Http\Controllers\LaporanController::class, 'exportKesiswaan'])->name('export-kesiswaan');
 
     // Presensi
-    Route::get('/presensi', [App\Http\Controllers\LaporanController::class, 'presensi'])->name('presensi');
-    Route::get('/presensi/export', [App\Http\Controllers\LaporanController::class, 'exportPresensi'])->name('export-presensi');
+    Route::get('/laporan/presensi', [App\Http\Controllers\LaporanController::class, 'presensi'])->name('presensi');
+    Route::get('/laporan/presensi/export', [App\Http\Controllers\LaporanController::class, 'exportPresensi'])->name('export-presensi');
 
     // Absensi PTK
     Route::get('/absensi-ptk', [App\Http\Controllers\LaporanController::class, 'absensiPtk'])->name('absensi-ptk');

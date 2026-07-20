@@ -206,6 +206,10 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 
 - [x] CRUD Kategori Pelanggaran + poin
 - [x] CRUD Pelanggaran (BK/Guru)
+- [x] Dashboard BK (monitoring pelanggaran seluruh siswa per lembaga, statistik per kategori)
+- [x] Dashboard Wali Kelas (daftar siswa walinya, ringkasan presensi, link cepat rapor & pelanggaran)
+- [x] Relasi Wali Kelas ke Kelas (kelas_id di tugas_tambahans, dropdown pilih kelas saat set Wali Kelas)
+- [x] Navigasi dinamis guru (Wali Kelas/BK muncul di sidebar & bottom nav otomatis)
 - [x] Akumulasi poin per siswa (P9 dashboard)
 - [x] Notifikasi batas poin (P9 notifikasi)
 

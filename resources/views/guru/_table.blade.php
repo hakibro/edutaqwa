@@ -27,7 +27,8 @@
             </select>
         </td>
         <td class="px-6 py-4 text-sm text-gray-700">
-            <div class="tugas-tambahan-inline" data-guru-id="{{ $g->id }}">
+            <div class="tugas-tambahan-inline" data-guru-id="{{ $g->id }}"
+                data-lembaga-id="{{ $g->lembaga_id }}">
                 @php $ttList = $g->tugasTambahans; @endphp
                 @if ($ttList->isNotEmpty())
                     @foreach ($ttList as $tt)
@@ -51,6 +52,16 @@
                                 @foreach ($tahunAjarans as $ta)
                                     <option value="{{ $ta->id }}" @selected($tt->tahun_ajaran_id == $ta->id)>
                                         {{ $ta->nama }}</option>
+                                @endforeach
+                            </select>
+                            <select
+                                class="tt-kelas rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                style="{{ $tt->jenis === 'Wali Kelas' ? '' : 'display:none' }};min-width:120px">
+                                <option value="">-- Kelas --</option>
+                                @php $kelasOptions = \App\Models\Kelas::where('lembaga_id', $g->lembaga_id)->orderBy('nama')->get(); @endphp
+                                @foreach ($kelasOptions as $k)
+                                    <option value="{{ $k->id }}" @selected($tt->kelas_id == $k->id)>
+                                        {{ $k->nama }}</option>
                                 @endforeach
                             </select>
                             <button type="button"

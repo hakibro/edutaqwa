@@ -189,6 +189,30 @@
 | Lupa Check-in/Check-out   | Guru, Kepala Lembaga      | Lewat jam tanpa absen       |
 | Selfie Agenda Belum Diisi | Guru, Kurikulum           | Jadwal selesai tanpa selfie |
 
+### 1.8 Menu Khusus Guru — Tugas Tambahan
+
+| Fitur                  | Role        | Deskripsi                                                                   |
+| ---------------------- | ----------- | --------------------------------------------------------------------------- |
+| **Wali Kelas**         | Wali Kelas  | Dashboard monitoring siswa per kelas: presensi, nilai ringkasan, link cepat |
+| - Daftar Siswa         | Wali Kelas  | Lihat daftar siswa di kelas walinya (foto, NISN, nama, JK)                  |
+| - Ringkasan Presensi   | Wali Kelas  | Rekap hadir/sakit/izin/alpha bulan berjalan                                 |
+| - Link Rapor           | Wali Kelas  | Link ke input nilai & catatan wali kelas di rapor                           |
+| - Link Pelanggaran     | Wali Kelas  | Link ke halaman pelanggaran siswa kelas walinya                             |
+| **Dashboard BK**       | BK/Konselor | Dashboard monitoring pelanggaran siswa di seluruh lembaga                   |
+| - Statistik            | BK          | Total pelanggaran, poin, siswa bermasalah, siswa bersih                     |
+| - Filter Kelas         | BK          | Filter siswa per kelas                                                      |
+| - Filter TA            | BK          | Filter per tahun ajaran                                                     |
+| - Daftar Siswa         | BK          | Semua siswa dengan jumlah pelanggaran & poin, link ke detail                |
+| - Pelanggaran/Kategori | BK          | Statistik pelanggaran per kategori (bar chart sederhana)                    |
+
+### 1.9 Navigasi Guru Dinamis
+
+| Fitur                 | Deskripsi                                                           |
+| --------------------- | ------------------------------------------------------------------- |
+| Bottom Nav (Mobile)   | Item Wali Kelas / BK muncul otomatis jika guru punya tugas tambahan |
+| Sidebar (Desktop)     | Sama, menu muncul dinamis di sidebar bagian "Kehadiran & Mengajar"  |
+| Kolom grid bottom nav | Otomatis menyesuaikan (5/6/7 kolom tergantung ada menu tambahan)    |
+
 ## 2. Prioritas Fitur Berdasarkan Urutan Development
 
 | Phase                         | Fitur                                                                                                 |
@@ -203,8 +227,3 @@
 | **P8 — Rapor**                | Generate rapor, cetak PDF, E-Rapor                                                                    |
 
 # Belum Pernah disentuh
-
-- role walas
-- nilai
-- pelanggaran
-- bk

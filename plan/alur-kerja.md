@@ -224,8 +224,7 @@
 2. Guru buka menu Absensi PTK
    ├── Guru struktural (jenis_ptk_id terisi): wajib absen setiap hari
    │   └── Dashboard tampilkan banner merah jika belum absen
-   ├── Guru non-struktural: absen opsional
-   │   └── Dashboard tampilkan banner biru/netral
+   ├── Guru non-struktural: absensi tidak ditampilkan (dashboard, sidebar, bottom nav semua disembunyikan)
         │
 3. Check-in (pagi):
    ├── Tombol "Check-in" atau scan QR

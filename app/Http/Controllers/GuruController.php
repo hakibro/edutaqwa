@@ -69,12 +69,15 @@ class GuruController extends Controller
         $jenisPtks = JenisPtk::whereIn('lembaga_id', $allowedLembagaIds)->where('is_active', true)->get();
         $tahunAjarans = TahunAjaran::where('is_active', true)->get();
 
+        $kelasOptions = \App\Models\Kelas::whereIn('lembaga_id', $gurus->pluck('lembaga_id')->unique())
+            ->orderBy('nama')->get(['id', 'nama', 'lembaga_id']);
+
         if ($request->ajax() || $request->wantsJson()) {
             $html = view('guru._table', compact('gurus', 'jenisPtks', 'tahunAjarans'))->render();
             return response()->json(['html' => $html, 'pagination' => $gurus->links()->toHtml()]);
         }
 
-        return view('guru.index', compact('gurus', 'jenisPtks', 'tahunAjarans'));
+        return view('guru.index', compact('gurus', 'jenisPtks', 'tahunAjarans', 'kelasOptions'));
     }
 
     public function create(): View
@@ -93,8 +96,9 @@ class GuruController extends Controller
         $lembagaId = $user->lembaga_id ?? $lembagas->first()?->id;
         $jenisPtks = $lembagaId ? JenisPtk::where('lembaga_id', $lembagaId)->where('is_active', true)->get() : collect();
         $tahunAjarans = TahunAjaran::where('is_active', true)->get();
+        $kelas = $lembagaId ? \App\Models\Kelas::where('lembaga_id', $lembagaId)->orderBy('nama')->get() : collect();
 
-        return view('guru.create', compact('lembagas', 'jenisPtks', 'tahunAjarans'));
+        return view('guru.create', compact('lembagas', 'jenisPtks', 'tahunAjarans', 'kelas'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -127,6 +131,7 @@ class GuruController extends Controller
             'tugas_tambahan' => 'nullable|array',
             'tugas_tambahan.*.jenis' => 'required_with:tugas_tambahan|string|max:50',
             'tugas_tambahan.*.tahun_ajaran_id' => 'required_with:tugas_tambahan|exists:tahun_ajarans,id',
+            'tugas_tambahan.*.kelas_id' => 'nullable|exists:kelas,id',
         ]);
 
         $lembaga = Lembaga::findOrFail($lembagaId);
@@ -146,11 +151,13 @@ class GuruController extends Controller
             // Simpan tugas tambahan
             foreach ($tugasTambahan as $tt) {
                 if (!empty($tt['jenis'])) {
+                    $this->validateWaliKelasUnique($lembagaId, $tt);
                     TugasTambahan::create([
                         'guru_id' => $guru->id,
                         'jenis' => $tt['jenis'],
                         'keterangan' => $tt['keterangan'] ?? null,
                         'tahun_ajaran_id' => $tt['tahun_ajaran_id'],
+                        'kelas_id' => ($tt['jenis'] === 'Wali Kelas') ? ($tt['kelas_id'] ?? null) : null,
                         'is_active' => true,
                     ]);
                 }
@@ -188,8 +195,9 @@ class GuruController extends Controller
 
         $jenisPtks = JenisPtk::where('lembaga_id', $guru->lembaga_id)->where('is_active', true)->get();
         $tahunAjarans = TahunAjaran::where('is_active', true)->get();
+        $kelas = \App\Models\Kelas::where('lembaga_id', $guru->lembaga_id)->orderBy('nama')->get();
 
-        return view('guru.edit', compact('guru', 'lembagas', 'jenisPtks', 'tahunAjarans'));
+        return view('guru.edit', compact('guru', 'lembagas', 'jenisPtks', 'tahunAjarans', 'kelas'));
     }
 
     public function update(Request $request, Guru $guru): RedirectResponse
@@ -222,6 +230,7 @@ class GuruController extends Controller
             'tugas_tambahan' => 'nullable|array',
             'tugas_tambahan.*.jenis' => 'required_with:tugas_tambahan|string|max:50',
             'tugas_tambahan.*.tahun_ajaran_id' => 'required_with:tugas_tambahan|exists:tahun_ajarans,id',
+            'tugas_tambahan.*.kelas_id' => 'nullable|exists:kelas,id',
         ]);
 
         $lembaga = Lembaga::findOrFail($lembagaId);
@@ -242,11 +251,13 @@ class GuruController extends Controller
             $guru->tugasTambahans()->delete();
             foreach ($tugasTambahan as $tt) {
                 if (!empty($tt['jenis'])) {
+                    $this->validateWaliKelasUnique($lembagaId, $tt, $guru->id);
                     TugasTambahan::create([
                         'guru_id' => $guru->id,
                         'jenis' => $tt['jenis'],
                         'keterangan' => $tt['keterangan'] ?? null,
                         'tahun_ajaran_id' => $tt['tahun_ajaran_id'],
+                        'kelas_id' => ($tt['jenis'] === 'Wali Kelas') ? ($tt['kelas_id'] ?? null) : null,
                         'is_active' => true,
                     ]);
                 }
@@ -295,11 +306,13 @@ class GuruController extends Controller
             $guru->tugasTambahans()->delete();
             foreach ($tugasTambahan as $tt) {
                 if (!empty($tt['jenis'])) {
+                    $this->validateWaliKelasUnique($guru->lembaga_id, $tt, $guru->id);
                     TugasTambahan::create([
                         'guru_id' => $guru->id,
                         'jenis' => $tt['jenis'],
                         'keterangan' => $tt['keterangan'] ?? null,
                         'tahun_ajaran_id' => $tt['tahun_ajaran_id'] ?? null,
+                        'kelas_id' => ($tt['jenis'] === 'Wali Kelas') ? ($tt['kelas_id'] ?? null) : null,
                         'is_active' => true,
                     ]);
                 }
@@ -876,5 +889,26 @@ class GuruController extends Controller
 
         return redirect()->route('guru.index')
             ->with('success', 'Password user guru "' . $guru->nama . '" berhasil direset.');
+    }
+
+    /**
+     * Validasi bahwa 1 kelas hanya boleh punya 1 Wali Kelas per tahun ajaran.
+     */
+    private function validateWaliKelasUnique(int $lembagaId, array $tt, ?int $exceptGuruId = null): void
+    {
+        if ($tt['jenis'] !== 'Wali Kelas' || empty($tt['kelas_id'])) {
+            return;
+        }
+
+        $exists = TugasTambahan::where('jenis', 'Wali Kelas')
+            ->where('kelas_id', $tt['kelas_id'])
+            ->where('tahun_ajaran_id', $tt['tahun_ajaran_id'])
+            ->where('is_active', true)
+            ->when($exceptGuruId, fn($q) => $q->whereHas('guru', fn($q) => $q->where('id', '!=', $exceptGuruId)))
+            ->exists();
+
+        if ($exists) {
+            abort(422, 'Kelas ini sudah memiliki Wali Kelas untuk tahun ajaran tersebut.');
+        }
     }
 }

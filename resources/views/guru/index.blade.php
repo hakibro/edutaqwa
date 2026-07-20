@@ -240,10 +240,12 @@
             const jenis = row.querySelector('.tt-jenis')?.value || '';
             const keterangan = row.querySelector('.tt-keterangan')?.value || '';
             const ta = row.querySelector('.tt-ta')?.value || '';
+            const kelasId = row.querySelector('.tt-kelas')?.value || '';
             if (jenis) tugasTambahan.push({
                 jenis,
                 keterangan,
-                tahun_ajaran_id: ta
+                tahun_ajaran_id: ta,
+                kelas_id: kelasId
             });
         });
         fetch(`/guru/${guruId}/inline-update`, {
@@ -275,15 +277,36 @@
             saveTugasTambahan(container);
         });
         ['change', 'input'].forEach(evt => {
-            row.querySelectorAll('.tt-jenis, .tt-keterangan, .tt-ta').forEach(el => {
+            row.querySelectorAll('.tt-jenis, .tt-keterangan, .tt-ta, .tt-kelas').forEach(el => {
                 el.addEventListener(evt, () => debouncedSaveTT(container));
             });
+        });
+        // Toggle kelas dropdown when jenis changes
+        row.querySelector('.tt-jenis')?.addEventListener('change', function() {
+            const kelasSelect = row.querySelector('.tt-kelas');
+            if (kelasSelect) {
+                if (this.value === 'Wali Kelas') {
+                    kelasSelect.style.display = '';
+                    if (kelasSelect.options.length <= 1) populateKelasSelect(kelasSelect);
+                } else {
+                    kelasSelect.style.display = 'none';
+                }
+            }
+            debouncedSaveTT(container);
         });
     }
 
     function initTTEvents() {
         document.querySelectorAll('.tugas-tambahan-inline').forEach(container => {
-            container.querySelectorAll('.tt-row').forEach(row => attachTTEvents(row, container));
+            container.querySelectorAll('.tt-row').forEach(row => {
+                attachTTEvents(row, container);
+                // Init kelas visibility for existing rows
+                const jenis = row.querySelector('.tt-jenis')?.value;
+                const kelasSelect = row.querySelector('.tt-kelas');
+                if (kelasSelect) {
+                    kelasSelect.style.display = jenis === 'Wali Kelas' ? '' : 'none';
+                }
+            });
             container.querySelector('.tt-add')?.addEventListener('click', function() {
                 const empty = container.querySelector('.tt-empty');
                 if (empty) empty.remove();
@@ -304,6 +327,9 @@
                         @foreach ($tahunAjarans as $ta)
                             <option value="{{ $ta->id }}">{{ $ta->nama }}</option>
                         @endforeach
+                    </select>
+                    <select class="tt-kelas rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500" style="display:none;min-width:120px">
+                        <option value="">-- Kelas --</option>
                     </select>
                     <button type="button" class="tt-remove text-red-400 hover:text-red-600 text-xs leading-none">&times;</button>
                 `;
@@ -414,3 +440,13 @@
         initBulkCheckboxes();
     });
 </script>
+
+<!-- Kelas options for inline TT add (keyed by lembaga_id for future multi-lembaga support) -->
+const kelasOptions = @json($kelasOptions ?? []);
+
+function populateKelasSelect(select) {
+const lembagaId = select.closest('.tugas-tambahan-inline')?.dataset?.lembagaId;
+const filtered = lembagaId ? kelasOptions.filter(k => k.lembaga_id == lembagaId) : kelasOptions;
+select.innerHTML = '<option value="">-- Kelas --</option>' + filtered.map(k => `<option value="${k.id}">${k.nama}
+</option>`).join('');
+}

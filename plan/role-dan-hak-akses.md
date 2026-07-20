@@ -91,7 +91,40 @@
 - **✓** = Akses laporan
 - **-** = Tidak ada akses
 
-## 3. RBAC Implementation Note
+## 3. Hak Akses Tambahan — Guru dengan Tugas Tambahan
+
+Selain akses standar `guru` di atas, guru dengan tugas tambahan tertentu mendapat akses tambahan:
+
+### 3.1 Wali Kelas
+
+| Fitur                    | Akses Wali Kelas | Keterangan                                    |
+| ------------------------ | :--------------: | --------------------------------------------- |
+| Dashboard Wali Kelas     |        ✓         | Lihat daftar siswa, presensi, nilai ringkasan |
+| Data Siswa (kelas wali)  |        R         | Filter otomatis ke kelas walinya              |
+| Presensi (kelas wali)    |        R         | Lihat rekap presensi siswa                    |
+| Rapor (kelas wali)       |        RU        | Input catatan wali kelas                      |
+| Pelanggaran (kelas wali) |        R         | Lihat & laporkan pelanggaran                  |
+
+- Menu khusus muncul di sidebar & bottom nav jika guru punya tugas tambahan `Wali Kelas` aktif.
+- Relasi Wali Kelas ke kelas disimpan via `tugas_tambahans.kelas_id`.
+- 1 kelas hanya boleh punya 1 Wali Kelas per tahun ajaran.
+
+### 3.2 BK / Konselor
+
+| Fitur                    | Akses BK | Keterangan                               |
+| ------------------------ | :------: | ---------------------------------------- |
+| Dashboard BK             |    ✓     | Lihat statistik pelanggaran per kategori |
+| Data Siswa (semua kelas) |    R     | Filter per kelas                         |
+| Pelanggaran              |   CRUD   | Catat & kelola pelanggaran siswa         |
+| Pembinaan                |   CRUD   | Catat tindak lanjut pembinaan            |
+
+- Menu khusus muncul di sidebar & bottom nav jika guru punya tugas tambahan `BK` aktif.
+
+### 3.3 Pembina Ekskul (tunda — prioritas rendah)
+
+- Belum diimplementasikan. Ekskul sudah ada modul di Kesiswaan.
+
+## 4. RBAC Implementation Note
 
 - **Gates & Policies**: Laravel Authorization Gates/Policies untuk tiap fitur.
 - **Middleware**: `CheckRole` middleware untuk route grouping.

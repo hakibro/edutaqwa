@@ -19,10 +19,12 @@
             <div class="pt-4 pb-1 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
                 Kehadiran & Mengajar
             </div>
-            <x-sidebar-nav-link :href="route('absensi-ptk.index')" :active="request()->routeIs('absensi-ptk.*')">
-                <x-heroicon-o-check-circle class="h-5 w-5 shrink-0" />
-                <span>{{ __('Absensi GTK') }}</span>
-            </x-sidebar-nav-link>
+            @if (optional(Auth::user()->guru)->isStruktural())
+                <x-sidebar-nav-link :href="route('absensi-ptk.index')" :active="request()->routeIs('absensi-ptk.*')">
+                    <x-heroicon-o-check-circle class="h-5 w-5 shrink-0" />
+                    <span>{{ __('Absensi GTK') }}</span>
+                </x-sidebar-nav-link>
+            @endif
             <x-sidebar-nav-link :href="route('guru.jadwal-saya')" :active="request()->routeIs('guru.jadwal-saya')">
                 <x-heroicon-o-calendar-days class="h-5 w-5 shrink-0" />
                 <span>{{ __('Jadwal Saya') }}</span>
@@ -31,6 +33,25 @@
                 <x-heroicon-o-check-circle class="h-5 w-5 shrink-0" />
                 <span>{{ __('Jurnal Mengajar') }}</span>
             </x-sidebar-nav-link>
+        @endif
+
+        {{-- Guru: Wali Kelas & BK --}}
+        @if (Auth::user()->isGuru())
+            @php
+                $guru = \App\Models\Guru::find(Auth::user()->guru_id);
+            @endphp
+            @if ($guru && $guru->isWaliKelas())
+                <x-sidebar-nav-link :href="route('guru.wali-kelas')" :active="request()->routeIs('guru.wali-kelas')">
+                    <x-heroicon-o-users class="h-5 w-5 shrink-0" />
+                    <span>{{ __('Wali Kelas') }}</span>
+                </x-sidebar-nav-link>
+            @endif
+            @if ($guru && $guru->isBK())
+                <x-sidebar-nav-link :href="route('guru.bk')" :active="request()->routeIs('guru.bk')">
+                    <x-heroicon-o-shield-exclamation class="h-5 w-5 shrink-0" />
+                    <span>{{ __('BK') }}</span>
+                </x-sidebar-nav-link>
+            @endif
         @endif
 
         @if (Auth::user()->isSuperAdmin())

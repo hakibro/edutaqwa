@@ -10,7 +10,7 @@ class TugasTambahan extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['guru_id', 'jenis', 'keterangan', 'tahun_ajaran_id', 'is_active'];
+    protected $fillable = ['guru_id', 'jenis', 'keterangan', 'tahun_ajaran_id', 'kelas_id', 'is_active'];
 
     protected $casts = ['is_active' => 'boolean'];
 
@@ -22,5 +22,10 @@ class TugasTambahan extends Model
     public function tahunAjaran(): BelongsTo
     {
         return $this->belongsTo(TahunAjaran::class);
+    }
+
+    public function kelas(): BelongsTo
+    {
+        return $this->belongsTo(Kelas::class);
     }
 }

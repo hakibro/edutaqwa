@@ -114,10 +114,10 @@
                     <h3 class="text-sm font-semibold text-gray-700">Tugas Tambahan</h3>
                     <p class="text-xs text-gray-500">Guru Mapel, BK, Wali Kelas, dll.</p>
                     <div id="tugasTambahanContainer">
-                        <div class="tugas-tambahan-item grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+                        <div class="tugas-tambahan-item grid grid-cols-1 md:grid-cols-4 gap-2 mb-2">
                             <div>
                                 <select name="tugas_tambahan[0][jenis]"
-                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                    class="tt-jenis block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                                     <option value="">-- Pilih Tugas Tambahan --</option>
                                     <option value="Guru Mapel">Guru Mapel</option>
                                     <option value="BK">BK</option>
@@ -137,6 +137,15 @@
                                     <option value="">-- Tahun Ajaran --</option>
                                     @foreach ($tahunAjarans as $ta)
                                         <option value="{{ $ta->id }}">{{ $ta->nama }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="tt-kelas-wrapper" style="display:none">
+                                <select name="tugas_tambahan[0][kelas_id]"
+                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                    <option value="">-- Pilih Kelas --</option>
+                                    @foreach ($kelas as $k)
+                                        <option value="{{ $k->id }}">{{ $k->nama }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -217,10 +226,10 @@
     function addTugasTambahan() {
         const container = document.getElementById('tugasTambahanContainer');
         const template = `
-        <div class="tugas-tambahan-item grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+        <div class="tugas-tambahan-item grid grid-cols-1 md:grid-cols-4 gap-2 mb-2">
             <div>
                 <select name="tugas_tambahan[${tugasTambahanIndex}][jenis]"
-                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    class="tt-jenis block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                     <option value="">-- Pilih Tugas Tambahan --</option>
                     <option value="Guru Mapel">Guru Mapel</option>
                     <option value="BK">BK</option>
@@ -233,7 +242,7 @@
                 <input type="text" name="tugas_tambahan[${tugasTambahanIndex}][keterangan]" placeholder="Keterangan (opsional)"
                     class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
             </div>
-            <div class="flex gap-1">
+            <div>
                 <select name="tugas_tambahan[${tugasTambahanIndex}][tahun_ajaran_id]"
                     class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                     <option value="">-- Tahun Ajaran --</option>
@@ -241,11 +250,30 @@
                         <option value="{{ $ta->id }}">{{ $ta->nama }}</option>
                     @endforeach
                 </select>
-                <button type="button" onclick="this.parentElement.parentElement.remove()"
+            </div>
+            <div class="flex gap-1">
+                <div class="tt-kelas-wrapper flex-1" style="display:none">
+                    <select name="tugas_tambahan[${tugasTambahanIndex}][kelas_id]"
+                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                        <option value="">-- Pilih Kelas --</option>
+                        @foreach ($kelas as $k)
+                            <option value="{{ $k->id }}">{{ $k->nama }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <button type="button" onclick="this.closest('.tugas-tambahan-item').remove()"
                     class="text-red-500 hover:text-red-700 text-xs px-1">&times;</button>
             </div>
         </div>`;
         container.insertAdjacentHTML('beforeend', template);
         tugasTambahanIndex++;
     }
+
+    // Toggle kelas dropdown when jenis changes to Wali Kelas
+    document.getElementById('tugasTambahanContainer').addEventListener('change', function(e) {
+        if (e.target.classList.contains('tt-jenis')) {
+            const wrapper = e.target.closest('.tugas-tambahan-item').querySelector('.tt-kelas-wrapper');
+            wrapper.style.display = e.target.value === 'Wali Kelas' ? '' : 'none';
+        }
+    });
 </script>

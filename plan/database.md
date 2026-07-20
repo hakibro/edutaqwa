@@ -158,11 +158,16 @@ CREATE TABLE tugas_tambahans (
     jenis VARCHAR(50) NOT NULL,                 -- 'wali_kelas', 'bk', 'pembina_ekskul', dll
     keterangan VARCHAR(255) NULL,               -- Kelas yg diampu, ekskul, dll
     tahun_ajaran_id BIGINT UNSIGNED NOT NULL,
+    kelas_id BIGINT UNSIGNED NULL,              -- Kelas yg diwalikan (khusus Wali Kelas)
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (guru_id) REFERENCES gurus(id) ON DELETE CASCADE,
-    FOREIGN KEY (tahun_ajaran_id) REFERENCES tahun_ajarans(id) ON DELETE CASCADE
+    FOREIGN KEY (tahun_ajaran_id) REFERENCES tahun_ajarans(id) ON DELETE CASCADE,
+    FOREIGN KEY (kelas_id) REFERENCES kelas(id) ON DELETE SET NULL
 );
+
+> **2026-07-20**: Tambah `kelas_id` — relasi ke tabel `kelas` untuk Wali Kelas. Nullable, hanya diisi jika jenis = 'Wali Kelas'. Validasi: 1 kelas hanya boleh punya 1 Wali Kelas per tahun ajaran.
 
 -- === SISWA ===
 
