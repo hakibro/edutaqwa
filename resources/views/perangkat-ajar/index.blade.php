@@ -915,7 +915,7 @@
                     // Populate form fields on edit — use setTimeout so x-show renders the form first
                     this.$nextTick(() => {
                         setTimeout(() => {
-                            const form = this.$el.querySelector(
+                            const form = document.querySelector(
                                 `form[x-show="modalType === '${type}'"]`);
                             if (!form) return;
                             form.reset();
