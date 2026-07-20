@@ -45,7 +45,8 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Guru</label>
                         <select name="guru_id"
-                            class="mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                            class="mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                            onchange="this.form.submit()">
                             <option value="">Semua Guru</option>
                             @foreach ($guruList as $g)
                                 <option value="{{ $g->id }}"
@@ -54,8 +55,10 @@
                         </select>
                     </div>
                     <div>
-                        <button type="submit"
-                            class="rounded-md bg-gray-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-500">Filter</button>
+                        <noscript>
+                            <button type="submit"
+                                class="rounded-md bg-gray-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-500">Filter</button>
+                        </noscript>
                         <a href="{{ route('jadwal.index') }}"
                             class="ml-2 text-sm text-gray-600 hover:text-gray-900">Reset</a>
                     </div>

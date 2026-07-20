@@ -48,9 +48,11 @@ class PengajaranMapelController extends Controller
 
         $mapels = Mapel::when($lembagaId, fn($q) => $q->where('lembaga_id', $lembagaId))
             ->when($user->yayasan_id, fn($q) => $q->whereHas('lembaga', fn($ql) => $ql->where('yayasan_id', $user->yayasan_id)))
+            ->orderBy('nama')
             ->get();
         $gurus = Guru::when($lembagaId, fn($q) => $q->where('lembaga_id', $lembagaId))
             ->when($user->yayasan_id, fn($q) => $q->whereHas('lembaga', fn($ql) => $ql->where('yayasan_id', $user->yayasan_id)))
+            ->orderBy('nama')
             ->get();
 
         return view('pengajaran-mapel.index', compact('pengajarans', 'tahunAjarans', 'mapels', 'gurus'));

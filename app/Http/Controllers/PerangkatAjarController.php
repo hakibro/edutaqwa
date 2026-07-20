@@ -158,28 +158,22 @@ class PerangkatAjarController extends Controller
             ->when($guruId && $user->isGuru(), fn($q) => $q->whereHas('cp', fn($qc) => $qc->where('guru_id', $guruId)))
             ->get();
 
-        // JSON data for edit modals (pre-encoded to avoid Blade @json parse issues)
-        $cpDataJson = collect($cps->items())->keyBy('id')->map(fn($c) => [
-            'mapel_id' => $c->mapel_id,
-            'fase' => $c->fase,
-            'kode' => $c->kode,
-            'deskripsi' => $c->deskripsi,
-        ]);
-        $tpDataJson = collect($tps->items())->keyBy('id')->map(fn($t) => [
-            'cp_id' => $t->cp_id,
-            'kode' => $t->kode,
-            'deskripsi' => $t->deskripsi,
-        ]);
-        $atpDataJson = collect($atps->items())->keyBy('id')->map(fn($a) => [
-            'tp_id' => $a->tp_id,
-            'minggu_ke' => $a->minggu_ke,
-            'materi' => $a->materi,
-        ]);
-        $modulDataJson = collect($moduls->items())->keyBy->id->map(fn($m) => [
-            'mapel_id' => $m->mapel_id,
-            'judul' => $m->judul,
-            'deskripsi' => $m->deskripsi,
-        ]);
+        // JSON data for edit modals — fetch ALL records (not just current page)
+        $allCps = Cp::select('id', 'mapel_id', 'fase', 'kode', 'deskripsi');
+        $cpScope($allCps);
+        $cpDataJson = $allCps->get()->keyBy('id');
+
+        $allTps = Tp::select('id', 'cp_id', 'kode', 'deskripsi');
+        $tpScope($allTps);
+        $tpDataJson = $allTps->get()->keyBy('id');
+
+        $allAtps = Atp::select('id', 'tp_id', 'minggu_ke', 'materi');
+        $atpScope($allAtps);
+        $atpDataJson = $allAtps->get()->keyBy('id');
+
+        $allModuls = ModulAjar::select('id', 'mapel_id', 'judul', 'deskripsi');
+        $modulScope($allModuls);
+        $modulDataJson = $allModuls->get()->keyBy('id');
 
         return view('perangkat-ajar.index', compact(
             'cps',
@@ -221,7 +215,7 @@ class PerangkatAjarController extends Controller
         $cp = Cp::create($validated);
         LogAktivita::log('create', 'Menambah CP "' . $cp->kode . '"', $cp);
 
-        return back()->with('success', 'CP berhasil ditambahkan.');
+        return back()->with('tab', 'cp')->with('success', 'CP berhasil ditambahkan.');
     }
 
     public function updateCp(Request $request, Cp $cp): RedirectResponse
@@ -236,7 +230,7 @@ class PerangkatAjarController extends Controller
         $cp->update($validated);
         LogAktivita::log('update', 'Mengupdate CP "' . $cp->kode . '"', $cp);
 
-        return back()->with('success', 'CP berhasil diperbarui.');
+        return back()->with('tab', 'cp')->with('success', 'CP berhasil diperbarui.');
     }
 
     public function destroyCp(Cp $cp): RedirectResponse
@@ -244,7 +238,7 @@ class PerangkatAjarController extends Controller
         LogAktivita::log('delete', 'Menghapus CP "' . $cp->kode . '"', $cp);
         $cp->delete();
 
-        return back()->with('success', 'CP berhasil dihapus.');
+        return back()->with('tab', 'cp')->with('success', 'CP berhasil dihapus.');
     }
 
     // ============================================================
@@ -262,7 +256,7 @@ class PerangkatAjarController extends Controller
         $tp = Tp::create($validated);
         LogAktivita::log('create', 'Menambah TP "' . $tp->kode . '"', $tp);
 
-        return back()->with('success', 'TP berhasil ditambahkan.');
+        return back()->with('tab', 'tp')->with('success', 'TP berhasil ditambahkan.');
     }
 
     public function updateTp(Request $request, Tp $tp): RedirectResponse
@@ -276,7 +270,7 @@ class PerangkatAjarController extends Controller
         $tp->update($validated);
         LogAktivita::log('update', 'Mengupdate TP "' . $tp->kode . '"', $tp);
 
-        return back()->with('success', 'TP berhasil diperbarui.');
+        return back()->with('tab', 'tp')->with('success', 'TP berhasil diperbarui.');
     }
 
     public function destroyTp(Tp $tp): RedirectResponse
@@ -284,7 +278,7 @@ class PerangkatAjarController extends Controller
         LogAktivita::log('delete', 'Menghapus TP "' . $tp->kode . '"', $tp);
         $tp->delete();
 
-        return back()->with('success', 'TP berhasil dihapus.');
+        return back()->with('tab', 'tp')->with('success', 'TP berhasil dihapus.');
     }
 
     // ============================================================
@@ -302,7 +296,7 @@ class PerangkatAjarController extends Controller
         Atp::create($validated);
         LogAktivita::log('create', 'Menambah ATP minggu ke-' . $validated['minggu_ke']);
 
-        return back()->with('success', 'ATP berhasil ditambahkan.');
+        return back()->with('tab', 'atp')->with('success', 'ATP berhasil ditambahkan.');
     }
 
     public function updateAtp(Request $request, Atp $atp): RedirectResponse
@@ -316,7 +310,7 @@ class PerangkatAjarController extends Controller
         $atp->update($validated);
         LogAktivita::log('update', 'Mengupdate ATP minggu ke-' . $validated['minggu_ke']);
 
-        return back()->with('success', 'ATP berhasil diperbarui.');
+        return back()->with('tab', 'atp')->with('success', 'ATP berhasil diperbarui.');
     }
 
     public function destroyAtp(Atp $atp): RedirectResponse
@@ -324,7 +318,7 @@ class PerangkatAjarController extends Controller
         LogAktivita::log('delete', 'Menghapus ATP minggu ke-' . $atp->minggu_ke);
         $atp->delete();
 
-        return back()->with('success', 'ATP berhasil dihapus.');
+        return back()->with('tab', 'atp')->with('success', 'ATP berhasil dihapus.');
     }
 
     // ============================================================
@@ -361,7 +355,7 @@ class PerangkatAjarController extends Controller
         $modul = ModulAjar::create($data);
         LogAktivita::log('create', 'Menambah Modul Ajar "' . $modul->judul . '"', $modul);
 
-        return back()->with('success', 'Modul Ajar berhasil ditambahkan.');
+        return back()->with('tab', 'modul')->with('success', 'Modul Ajar berhasil ditambahkan.');
     }
 
     public function updateModul(Request $request, ModulAjar $modulAjar): RedirectResponse
@@ -387,7 +381,7 @@ class PerangkatAjarController extends Controller
         $modulAjar->save();
         LogAktivita::log('update', 'Mengupdate Modul Ajar "' . $modulAjar->judul . '"', $modulAjar);
 
-        return back()->with('success', 'Modul Ajar berhasil diperbarui.');
+        return back()->with('tab', 'modul')->with('success', 'Modul Ajar berhasil diperbarui.');
     }
 
     public function destroyModul(ModulAjar $modulAjar): RedirectResponse
@@ -399,7 +393,7 @@ class PerangkatAjarController extends Controller
         LogAktivita::log('delete', 'Menghapus Modul Ajar "' . $modulAjar->judul . '"', $modulAjar);
         $modulAjar->delete();
 
-        return back()->with('success', 'Modul Ajar berhasil dihapus.');
+        return back()->with('tab', 'modul')->with('success', 'Modul Ajar berhasil dihapus.');
     }
 
     public function downloadModul(ModulAjar $modulAjar)

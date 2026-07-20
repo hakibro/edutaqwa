@@ -106,8 +106,8 @@ class JurnalMengajarController extends Controller
         $validated = $request->validate([
             'jadwal_id' => 'required|exists:jadwals,id',
             'foto_base64' => 'required|string',
-            'latitude' => 'required|string|max:50',
-            'longitude' => 'required|string|max:50',
+            'latitude' => 'nullable|string|max:50',
+            'longitude' => 'nullable|string|max:50',
             'materi' => 'nullable|string|max:500',
             'siswa' => 'required|array',
             'siswa.*.id' => 'required|exists:siswas,id',

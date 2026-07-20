@@ -9,6 +9,17 @@
 
     <div class="py-12">
         <div class="mx-auto max-w-3xl sm:px-6 lg:px-8">
+            @if ($errors->any())
+                <div class="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-800">
+                    @foreach ($errors->all() as $error)
+                        <p>{{ $error }}</p>
+                    @endforeach
+                </div>
+            @endif
+            @if (session('error'))
+                <div class="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-800">{{ session('error') }}</div>
+            @endif
+
             @if ($existingToday)
                 <div class="mb-4 rounded-md bg-yellow-50 p-4 text-sm text-yellow-800">
                     Jurnal untuk jadwal ini hari ini sudah ada. Silakan cek <a
@@ -142,7 +153,8 @@
                                                 <th
                                                     class="px-2 py-2 text-center text-xs font-medium text-orange-700 w-10">
                                                     I</th>
-                                                <th class="px-2 py-2 text-center text-xs font-medium text-red-700 w-10">
+                                                <th
+                                                    class="px-2 py-2 text-center text-xs font-medium text-red-700 w-10">
                                                     A</th>
                                                 <th
                                                     class="px-2 py-2 text-center text-xs font-medium text-purple-700 w-10">

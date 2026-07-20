@@ -866,7 +866,7 @@
 
         function perangkatAjar() {
             return {
-                tab: '{{ request()->has('tab') ? request()->tab : 'cp' }}',
+                tab: '{{ session('tab', request()->tab ?? 'cp') }}',
                 modalOpen: false,
                 modalType: '',
                 modalId: null,
@@ -912,28 +912,33 @@
                         this.modalMethod = 'POST';
                     }
 
-                    // Populate form fields on edit
+                    // Populate form fields on edit — use setTimeout so x-show renders the form first
                     this.$nextTick(() => {
-                        const form = this.$el.querySelector(`form[x-show="modalType === '${type}'"]`);
-                        if (!form) return;
-                        form.reset();
+                        setTimeout(() => {
+                            const form = this.$el.querySelector(
+                                `form[x-show="modalType === '${type}'"]`);
+                            if (!form) return;
+                            form.reset();
 
-                        if (id) {
-                            const data = {
-                                cp: __cpData,
-                                tp: __tpData,
-                                atp: __atpData,
-                                modul: __modulData
-                            } [type]?.[id];
-                            if (!data) return;
-                            const fields = form.querySelectorAll('[name]');
-                            fields.forEach(el => {
-                                const name = el.getAttribute('name');
-                                if (name === '_method' || name === '_token') return;
-                                if (el.type === 'file') return;
-                                if (data[name] !== undefined) el.value = data[name];
-                            });
-                        }
+                            if (id) {
+                                const data = {
+                                    cp: __cpData,
+                                    tp: __tpData,
+                                    atp: __atpData,
+                                    modul: __modulData
+                                } [type]?.[id];
+                                if (!data) return;
+                                const fields = form.querySelectorAll('[name]');
+                                fields.forEach(el => {
+                                    const name = el.getAttribute('name');
+                                    if (name === '_method' || name === '_token')
+                                        return;
+                                    if (el.type === 'file') return;
+                                    if (data[name] !== undefined) el.value =
+                                        data[name];
+                                });
+                            }
+                        }, 50);
                     });
 
                     this.modalOpen = true;
