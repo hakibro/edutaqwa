@@ -26,7 +26,7 @@
                 @endforeach
             </select>
         </td>
-        <td class="px-6 py-4 text-sm text-gray-700">
+        <td class="px-6 py-4 text-sm text-gray-700 max-w-[320px]">
             <div class="tugas-tambahan-inline" data-guru-id="{{ $g->id }}"
                 data-lembaga-id="{{ $g->lembaga_id }}">
                 @php $ttList = $g->tugasTambahans; @endphp

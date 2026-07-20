@@ -439,14 +439,14 @@
 
         initBulkCheckboxes();
     });
+
+    // Kelas options for inline TT add (keyed by lembaga_id for future multi-lembaga support)
+    const kelasOptions = @json($kelasOptions ?? []);
+
+    function populateKelasSelect(select) {
+        const lembagaId = select.closest('.tugas-tambahan-inline')?.dataset?.lembagaId;
+        const filtered = lembagaId ? kelasOptions.filter(k => k.lembaga_id == lembagaId) : kelasOptions;
+        select.innerHTML = '<option value="">-- Kelas --</option>' + filtered.map(k =>
+            `<option value="${k.id}">${k.nama}</option>`).join('');
+    }
 </script>
-
-<!-- Kelas options for inline TT add (keyed by lembaga_id for future multi-lembaga support) -->
-const kelasOptions = @json($kelasOptions ?? []);
-
-function populateKelasSelect(select) {
-const lembagaId = select.closest('.tugas-tambahan-inline')?.dataset?.lembagaId;
-const filtered = lembagaId ? kelasOptions.filter(k => k.lembaga_id == lembagaId) : kelasOptions;
-select.innerHTML = '<option value="">-- Kelas --</option>' + filtered.map(k => `<option value="${k.id}">${k.nama}
-</option>`).join('');
-}
