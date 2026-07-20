@@ -34,6 +34,41 @@
                 <div class="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-800">{{ session('error') }}</div>
             @endif
 
+            @php
+                $guruTmtKosong = $gurus->filter(fn($g) => $g->relationLoaded('user') && $g->user && !$g->tmt);
+                $guruBelumApproved = $gurus->filter(fn($g) => !$g->is_approved);
+            @endphp
+            @if ($guruTmtKosong->isNotEmpty())
+                <div class="mb-4 rounded-md bg-yellow-50 border border-yellow-300 p-4 text-sm text-yellow-800">
+                    <p class="font-semibold">⚠ {{ $guruTmtKosong->count() }} guru belum mengisi TMT:</p>
+                    <ul class="mt-1 list-inside list-disc">
+                        @foreach ($guruTmtKosong as $g)
+                            <li>{{ $g->nama }} ({{ $g->kode_guru_lembaga }}) —
+                                <a href="{{ route('guru.edit', $g) }}" class="text-indigo-600 underline">Edit TMT</a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+            @if ($guruBelumApproved->isNotEmpty())
+                <div class="mb-4 rounded-md bg-yellow-50 border border-yellow-300 p-4 text-sm text-yellow-800">
+                    <p class="font-semibold">⚠ {{ $guruBelumApproved->count() }} guru belum disetujui admin yayasan:
+                    </p>
+                    <ul class="mt-1 list-inside list-disc">
+                        @foreach ($guruBelumApproved as $g)
+                            <li>{{ $g->nama }} ({{ $g->kode_guru_lembaga }})
+                                — @if (auth()->user()->isAdminYayasan())
+                                    <a href="{{ route('guru.approval') }}" class="text-indigo-600 underline">Setujui di
+                                        halaman Approval</a>
+                                @else
+                                    <span class="text-gray-500">menunggu persetujuan admin yayasan</span>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             {{-- Import Form --}}
             <div id="importForm" class="hidden mb-6 p-4 bg-gray-50 border rounded-lg">
                 <p class="text-sm text-gray-600 mb-3">
@@ -150,6 +185,9 @@
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                         Status</th>
+                                    <th
+                                        class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                                        Peringatan</th>
                                     <th
                                         class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                                         Aksi</th>

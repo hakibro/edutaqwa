@@ -25,7 +25,7 @@ class GuruController extends Controller
     public function index(Request $request): View|JsonResponse
     {
         $user = auth()->user();
-        $query = Guru::with('lembaga', 'tugasTambahans', 'jenisPtk');
+        $query = Guru::with('lembaga', 'tugasTambahans', 'jenisPtk', 'user');
 
         // Collect allowed lembaga IDs first
         $allowedLembagaIds = collect();
@@ -118,7 +118,7 @@ class GuruController extends Controller
             'status_satminkal' => 'boolean',
             'tempat_lahir' => 'nullable|string|max:100',
             'tanggal_lahir' => 'nullable|date',
-            'tmt' => 'nullable|date',
+            'tmt' => 'required|date',
             'alamat' => 'nullable|string',
             'telp' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',

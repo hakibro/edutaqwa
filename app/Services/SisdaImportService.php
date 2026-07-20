@@ -13,7 +13,15 @@ use Illuminate\Support\Facades\Log;
 
 class SisdaImportService
 {
-    protected string $baseUrl = 'https://apiakademik.daruttaqwa.or.id/api';
+    protected string $baseUrl;
+
+    protected int $timeout;
+
+    public function __construct()
+    {
+        $this->baseUrl = config('services.sisda.base_url', 'https://apiakademik.daruttaqwa.or.id/api');
+        $this->timeout = config('services.sisda.timeout', 30);
+    }
 
     /**
      * Sync semua siswa dari API Akademik.
@@ -48,17 +56,26 @@ class SisdaImportService
             return ['success' => false, 'message' => 'Lembaga tidak punya kode_sisda', 'count' => 0];
         }
 
-        $kelasList = $this->fetchKelas($idunit);
-        if ($kelasList === null) {
-            return ['success' => false, 'message' => 'Gagal mengambil data kelas dari API Akademik', 'count' => 0];
+        try {
+            $kelasList = $this->fetchKelas($idunit);
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Gagal mengambil data kelas dari API Akademik: ' . $e->getMessage(),
+                'count' => 0,
+            ];
+        }
+
+        if (empty($kelasList)) {
+            return ['success' => false, 'message' => 'Tidak ada data kelas dari API Akademik', 'count' => 0];
         }
 
         $tahunAjaranAktif = TahunAjaran::where('yayasan_id', $lembaga->yayasan_id)
             ->where('is_active', true)
             ->first();
 
-        $stats = ['created' => 0, 'updated' => 0, 'skipped' => 0, 'kelas_created' => 0, 'jurusan_created' => 0, 'deleted' => 0];
-        $details = ['created' => [], 'updated' => [], 'deleted' => [], 'restored' => []];
+        $stats = ['created' => 0, 'updated' => 0, 'skipped' => 0, 'kelas_created' => 0, 'jurusan_created' => 0, 'deleted' => 0, 'error_kelas' => 0];
+        $details = ['created' => [], 'updated' => [], 'deleted' => [], 'restored' => [], 'errors' => []];
         $totalSiswa = 0;
         $idpersonDariApi = [];
 
@@ -68,7 +85,15 @@ class SisdaImportService
                 continue;
             }
 
-            $siswaList = $this->fetchSiswaByKelas($idunit, $idkelas);
+            try {
+                $siswaList = $this->fetchSiswaByKelas($idunit, $idkelas);
+            } catch (\Exception $e) {
+                $stats['error_kelas']++;
+                $kelasNama = $kelasData['nama'] ?? $idkelas;
+                $details['errors'][] = "Kelas {$kelasNama}: {$e->getMessage()}";
+                continue;
+            }
+
             if ($siswaList === null) {
                 continue;
             }
@@ -117,7 +142,7 @@ class SisdaImportService
 
         return [
             'success' => true,
-            'message' => "Sync selesai. {$stats['created']} baru, {$stats['updated']} diperbarui, {$stats['skipped']} dilewati, {$stats['deleted']} dihapus.",
+            'message' => "Sync selesai. {$stats['created']} baru, {$stats['updated']} diperbarui, {$stats['skipped']} dilewati, {$stats['deleted']} dihapus." . ($stats['error_kelas'] ? " {$stats['error_kelas']} kelas gagal." : ''),
             'count' => $totalSiswa,
             'stats' => $stats,
             'details' => $details,
@@ -128,16 +153,17 @@ class SisdaImportService
     {
         $url = $this->baseUrl . '/lembaga/' . $idunit . '/kelas';
         try {
-            $response = Http::timeout(30)->get($url);
+            $response = Http::timeout($this->timeout)->get($url);
             if ($response->successful()) {
                 $json = $response->json();
                 return $json['data'] ?? null;
             }
-            Log::error('API Akademik error (kelas)', ['status' => $response->status(), 'body' => $response->body()]);
-            return null;
+            $msg = "API Akademik error (kelas): HTTP {$response->status()} — {$response->body()}";
+            Log::error($msg);
+            throw new \RuntimeException($msg);
         } catch (\Exception $e) {
             Log::error('API Akademik exception (kelas)', ['message' => $e->getMessage()]);
-            return null;
+            throw new \RuntimeException("Gagal fetch kelas: " . $e->getMessage());
         }
     }
 
@@ -145,16 +171,17 @@ class SisdaImportService
     {
         $url = $this->baseUrl . '/lembaga/' . $idunit . '/kelas/' . $idkelas . '/siswa';
         try {
-            $response = Http::timeout(30)->get($url);
+            $response = Http::timeout($this->timeout)->get($url);
             if ($response->successful()) {
                 $json = $response->json();
                 return $json['data'] ?? null;
             }
-            Log::error('API Akademik error (siswa)', ['status' => $response->status(), 'body' => $response->body()]);
-            return null;
+            $msg = "API Akademik error (siswa): HTTP {$response->status()} — {$response->body()}";
+            Log::error($msg);
+            throw new \RuntimeException($msg);
         } catch (\Exception $e) {
             Log::error('API Akademik exception (siswa)', ['message' => $e->getMessage()]);
-            return null;
+            throw new \RuntimeException("Gagal fetch siswa: " . $e->getMessage());
         }
     }
 
@@ -283,26 +310,61 @@ class SisdaImportService
 
     protected function assignKelas(Siswa $siswa, Kelas $kelas, TahunAjaran $tahunAjaran, ?string $tanggalMasuk = null): void
     {
-        RiwayatKelasSiswa::create([
-            'siswa_id' => $siswa->id,
-            'kelas_id' => $kelas->id,
-            'tahun_ajaran_id' => $tahunAjaran->id,
-            'tanggal_masuk' => $tanggalMasuk ?? now()->toDateString(),
-        ]);
+        try {
+            RiwayatKelasSiswa::create([
+                'siswa_id' => $siswa->id,
+                'kelas_id' => $kelas->id,
+                'tahun_ajaran_id' => $tahunAjaran->id,
+                'tanggal_masuk' => $tanggalMasuk ?? now()->toDateString(),
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (str_contains($e->getMessage(), 'Duplicate entry')) {
+                // Row already exists — update instead
+                RiwayatKelasSiswa::where('siswa_id', $siswa->id)
+                    ->where('tahun_ajaran_id', $tahunAjaran->id)
+                    ->update([
+                        'kelas_id' => $kelas->id,
+                        'tanggal_masuk' => $tanggalMasuk ?? now()->toDateString(),
+                        'tanggal_keluar' => null,
+                    ]);
+            } else {
+                throw $e;
+            }
+        }
     }
 
     protected function ensureRiwayatKelas(Siswa $siswa, Kelas $kelas, TahunAjaran $tahunAjaran, ?string $tanggalMasuk = null): void
     {
+        // Cari riwayat yang masih aktif (tanggal_keluar null) untuk tahun ajaran ini
         $existing = RiwayatKelasSiswa::where('siswa_id', $siswa->id)
             ->where('tahun_ajaran_id', $tahunAjaran->id)
             ->whereNull('tanggal_keluar')
             ->first();
 
-        if (!$existing) {
-            $this->assignKelas($siswa, $kelas, $tahunAjaran, $tanggalMasuk);
-        } elseif ($existing->kelas_id !== $kelas->id) {
-            // Pindah kelas: tutup yang lama, buat baru
-            $existing->update(['tanggal_keluar' => now()->toDateString()]);
+        if ($existing) {
+            if ($existing->kelas_id !== $kelas->id) {
+                // Pindah kelas: tutup yang lama, buat baru
+                $existing->update(['tanggal_keluar' => now()->toDateString()]);
+                $this->assignKelas($siswa, $kelas, $tahunAjaran, $tanggalMasuk);
+            }
+            // else: sudah di kelas yang sama, tidak perlu apa-apa
+            return;
+        }
+
+        // Tidak ada riwayat aktif. Cek apakah ada riwayat non-aktif (tanggal_keluar terisi)
+        // untuk siswa + tahun ajaran ini — update instead of insert to avoid duplicate key
+        $inactive = RiwayatKelasSiswa::where('siswa_id', $siswa->id)
+            ->where('tahun_ajaran_id', $tahunAjaran->id)
+            ->whereNotNull('tanggal_keluar')
+            ->first();
+
+        if ($inactive) {
+            $inactive->update([
+                'kelas_id' => $kelas->id,
+                'tanggal_keluar' => null,
+                'tanggal_masuk' => $tanggalMasuk ?? now()->toDateString(),
+            ]);
+        } else {
             $this->assignKelas($siswa, $kelas, $tahunAjaran, $tanggalMasuk);
         }
     }

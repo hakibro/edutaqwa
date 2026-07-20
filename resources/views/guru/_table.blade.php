@@ -76,6 +76,28 @@
                 {{ $g->is_active ? 'Aktif' : 'Nonaktif' }}
             </span>
         </td>
+        <td class="whitespace-nowrap px-6 py-4 text-sm text-center">
+            @php
+                $warnings = [];
+                $hasUser = $g->relationLoaded('user') && $g->user;
+                if ($hasUser && !$g->tmt) {
+                    $warnings[] = 'TMT belum diisi';
+                }
+                if (!$g->is_approved) {
+                    $warnings[] = 'Akun belum disetujui';
+                }
+            @endphp
+            @if ($warnings)
+                @foreach ($warnings as $w)
+                    <span
+                        class="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-800 mb-1">
+                        ⚠ {{ $w }}
+                    </span>
+                @endforeach
+            @else
+                <span class="text-xs text-gray-400">-</span>
+            @endif
+        </td>
         <td class="whitespace-nowrap px-6 py-4 text-right text-sm">
             <a href="{{ route('guru.reset-password', $g) }}" class="text-amber-600 hover:text-amber-900">Reset PW</a>
             <a href="{{ route('guru.edit', $g) }}" class="ml-2 text-indigo-600 hover:text-indigo-900">Edit</a>
@@ -88,6 +110,6 @@
     </tr>
 @empty
     <tr>
-        <td colspan="9" class="px-6 py-8 text-center text-sm text-gray-500">Belum ada data guru.</td>
+        <td colspan="10" class="px-6 py-8 text-center text-sm text-gray-500">Belum ada data guru.</td>
     </tr>
 @endforelse

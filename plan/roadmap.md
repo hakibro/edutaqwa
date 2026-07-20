@@ -90,6 +90,8 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 
 - [x] CRUD Siswa
 - [x] Import dari Sisda API (mapping + deduplikasi)
+- [x] Error handling sync siswa: detail pesan error dari API, status HTTP, error per kelas
+- [x] Konfigurasi API Sisda via env (SISDA_API_BASE_URL, SISDA_API_TIMEOUT)
 - [x] ~~Sync kenaikan kelas via Sisda API (setelah tahun ajaran baru aktif)~~ — ditangani Sisda Yayasan
 - [x] Upload foto siswa
 - [x] Mutasi siswa: pindah masuk

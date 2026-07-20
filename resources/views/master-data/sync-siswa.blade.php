@@ -173,13 +173,37 @@
                                     lembaga_id: lembagaId
                                 }),
                             })
-                            .then(response => response.json())
+                            .then(response => {
+                                if (!response.ok) {
+                                    // Try JSON first, fallback to text for HTML error pages
+                                    return response.text().then(text => {
+                                        let msg;
+                                        try {
+                                            const json = JSON.parse(text);
+                                            msg = json.message || json.error || json
+                                                .exception || null;
+                                        } catch (_) {}
+                                        if (msg) throw new Error(msg);
+                                        // Detect HTML response
+                                        if (text.trim().startsWith('<')) {
+                                            throw new Error(
+                                                `Server error (HTTP ${response.status}). Server returned HTML instead of JSON. Check server logs.`
+                                            );
+                                        }
+                                        throw new Error(
+                                            `Server error: HTTP ${response.status} ${response.statusText}`
+                                        );
+                                    });
+                                }
+                                return response.json();
+                            })
                             .then(data => {
                                 clearInterval(progressInterval);
                                 progressBar.style.width = '100%';
 
                                 if (data.success) {
-                                    statusText.textContent = 'Sinkronisasi selesai!';
+                                    statusText.textContent = data.message ||
+                                        'Sinkronisasi selesai!';
                                     statusText.classList.add('text-green-600');
                                     statusText.classList.remove('text-gray-500');
                                 } else {
@@ -205,7 +229,15 @@
                             })
                             .catch(err => {
                                 clearInterval(progressInterval);
-                                statusText.textContent = 'Gagal terhubung ke server.';
+                                let errMsg = err.message ||
+                                    'Gagal terhubung ke server. Periksa koneksi dan API Akademik.';
+                                // Sanitize raw JSON parse errors
+                                if (errMsg.includes('Unexpected token') || errMsg.includes(
+                                        ' is not valid JSON')) {
+                                    errMsg =
+                                        'Server mengembalikan response tidak valid (HTML/error page). Cek server logs.';
+                                }
+                                statusText.textContent = errMsg;
                                 statusText.classList.add('text-red-600');
                                 statusText.classList.remove('text-gray-500');
                                 progressBar.style.width = '100%';
@@ -224,7 +256,8 @@
                                     resultDiv.classList.remove('hidden');
                                     resultDiv.innerHTML = `
                                 <div class="p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-                                    Gagal terhubung ke server. Silakan coba lagi.
+                                    <strong>${errMsg}</strong>
+                                    <p class="mt-2 text-sm">Silakan coba lagi. Jika terus gagal, periksa koneksi ke API Akademik (https://apiakademik.daruttaqwa.or.id/api).</p>
                                 </div>`;
                                 }, 1500);
                             });
@@ -240,6 +273,7 @@
                     const updated = details.updated || [];
                     const deleted = details.deleted || [];
                     const restored = details.restored || [];
+                    const errors = details.errors || [];
 
                     let html = '<div class="space-y-4">';
 
@@ -268,8 +302,13 @@
                         html += detailSection('🗑️ Siswa Dihapus (soft-delete)', 'text-red-700',
                             'bg-red-50 border-red-200', deleted);
                     }
+                    if (errors.length > 0) {
+                        html += detailSection('⚠️ Gagal per Kelas', 'text-orange-700',
+                            'bg-orange-50 border-orange-200', errors);
+                    }
 
-                    if (created.length === 0 && updated.length === 0 && restored.length === 0 && deleted.length === 0) {
+                    if (created.length === 0 && updated.length === 0 && restored.length === 0 && deleted.length === 0 &&
+                        errors.length === 0) {
                         html +=
                             '<div class="p-4 bg-gray-100 border border-gray-300 text-gray-600 rounded text-center">Tidak ada perubahan data.</div>';
                     }

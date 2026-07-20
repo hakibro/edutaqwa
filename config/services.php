@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'sisda' => [
+        'base_url' => env('SISDA_API_BASE_URL', 'https://apiakademik.daruttaqwa.or.id/api'),
+        'timeout' => env('SISDA_API_TIMEOUT', 30),
+    ],
+
 ];

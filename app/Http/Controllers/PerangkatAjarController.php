@@ -158,6 +158,29 @@ class PerangkatAjarController extends Controller
             ->when($guruId && $user->isGuru(), fn($q) => $q->whereHas('cp', fn($qc) => $qc->where('guru_id', $guruId)))
             ->get();
 
+        // JSON data for edit modals (pre-encoded to avoid Blade @json parse issues)
+        $cpDataJson = collect($cps->items())->keyBy('id')->map(fn($c) => [
+            'mapel_id' => $c->mapel_id,
+            'fase' => $c->fase,
+            'kode' => $c->kode,
+            'deskripsi' => $c->deskripsi,
+        ]);
+        $tpDataJson = collect($tps->items())->keyBy('id')->map(fn($t) => [
+            'cp_id' => $t->cp_id,
+            'kode' => $t->kode,
+            'deskripsi' => $t->deskripsi,
+        ]);
+        $atpDataJson = collect($atps->items())->keyBy('id')->map(fn($a) => [
+            'tp_id' => $a->tp_id,
+            'minggu_ke' => $a->minggu_ke,
+            'materi' => $a->materi,
+        ]);
+        $modulDataJson = collect($moduls->items())->keyBy->id->map(fn($m) => [
+            'mapel_id' => $m->mapel_id,
+            'judul' => $m->judul,
+            'deskripsi' => $m->deskripsi,
+        ]);
+
         return view('perangkat-ajar.index', compact(
             'cps',
             'tps',
@@ -168,6 +191,10 @@ class PerangkatAjarController extends Controller
             'mapelOptions',
             'cpOptions',
             'tpOptions',
+            'cpDataJson',
+            'tpDataJson',
+            'atpDataJson',
+            'modulDataJson',
             'user',
             'guru'
         ));
