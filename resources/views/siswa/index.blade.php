@@ -89,7 +89,9 @@
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                         Nama</th>
-
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                        Kelas</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                         Lembaga</th>
@@ -112,7 +114,17 @@
                                         <td class="whitespace-nowrap px-6 py-4 text-sm font-mono text-gray-700">
                                             {{ $s->nis ?? '-' }}</td>
                                         <td class="px-6 py-4 text-sm text-gray-900">{{ $s->nama }}</td>
-
+                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
+                                            @if ($s->kelasAktif)
+                                                {{ $s->kelasAktif->nama }}
+                                                @if ($s->kelasAktif->jurusan)
+                                                    <span
+                                                        class="text-gray-400">({{ $s->kelasAktif->jurusan->nama }})</span>
+                                                @endif
+                                            @else
+                                                <span class="text-gray-400">-</span>
+                                            @endif
+                                        </td>
                                         <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
                                             {{ $s->lembaga->nama }}</td>
                                         <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
@@ -138,7 +150,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="px-6 py-8 text-center text-sm text-gray-500">Belum ada
+                                        <td colspan="8" class="px-6 py-8 text-center text-sm text-gray-500">Belum ada
                                             data siswa.</td>
                                     </tr>
                                 @endforelse

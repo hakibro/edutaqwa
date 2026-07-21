@@ -132,6 +132,8 @@ class GuruController extends Controller
             'tugas_tambahan.*.jenis' => 'required_with:tugas_tambahan|string|max:50',
             'tugas_tambahan.*.tahun_ajaran_id' => 'required_with:tugas_tambahan|exists:tahun_ajarans,id',
             'tugas_tambahan.*.kelas_id' => 'nullable|exists:kelas,id',
+            'tugas_tambahan.*.permissions' => 'nullable|array',
+            'tugas_tambahan.*.permissions.*' => 'string|in:validator_jurnal,perizinan_siswa,presensi_ptk',
         ]);
 
         $lembaga = Lembaga::findOrFail($lembagaId);
@@ -156,6 +158,7 @@ class GuruController extends Controller
                         'guru_id' => $guru->id,
                         'jenis' => $tt['jenis'],
                         'keterangan' => $tt['keterangan'] ?? null,
+                        'permissions' => $tt['permissions'] ?? null,
                         'tahun_ajaran_id' => $tt['tahun_ajaran_id'],
                         'kelas_id' => ($tt['jenis'] === 'Wali Kelas') ? ($tt['kelas_id'] ?? null) : null,
                         'is_active' => true,
@@ -231,6 +234,8 @@ class GuruController extends Controller
             'tugas_tambahan.*.jenis' => 'required_with:tugas_tambahan|string|max:50',
             'tugas_tambahan.*.tahun_ajaran_id' => 'required_with:tugas_tambahan|exists:tahun_ajarans,id',
             'tugas_tambahan.*.kelas_id' => 'nullable|exists:kelas,id',
+            'tugas_tambahan.*.permissions' => 'nullable|array',
+            'tugas_tambahan.*.permissions.*' => 'string|in:validator_jurnal,perizinan_siswa,presensi_ptk',
         ]);
 
         $lembaga = Lembaga::findOrFail($lembagaId);
@@ -256,6 +261,7 @@ class GuruController extends Controller
                         'guru_id' => $guru->id,
                         'jenis' => $tt['jenis'],
                         'keterangan' => $tt['keterangan'] ?? null,
+                        'permissions' => $tt['permissions'] ?? null,
                         'tahun_ajaran_id' => $tt['tahun_ajaran_id'],
                         'kelas_id' => ($tt['jenis'] === 'Wali Kelas') ? ($tt['kelas_id'] ?? null) : null,
                         'is_active' => true,
@@ -311,6 +317,7 @@ class GuruController extends Controller
                         'guru_id' => $guru->id,
                         'jenis' => $tt['jenis'],
                         'keterangan' => $tt['keterangan'] ?? null,
+                        'permissions' => $tt['permissions'] ?? null,
                         'tahun_ajaran_id' => $tt['tahun_ajaran_id'] ?? null,
                         'kelas_id' => ($tt['jenis'] === 'Wali Kelas') ? ($tt['kelas_id'] ?? null) : null,
                         'is_active' => true,

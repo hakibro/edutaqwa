@@ -24,6 +24,7 @@ LEMBAGA (Sekolah/Madrasah)
 │   ├── Guru Biasa
 │   ├── Wali Kelas        (tugas tambahan)
 │   ├── BK/Konselor       (tugas tambahan)
+│   ├── Validator Presensi (tugas tambahan — permission fungsional)
 │   ├── Satminkal         (PTK tetap di lembaga)
 │   └── Non-Satminkal     (PTK tidak tetap)
 ├── Siswa                 (melihat jadwal, nilai, rapor)
@@ -55,6 +56,8 @@ LEMBAGA (Sekolah/Madrasah)
 | Jadwal Per Kelas                        | Kurikulum                    | 🔴 Tinggi |
 | Absensi PTK — Check-in/out Harian       | Guru                         | 🔴 Tinggi |
 | Jurnal Mengajar (Selfie + Presensi)     | Guru                         | 🔴 Tinggi |
+| Validator Presensi Siswa                | Guru (Validator Presensi)    | 🟡 Sedang |
+| Perizinan Siswa (Sakit/Izin)            | Guru (Validator Presensi)    | 🟡 Sedang |
 | Penilaian (Harian, PTS, PAS, UKK)       | Guru                         | 🔴 Tinggi |
 | Rapor (Cetak, E-Rapor)                  | Guru, Kurikulum              | 🔴 Tinggi |
 | Kalender Akademik                       | Admin Yayasan                | 🟡 Sedang |
@@ -69,17 +72,18 @@ LEMBAGA (Sekolah/Madrasah)
 
 ## 4. Matriks Relasi Role
 
-| Role           | Yayasan | Lembaga | Master Data | Mapel | Jadwal | CP/TP/ATP | Jurnal | Absensi PTK | Penilaian | Rapor | Kesiswaan | Dashboard | Laporan |
-| -------------- | :-----: | :-----: | :---------: | :---: | :----: | :-------: | :----: | :---------: | :-------: | :---: | :-------: | :-------: | :-----: |
-| Super Admin    |    ✓    |    -    |      -      |   -   |   -    |     -     |   -    |      -      |     -     |   -   |     -     |     -     |    -    |
-| Admin Yayasan  |    ✓    |    ✓    |      -      |   -   |   -    |     -     |   -    |      -      |     -     |   -   |     -     |     -     |    ✓    |
-| Kepala Lembaga |    -    |    ✓    |      R      |   R   |   R    |     R     |   R    |      R      |     R     |   R   |     R     |     ✓     |    ✓    |
-| Admin Lembaga  |    -    |    -    |      ✓      |   -   |   -    |     -     |   -    |      R      |     -     |   -   |     R     |     -     |    ✓    |
-| Kurikulum      |    -    |    -    |      R      |   ✓   |   ✓    |     -     |   R    |      -      |     -     |   -   |     -     |     ✓     |    ✓    |
-| Kesiswaan      |    -    |    -    |      R      |   -   |   -    |     -     |   -    |      -      |     -     |   -   |     ✓     |     ✓     |    ✓    |
-| Guru           |    -    |    -    |      -      |   R   |   R    |     ✓     |   ✓    |      ✓      |     ✓     |  RU   |     C     |     ✓     |    R    |
-| Siswa          |    -    |    -    |      -      |   R   |   R    |     -     |   R    |      -      |     R     |   R   |     -     |     ✓     |    -    |
-| Orang Tua      |    -    |    -    |      -      |   -   |   -    |     -     |   R    |      -      |     R     |   R   |     R     |     ✓     |    -    |
+| Role               | Yayasan | Lembaga | Master Data | Mapel | Jadwal | CP/TP/ATP | Jurnal | Absensi PTK | Penilaian | Rapor | Kesiswaan | Dashboard | Laporan |
+| ------------------ | :-----: | :-----: | :---------: | :---: | :----: | :-------: | :----: | :---------: | :-------: | :---: | :-------: | :-------: | :-----: |
+| Super Admin        |    ✓    |    -    |      -      |   -   |   -    |     -     |   -    |      -      |     -     |   -   |     -     |     -     |    -    |
+| Admin Yayasan      |    ✓    |    ✓    |      -      |   -   |   -    |     -     |   -    |      -      |     -     |   -   |     -     |     -     |    ✓    |
+| Kepala Lembaga     |    -    |    ✓    |      R      |   R   |   R    |     R     |   R    |      R      |     R     |   R   |     R     |     ✓     |    ✓    |
+| Admin Lembaga      |    -    |    -    |      ✓      |   -   |   -    |     -     |   -    |      R      |     -     |   -   |     R     |     -     |    ✓    |
+| Kurikulum          |    -    |    -    |      R      |   ✓   |   ✓    |     -     |   R    |      -      |     -     |   -   |     -     |     ✓     |    ✓    |
+| Kesiswaan          |    -    |    -    |      R      |   -   |   -    |     -     |   -    |      -      |     -     |   -   |     ✓     |     ✓     |    ✓    |
+| Guru               |    -    |    -    |      -      |   R   |   R    |     ✓     |   ✓    |      ✓      |     ✓     |  RU   |     C     |     ✓     |    R    |
+| Validator Presensi |    -    |    -    |      -      |   -   |   -    |     -     |   -    |      -      |     -     |   -   |     -     |     ✓     |    ✓    |
+| Siswa              |    -    |    -    |      -      |   R   |   R    |     -     |   R    |      -      |     R     |   R   |     -     |     ✓     |    -    |
+| Orang Tua          |    -    |    -    |      -      |   -   |   -    |     -     |   R    |      -      |     R     |   R   |     R     |     ✓     |    -    |
 
 **Legend:** ✓ = Kelola Penuh / CRUD | R = Read Only | C = Create only | U = Update only
 
@@ -108,7 +112,8 @@ Yayasan
       ├── AkademikSetting          (konfigurasi jam mulai, durasi KBM/istirahat/kegiatan, hari efektif, timetable per hari via drag-drop)
       ├── JamKerjaLembaga          (konfigurasi jam masuk/pulang)
       ├── JurnalMengajar           (selfie + presensi siswa + materi)
-      │    └── DetailJurnalSiswa   (kehadiran per siswa)
+      │    └── DetailJurnalSiswa   (kehadiran per siswa — hanya Hadir/Tidak Hadir dari guru kelas)
+      ├── PerizinanSiswa           (pengajuan sakit/izin oleh validator presensi, auto-override detail_jurnal_siswas)
       ├── AbsensiPTK               (check-in/check-out guru harian)
       ├── Penilaian
       │    ├── NilaiHarian
@@ -165,16 +170,31 @@ Jam kerja bisa berbeda per hari (Senin-Jumat vs Sabtu) atau per jenis guru (satm
 
 Wizard 3 langkah menggabungkan selfie, presensi siswa, dan materi pertemuan dalam satu alur.
 
-| Atribut     | Keterangan                                                              |
-| ----------- | ----------------------------------------------------------------------- |
-| Step 1      | Selfie — foto di depan kelas (kamera browser / upload)                  |
-| Step 2      | Presensi Siswa — kehadiran per siswa (hadir/sakit/izin/alpha/terlambat) |
-| Step 3      | Materi Pertemuan — isi materi yang diajarkan                            |
-| Metadata    | Otomatis: timestamp, lokasi (GPS), jadwal_id                            |
-| Verifikasi  | Foto dicocokkan dengan jadwal & wajah guru                              |
-| Frekuensi   | 1x per pertemuan per jadwal                                             |
-| Penyimpanan | File di storage `storage/app/public/agenda/`                            |
-| Duplikat    | Unique constraint (jadwal_id, tanggal)                                  |
+| Atribut     | Keterangan                                                                                                                     |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Step 1      | Selfie — foto di depan kelas (kamera browser / upload)                                                                         |
+| Step 2      | Presensi Siswa — guru kelas hanya memilih **Hadir** atau **Tidak Hadir** (sakit/izin/alpha ditentukan oleh Validator Presensi) |
+| Step 3      | Materi Pertemuan — isi materi yang diajarkan                                                                                   |
+| Metadata    | Otomatis: timestamp, lokasi (GPS), jadwal_id                                                                                   |
+| Verifikasi  | Foto dicocokkan dengan jadwal & wajah guru                                                                                     |
+| Frekuensi   | 1x per pertemuan per jadwal                                                                                                    |
+| Penyimpanan | File di storage `storage/app/public/agenda/`                                                                                   |
+| Duplikat    | Unique constraint (jadwal_id, tanggal)                                                                                         |
+
+### 6.6 Validator Presensi Siswa & Perizinan
+
+Guru dengan tugas tambahan **Validator Presensi** (permission `validator_presensi_siswa`) mengelola perizinan siswa.
+
+| Atribut          | Keterangan                                                                 |
+| ---------------- | -------------------------------------------------------------------------- |
+| Permission       | `validator_presensi_siswa` — disimpan di `tugas_tambahans.permissions`     |
+| Fungsi           | Mencatat perizinan sakit/izin siswa per tanggal                            |
+| Auto-Override    | Set perizinan → otomatis update `detail_jurnal_siswas.status` di hari itu  |
+| Alur Jurnal Guru | Guru kelas isi jurnal: hanya pilihan **Hadir** / **Tidak Hadir**           |
+|                  | Status sakit/izin/alpha ditentukan oleh Validator Presensi                 |
+|                  | Jika siswa tidak hadir & tidak ada perizinan → status = Alpha              |
+| Rekap Perizinan  | Validator Presensi lihat rekap perizinan per kelas, per tanggal, per siswa |
+| Notifikasi       | Notifikasi ke Wali Kelas jika siswa sakit/izin                             |
 
 ---
 

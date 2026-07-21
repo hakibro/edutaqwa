@@ -162,6 +162,14 @@
                 <x-heroicon-o-calendar-days class="h-5 w-5 shrink-0" />
                 <span>{{ __('Jadwal') }}</span>
             </x-sidebar-nav-link>
+            <x-sidebar-nav-link :href="route('nilai.jenis-nilai.index')" :active="request()->routeIs('nilai.jenis-nilai.*')">
+                <x-heroicon-o-clipboard-document-list class="h-5 w-5 shrink-0" />
+                <span>{{ __('Jenis Nilai') }}</span>
+            </x-sidebar-nav-link>
+            <x-sidebar-nav-link :href="route('nilai.rekap')" :active="request()->routeIs('nilai.rekap')">
+                <x-heroicon-o-table-cells class="h-5 w-5 shrink-0" />
+                <span>{{ __('Rekap Nilai') }}</span>
+            </x-sidebar-nav-link>
             <x-sidebar-nav-link :href="route('akademik-settings.index')" :active="request()->routeIs('akademik-settings.*')">
                 <x-heroicon-o-cog-6-tooth class="h-5 w-5 shrink-0" />
                 <span>{{ __('Settings') }}</span>

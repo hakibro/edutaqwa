@@ -77,6 +77,33 @@
                         </div>
                     @endif
 
+                    @if ($jurnal->atp)
+                        <div class="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                            <span class="block text-xs text-gray-500 mb-2 font-semibold">ATP — Alur Tujuan
+                                Pembelajaran</span>
+                            <div class="text-sm space-y-1.5">
+                                <p class="text-gray-700">
+                                    <span class="font-medium text-blue-700">CP:</span>
+                                    @if ($jurnal->atp->tp->cp->kode)
+                                        <span class="text-blue-600">[{{ $jurnal->atp->tp->cp->kode }}]</span>
+                                    @endif
+                                    {{ $jurnal->atp->tp->cp->deskripsi ?? '-' }}
+                                </p>
+                                <p class="text-gray-700">
+                                    <span class="font-medium text-indigo-700">TP:</span>
+                                    @if ($jurnal->atp->tp->kode)
+                                        <span class="text-indigo-600">[{{ $jurnal->atp->tp->kode }}]</span>
+                                    @endif
+                                    {{ $jurnal->atp->tp->deskripsi ?? '-' }}
+                                </p>
+                                <p class="text-gray-700">
+                                    <span class="font-medium text-gray-600">ATP:</span>
+                                    Minggu {{ $jurnal->atp->minggu_ke }} — {{ $jurnal->atp->materi }}
+                                </p>
+                            </div>
+                        </div>
+                    @endif
+
                     @if ($jurnal->is_verified)
                         <div class="mb-4 text-xs text-gray-500">
                             Diverifikasi {{ $jurnal->verified_at->format('d/m/Y H:i') }} oleh

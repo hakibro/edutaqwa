@@ -149,6 +149,28 @@
                                     @endforeach
                                 </select>
                             </div>
+                            <div class="tt-permissions-wrapper col-span-full" style="display:none">
+                                <div class="flex flex-wrap gap-3 text-xs text-gray-600">
+                                    <label class="inline-flex items-center gap-1 cursor-pointer">
+                                        <input type="checkbox" name="tugas_tambahan[0][permissions][]"
+                                            value="validator_jurnal"
+                                            class="tt-perm rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                        <span>Validator Jurnal</span>
+                                    </label>
+                                    <label class="inline-flex items-center gap-1 cursor-pointer">
+                                        <input type="checkbox" name="tugas_tambahan[0][permissions][]"
+                                            value="perizinan_siswa"
+                                            class="tt-perm rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                        <span>Perizinan Siswa</span>
+                                    </label>
+                                    <label class="inline-flex items-center gap-1 cursor-pointer">
+                                        <input type="checkbox" name="tugas_tambahan[0][permissions][]"
+                                            value="presensi_ptk"
+                                            class="tt-perm rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                        <span>Presensi PTK</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <button type="button" onclick="addTugasTambahan()"
@@ -264,16 +286,35 @@
                 <button type="button" onclick="this.closest('.tugas-tambahan-item').remove()"
                     class="text-red-500 hover:text-red-700 text-xs px-1">&times;</button>
             </div>
+            <div class="tt-permissions-wrapper col-span-full" style="display:none">
+                <div class="flex flex-wrap gap-3 text-xs text-gray-600">
+                    <label class="inline-flex items-center gap-1 cursor-pointer">
+                        <input type="checkbox" name="tugas_tambahan[${tugasTambahanIndex}][permissions][]" value="validator_jurnal" class="tt-perm rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <span>Validator Jurnal</span>
+                    </label>
+                    <label class="inline-flex items-center gap-1 cursor-pointer">
+                        <input type="checkbox" name="tugas_tambahan[${tugasTambahanIndex}][permissions][]" value="perizinan_siswa" class="tt-perm rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <span>Perizinan Siswa</span>
+                    </label>
+                    <label class="inline-flex items-center gap-1 cursor-pointer">
+                        <input type="checkbox" name="tugas_tambahan[${tugasTambahanIndex}][permissions][]" value="presensi_ptk" class="tt-perm rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <span>Presensi PTK</span>
+                    </label>
+                </div>
+            </div>
         </div>`;
         container.insertAdjacentHTML('beforeend', template);
         tugasTambahanIndex++;
     }
 
-    // Toggle kelas dropdown when jenis changes to Wali Kelas
+    // Toggle kelas dropdown & permissions when jenis changes
     document.getElementById('tugasTambahanContainer').addEventListener('change', function(e) {
         if (e.target.classList.contains('tt-jenis')) {
-            const wrapper = e.target.closest('.tugas-tambahan-item').querySelector('.tt-kelas-wrapper');
-            wrapper.style.display = e.target.value === 'Wali Kelas' ? '' : 'none';
+            const item = e.target.closest('.tugas-tambahan-item');
+            const kelasWrapper = item.querySelector('.tt-kelas-wrapper');
+            const permWrapper = item.querySelector('.tt-permissions-wrapper');
+            if (kelasWrapper) kelasWrapper.style.display = e.target.value === 'Wali Kelas' ? '' : 'none';
+            if (permWrapper) permWrapper.style.display = e.target.value ? '' : 'none';
         }
     });
 </script>

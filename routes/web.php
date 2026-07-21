@@ -228,6 +228,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/jurnal-mengajar/{jurnal}/edit', [JurnalMengajarController::class, 'edit'])->name('jurnal-mengajar.edit');
         Route::put('/jurnal-mengajar/{jurnal}', [JurnalMengajarController::class, 'update'])->name('jurnal-mengajar.update');
         Route::delete('/jurnal-mengajar/{jurnal}', [JurnalMengajarController::class, 'destroy'])->name('jurnal-mengajar.destroy');
+        // Draft save per-step wizard
+        Route::post('/jurnal-mengajar/save-draft', [JurnalMengajarController::class, 'saveDraft'])->name('jurnal-mengajar.save-draft');
+        Route::delete('/jurnal-mengajar/draft/{jurnal}', [JurnalMengajarController::class, 'destroyDraft'])->name('jurnal-mengajar.destroy-draft');
     });
 
     // === PRESENSI SISWA (Phase 6) === (DIKEEP utk backward compat, redirect ke jurnal)

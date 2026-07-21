@@ -71,6 +71,39 @@
                     </div>
                 </div>
 
+                {{-- ATP --}}
+                <div class="mb-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <h3 class="text-base font-semibold text-gray-900 mb-3">ATP <span
+                                class="font-normal text-gray-400 text-sm">(Opsional)</span></h3>
+                        <select name="atp_id" id="atp-edit-select" class="w-full rounded-md border-gray-300 text-sm">
+                            <option value="">— Pilih ATP (opsional) —</option>
+                            @foreach ($atps as $atp)
+                                <option value="{{ $atp->id }}"
+                                    data-cp-deskripsi="{{ $atp->tp->cp->deskripsi ?? '' }}"
+                                    data-cp-kode="{{ $atp->tp->cp->kode ?? '' }}"
+                                    data-tp-deskripsi="{{ $atp->tp->deskripsi ?? '' }}"
+                                    data-tp-kode="{{ $atp->tp->kode ?? '' }}"
+                                    {{ $jurnal->atp_id == $atp->id ? 'selected' : '' }}>
+                                    Minggu {{ $atp->minggu_ke }} — {{ Str::limit($atp->materi, 60) }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <div id="atp-edit-info" class="hidden mt-3 space-y-2">
+                            <div class="rounded bg-blue-50 p-3 text-sm">
+                                <p class="text-xs font-semibold text-blue-700 uppercase tracking-wide">CP &mdash;
+                                    Capaian Pembelajaran</p>
+                                <p class="text-sm text-blue-900 mt-1" id="atp-edit-info-cp"></p>
+                            </div>
+                            <div class="rounded bg-indigo-50 p-3 text-sm">
+                                <p class="text-xs font-semibold text-indigo-700 uppercase tracking-wide">TP &mdash;
+                                    Tujuan Pembelajaran</p>
+                                <p class="text-sm text-indigo-900 mt-1" id="atp-edit-info-tp"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- Presensi Siswa --}}
                 <div class="mb-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div class="p-6">
@@ -200,6 +233,38 @@
                 if (ket) {
                     ket.classList.toggle('hidden', radio.value === 'hadir');
                 }
+            }
+
+            // ATP info toggle
+            const atpSelect = document.getElementById('atp-edit-select');
+            const atpInfo = document.getElementById('atp-edit-info');
+            const atpInfoCp = document.getElementById('atp-edit-info-cp');
+            const atpInfoTp = document.getElementById('atp-edit-info-tp');
+
+            function updateAtpInfo() {
+                const opt = atpSelect.options[atpSelect.selectedIndex];
+                if (opt && opt.value) {
+                    const cpKode = opt.dataset.cpKode;
+                    const cpDeskripsi = opt.dataset.cpDeskripsi;
+                    const tpKode = opt.dataset.tpKode;
+                    const tpDeskripsi = opt.dataset.tpDeskripsi;
+                    let cpText = '';
+                    if (cpKode) cpText += '[' + cpKode + '] ';
+                    cpText += cpDeskripsi || '-';
+                    atpInfoCp.textContent = cpText;
+                    let tpText = '';
+                    if (tpKode) tpText += '[' + tpKode + '] ';
+                    tpText += tpDeskripsi || '-';
+                    atpInfoTp.textContent = tpText;
+                    atpInfo.classList.remove('hidden');
+                } else {
+                    atpInfo.classList.add('hidden');
+                }
+            }
+
+            if (atpSelect) {
+                atpSelect.addEventListener('change', updateAtpInfo);
+                if (atpSelect.value) updateAtpInfo();
             }
 
             // Init on load — hide ket for hadir students

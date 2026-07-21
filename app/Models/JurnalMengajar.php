@@ -15,6 +15,7 @@ class JurnalMengajar extends Model
         'jadwal_id',
         'guru_id',
         'kelas_id',
+        'atp_id',
         'pertemuan_ke',
         'tanggal',
         'jam_mulai',
@@ -27,6 +28,8 @@ class JurnalMengajar extends Model
         'verified_at',
         'verified_by',
         'metadata',
+        'is_draft',
+        'draft_step',
     ];
 
     protected $casts = [
@@ -59,5 +62,10 @@ class JurnalMengajar extends Model
     public function detailSiswas(): HasMany
     {
         return $this->hasMany(DetailJurnalSiswa::class);
+    }
+
+    public function atp(): BelongsTo
+    {
+        return $this->belongsTo(Atp::class);
     }
 }

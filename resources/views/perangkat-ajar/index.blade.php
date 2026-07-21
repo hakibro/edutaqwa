@@ -170,88 +170,57 @@
                             <span class="text-xs text-gray-400">{{ $cps->total() }} CP</span>
                         </div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        Kode</th>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        Deskripsi</th>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        Fase</th>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        Mapel</th>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        Guru</th>
-                                    <th
-                                        class="px-4 py-3 text-center text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        TP</th>
-                                    <th
-                                        class="px-4 py-3 text-right text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100 bg-white">
-                                @forelse ($cps as $cp)
-                                    <tr class="hover:bg-gray-50 transition-colors even:bg-gray-50/50">
-                                        <td class="px-4 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">
-                                            <span
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">{{ $cp->kode ?? '-' }}</span>
-                                        </td>
-                                        <td class="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
-                                            {{ Str::limit($cp->deskripsi, 80) }}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                            <span
-                                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">{{ $cp->fase }}</span>
-                                        </td>
-                                        <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                            {{ $cp->mapel->nama }}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                            {{ $cp->guru->nama }}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-700 text-center whitespace-nowrap">
-                                            <span
-                                                class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold {{ $cp->tps_count > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-400' }}">{{ $cp->tps_count }}</span>
-                                        </td>
-                                        <td class="px-4 py-3 text-right text-sm whitespace-nowrap">
-                                            @php $canEdit = auth()->user()->isGuru() && auth()->user()->guru_id === $cp->guru_id; @endphp
-                                            @if (!auth()->user()->isGuru() || $canEdit)
-                                                <button @click="openModal('cp', {{ $cp->id }})"
-                                                    class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-900 font-medium">Edit</button>
-                                                <form action="{{ route('perangkat-ajar.cp.destroy', $cp) }}"
-                                                    method="POST" class="inline"
-                                                    onsubmit="return confirm('Hapus CP ini?')">
-                                                    @csrf @method('DELETE')
-                                                    <button type="submit"
-                                                        class="inline-flex items-center gap-1 ml-3 text-red-600 hover:text-red-900 font-medium">Hapus</button>
-                                                </form>
-                                            @else
-                                                <span class="text-gray-300">-</span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="7" class="px-4 py-12 text-center">
-                                            <div class="flex flex-col items-center gap-2">
-                                                <x-heroicon-o-document-text class="w-12 h-12 text-gray-300" />
-                                                <p class="text-sm text-gray-500">Belum ada data CP.</p>
-                                                @if (auth()->user()->isGuru())
-                                                    <button @click="openModal('cp')"
-                                                        class="text-sm text-indigo-600 hover:text-indigo-900 font-medium">+
-                                                        Tambah CP pertama</button>
-                                                @endif
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
+                        @forelse ($cps as $cp)
+                            <div
+                                class="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow">
+                                <div class="flex items-start justify-between mb-2">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">{{ $cp->kode ?? '-' }}</span>
+                                        <span
+                                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">{{ $cp->fase }}</span>
+                                    </div>
+                                    <span
+                                        class="inline-flex items-center justify-center min-w-[28px] h-7 rounded-full text-xs font-bold {{ $cp->tps_count > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-400' }}">{{ $cp->tps_count }}</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ Str::limit($cp->deskripsi, 80) }}
+                                </p>
+                                <div class="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                                    <span>{{ $cp->mapel->nama }}</span>
+                                    <span class="text-gray-300">|</span>
+                                    <span>{{ $cp->guru->nama }}</span>
+                                </div>
+                                <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+                                    @php $canEdit = auth()->user()->isGuru() && auth()->user()->guru_id === $cp->guru_id; @endphp
+                                    @if (!auth()->user()->isGuru() || $canEdit)
+                                        <div class="flex items-center gap-3">
+                                            <button @click="openModal('cp', {{ $cp->id }})"
+                                                class="text-sm text-indigo-600 hover:text-indigo-900 font-medium">Edit</button>
+                                            <form action="{{ route('perangkat-ajar.cp.destroy', $cp) }}"
+                                                method="POST" class="inline"
+                                                onsubmit="return confirm('Hapus CP ini?')">
+                                                @csrf @method('DELETE')
+                                                <button type="submit"
+                                                    class="text-sm text-red-600 hover:text-red-900 font-medium">Hapus</button>
+                                            </form>
+                                        </div>
+                                    @else
+                                        <span class="text-gray-300 text-sm">-</span>
+                                    @endif
+                                </div>
+                            </div>
+                        @empty
+                            <div class="col-span-full flex flex-col items-center gap-2 py-12">
+                                <x-heroicon-o-document-text class="w-12 h-12 text-gray-300" />
+                                <p class="text-sm text-gray-500">Belum ada data CP.</p>
+                                @if (auth()->user()->isGuru())
+                                    <button @click="openModal('cp')"
+                                        class="text-sm text-indigo-600 hover:text-indigo-900 font-medium">+
+                                        Tambah CP pertama</button>
+                                @endif
+                            </div>
+                        @endforelse
                     </div>
                     @if ($cps->hasPages())
                         <div class="p-4 border-t border-gray-100 bg-gray-50/50">
@@ -301,79 +270,54 @@
                             <span class="text-xs text-gray-400">{{ $tps->total() }} TP</span>
                         </div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        Kode</th>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        Deskripsi</th>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        CP</th>
-                                    <th
-                                        class="px-4 py-3 text-center text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        ATP</th>
-                                    <th
-                                        class="px-4 py-3 text-right text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100 bg-white">
-                                @forelse ($tps as $tp)
-                                    <tr class="hover:bg-gray-50 transition-colors even:bg-gray-50/50">
-                                        <td class="px-4 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">
-                                            <span
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">{{ $tp->kode ?? '-' }}</span>
-                                        </td>
-                                        <td class="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
-                                            {{ Str::limit($tp->deskripsi, 80) }}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                            {{ $tp->cp->kode ?? 'CP' }} <span
-                                                class="text-gray-400 text-xs">({{ $tp->cp->mapel->nama }})</span>
-                                        </td>
-                                        <td class="px-4 py-3 text-sm text-gray-700 text-center whitespace-nowrap">
-                                            <span
-                                                class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold {{ $tp->atps_count > 0 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-400' }}">{{ $tp->atps_count }}</span>
-                                        </td>
-                                        <td class="px-4 py-3 text-right text-sm whitespace-nowrap">
-                                            @php $canEditTp = !auth()->user()->isGuru() || auth()->user()->guru_id === $tp->cp->guru_id; @endphp
-                                            @if ($canEditTp)
-                                                <button @click="openModal('tp', {{ $tp->id }})"
-                                                    class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-900 font-medium">Edit</button>
-                                                <form action="{{ route('perangkat-ajar.tp.destroy', $tp) }}"
-                                                    method="POST" class="inline"
-                                                    onsubmit="return confirm('Hapus TP ini?')">
-                                                    @csrf @method('DELETE')
-                                                    <button type="submit"
-                                                        class="inline-flex items-center gap-1 ml-3 text-red-600 hover:text-red-900 font-medium">Hapus</button>
-                                                </form>
-                                            @else
-                                                <span class="text-gray-300">-</span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="px-4 py-12 text-center">
-                                            <div class="flex flex-col items-center gap-2">
-                                                <x-heroicon-o-clipboard-document-check
-                                                    class="w-12 h-12 text-gray-300" />
-                                                <p class="text-sm text-gray-500">Belum ada data TP.</p>
-                                                @if (auth()->user()->isGuru())
-                                                    <button @click="openModal('tp')"
-                                                        class="text-sm text-emerald-600 hover:text-emerald-900 font-medium">+
-                                                        Tambah TP pertama</button>
-                                                @endif
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
+                        @forelse ($tps as $tp)
+                            <div
+                                class="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow">
+                                <div class="flex items-start justify-between mb-2">
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">{{ $tp->kode ?? '-' }}</span>
+                                    <span
+                                        class="inline-flex items-center justify-center min-w-[28px] h-7 rounded-full text-xs font-bold {{ $tp->atps_count > 0 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-400' }}">{{ $tp->atps_count }}</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+                                    {{ Str::limit($tp->deskripsi, 80) }}</p>
+                                <div class="text-xs text-gray-500 mb-3">
+                                    <span class="inline-flex items-center gap-1">CP:
+                                        <strong>{{ $tp->cp->kode ?? 'CP' }}</strong>
+                                        ({{ $tp->cp->mapel->nama }})
+                                    </span>
+                                </div>
+                                <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+                                    @php $canEditTp = !auth()->user()->isGuru() || auth()->user()->guru_id === $tp->cp->guru_id; @endphp
+                                    @if ($canEditTp)
+                                        <div class="flex items-center gap-3">
+                                            <button @click="openModal('tp', {{ $tp->id }})"
+                                                class="text-sm text-indigo-600 hover:text-indigo-900 font-medium">Edit</button>
+                                            <form action="{{ route('perangkat-ajar.tp.destroy', $tp) }}"
+                                                method="POST" class="inline"
+                                                onsubmit="return confirm('Hapus TP ini?')">
+                                                @csrf @method('DELETE')
+                                                <button type="submit"
+                                                    class="text-sm text-red-600 hover:text-red-900 font-medium">Hapus</button>
+                                            </form>
+                                        </div>
+                                    @else
+                                        <span class="text-gray-300 text-sm">-</span>
+                                    @endif
+                                </div>
+                            </div>
+                        @empty
+                            <div class="col-span-full flex flex-col items-center gap-2 py-12">
+                                <x-heroicon-o-clipboard-document-check class="w-12 h-12 text-gray-300" />
+                                <p class="text-sm text-gray-500">Belum ada data TP.</p>
+                                @if (auth()->user()->isGuru())
+                                    <button @click="openModal('tp')"
+                                        class="text-sm text-emerald-600 hover:text-emerald-900 font-medium">+
+                                        Tambah TP pertama</button>
+                                @endif
+                            </div>
+                        @endforelse
                     </div>
                     @if ($tps->hasPages())
                         <div class="p-4 border-t border-gray-100 bg-gray-50/50">
@@ -423,76 +367,51 @@
                             <span class="text-xs text-gray-400">{{ $atps->total() }} ATP</span>
                         </div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        Minggu</th>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        Materi</th>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        TP</th>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        Mapel</th>
-                                    <th
-                                        class="px-4 py-3 text-right text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100 bg-white">
-                                @forelse ($atps as $atp)
-                                    <tr class="hover:bg-gray-50 transition-colors even:bg-gray-50/50">
-                                        <td class="px-4 py-3 text-sm whitespace-nowrap">
-                                            <span
-                                                class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-amber-50 text-amber-700 font-bold text-xs">{{ $atp->minggu_ke }}</span>
-                                        </td>
-                                        <td class="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
-                                            {{ Str::limit($atp->materi, 80) }}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                            <span
-                                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">{{ $atp->tp->kode ?? 'TP' }}</span>
-                                        </td>
-                                        <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                            {{ $atp->tp->cp->mapel->nama ?? '-' }}</td>
-                                        <td class="px-4 py-3 text-right text-sm whitespace-nowrap">
-                                            @php $canEditAtp = !auth()->user()->isGuru() || auth()->user()->guru_id === $atp->tp->cp->guru_id; @endphp
-                                            @if ($canEditAtp)
-                                                <button @click="openModal('atp', {{ $atp->id }})"
-                                                    class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-900 font-medium">Edit</button>
-                                                <form action="{{ route('perangkat-ajar.atp.destroy', $atp) }}"
-                                                    method="POST" class="inline"
-                                                    onsubmit="return confirm('Hapus ATP ini?')">
-                                                    @csrf @method('DELETE')
-                                                    <button type="submit"
-                                                        class="inline-flex items-center gap-1 ml-3 text-red-600 hover:text-red-900 font-medium">Hapus</button>
-                                                </form>
-                                            @else
-                                                <span class="text-gray-300">-</span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="px-4 py-12 text-center">
-                                            <div class="flex flex-col items-center gap-2">
-                                                <x-heroicon-o-chart-bar class="w-12 h-12 text-gray-300" />
-                                                <p class="text-sm text-gray-500">Belum ada data ATP.</p>
-                                                @if (auth()->user()->isGuru())
-                                                    <button @click="openModal('atp')"
-                                                        class="text-sm text-amber-600 hover:text-amber-900 font-medium">+
-                                                        Tambah ATP pertama</button>
-                                                @endif
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
+                        @forelse ($atps as $atp)
+                            <div
+                                class="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow">
+                                <div class="flex items-start justify-between mb-2">
+                                    <span
+                                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-amber-50 text-amber-700 font-bold text-xs">{{ $atp->minggu_ke }}</span>
+                                    <span
+                                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">{{ $atp->tp->kode ?? 'TP' }}</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ Str::limit($atp->materi, 80) }}
+                                </p>
+                                <div class="text-xs text-gray-500 mb-3">
+                                    {{ $atp->tp->cp->mapel->nama ?? '-' }}
+                                </div>
+                                <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+                                    @php $canEditAtp = !auth()->user()->isGuru() || auth()->user()->guru_id === $atp->tp->cp->guru_id; @endphp
+                                    @if ($canEditAtp)
+                                        <div class="flex items-center gap-3">
+                                            <button @click="openModal('atp', {{ $atp->id }})"
+                                                class="text-sm text-indigo-600 hover:text-indigo-900 font-medium">Edit</button>
+                                            <form action="{{ route('perangkat-ajar.atp.destroy', $atp) }}"
+                                                method="POST" class="inline"
+                                                onsubmit="return confirm('Hapus ATP ini?')">
+                                                @csrf @method('DELETE')
+                                                <button type="submit"
+                                                    class="text-sm text-red-600 hover:text-red-900 font-medium">Hapus</button>
+                                            </form>
+                                        </div>
+                                    @else
+                                        <span class="text-gray-300 text-sm">-</span>
+                                    @endif
+                                </div>
+                            </div>
+                        @empty
+                            <div class="col-span-full flex flex-col items-center gap-2 py-12">
+                                <x-heroicon-o-chart-bar class="w-12 h-12 text-gray-300" />
+                                <p class="text-sm text-gray-500">Belum ada data ATP.</p>
+                                @if (auth()->user()->isGuru())
+                                    <button @click="openModal('atp')"
+                                        class="text-sm text-amber-600 hover:text-amber-900 font-medium">+
+                                        Tambah ATP pertama</button>
+                                @endif
+                            </div>
+                        @endforelse
                     </div>
                     @if ($atps->hasPages())
                         <div class="p-4 border-t border-gray-100 bg-gray-50/50">
@@ -542,85 +461,64 @@
                             <span class="text-xs text-gray-400">{{ $moduls->total() }} Modul</span>
                         </div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        Judul</th>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        Mapel</th>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        Guru</th>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        File</th>
-                                    <th
-                                        class="px-4 py-3 text-right text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                                        Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100 bg-white">
-                                @forelse ($moduls as $modul)
-                                    <tr class="hover:bg-gray-50 transition-colors even:bg-gray-50/50">
-                                        <td class="px-4 py-3 text-sm font-medium text-gray-900 max-w-xs truncate">
-                                            {{ $modul->judul }}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                            {{ $modul->mapel->nama }}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                            {{ $modul->guru->nama ?? '-' }}</td>
-                                        <td class="px-4 py-3 text-sm whitespace-nowrap">
-                                            @if ($modul->file_path)
-                                                <div class="flex items-center gap-1.5">
-                                                    <a href="{{ route('perangkat-ajar.modul.view', $modul) }}"
-                                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition"
-                                                        target="_blank">Lihat</a>
-                                                    <a href="{{ route('perangkat-ajar.modul.download', $modul) }}"
-                                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Download</a>
-                                                </div>
-                                            @else
-                                                <span
-                                                    class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-400">Tanpa
-                                                    file</span>
-                                            @endif
-                                        </td>
-                                        <td class="px-4 py-3 text-right text-sm whitespace-nowrap">
-                                            @php $canEditModul = !auth()->user()->isGuru() || auth()->user()->guru_id === $modul->guru_id; @endphp
-                                            @if ($canEditModul)
-                                                <button @click="openModal('modul', {{ $modul->id }})"
-                                                    class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-900 font-medium">Edit</button>
-                                                <form action="{{ route('perangkat-ajar.modul.destroy', $modul) }}"
-                                                    method="POST" class="inline"
-                                                    onsubmit="return confirm('Hapus Modul Ajar ini?')">
-                                                    @csrf @method('DELETE')
-                                                    <button type="submit"
-                                                        class="inline-flex items-center gap-1 ml-3 text-red-600 hover:text-red-900 font-medium">Hapus</button>
-                                                </form>
-                                            @else
-                                                <span class="text-gray-300">-</span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="px-4 py-12 text-center">
-                                            <div class="flex flex-col items-center gap-2">
-                                                <x-heroicon-o-book-open class="w-12 h-12 text-gray-300" />
-                                                <p class="text-sm text-gray-500">Belum ada data Modul Ajar.</p>
-                                                @if (auth()->user()->isGuru())
-                                                    <button @click="openModal('modul')"
-                                                        class="text-sm text-rose-600 hover:text-rose-900 font-medium">+
-                                                        Tambah Modul pertama</button>
-                                                @endif
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
+                        @forelse ($moduls as $modul)
+                            <div
+                                class="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow">
+                                <div class="flex items-start justify-between mb-2">
+                                    <h4 class="text-sm font-medium text-gray-900 line-clamp-1">{{ $modul->judul }}
+                                    </h4>
+                                </div>
+                                <div class="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                                    <span>{{ $modul->mapel->nama }}</span>
+                                    <span class="text-gray-300">|</span>
+                                    <span>{{ $modul->guru->nama ?? '-' }}</span>
+                                </div>
+                                <div class="mb-3">
+                                    @if ($modul->file_path)
+                                        <div class="flex items-center gap-1.5">
+                                            <a href="{{ route('perangkat-ajar.modul.view', $modul) }}"
+                                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition"
+                                                target="_blank">Lihat</a>
+                                            <a href="{{ route('perangkat-ajar.modul.download', $modul) }}"
+                                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Download</a>
+                                        </div>
+                                    @else
+                                        <span
+                                            class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-400">Tanpa
+                                            file</span>
+                                    @endif
+                                </div>
+                                <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+                                    @php $canEditModul = !auth()->user()->isGuru() || auth()->user()->guru_id === $modul->guru_id; @endphp
+                                    @if ($canEditModul)
+                                        <div class="flex items-center gap-3">
+                                            <button @click="openModal('modul', {{ $modul->id }})"
+                                                class="text-sm text-indigo-600 hover:text-indigo-900 font-medium">Edit</button>
+                                            <form action="{{ route('perangkat-ajar.modul.destroy', $modul) }}"
+                                                method="POST" class="inline"
+                                                onsubmit="return confirm('Hapus Modul Ajar ini?')">
+                                                @csrf @method('DELETE')
+                                                <button type="submit"
+                                                    class="text-sm text-red-600 hover:text-red-900 font-medium">Hapus</button>
+                                            </form>
+                                        </div>
+                                    @else
+                                        <span class="text-gray-300 text-sm">-</span>
+                                    @endif
+                                </div>
+                            </div>
+                        @empty
+                            <div class="col-span-full flex flex-col items-center gap-2 py-12">
+                                <x-heroicon-o-book-open class="w-12 h-12 text-gray-300" />
+                                <p class="text-sm text-gray-500">Belum ada data Modul Ajar.</p>
+                                @if (auth()->user()->isGuru())
+                                    <button @click="openModal('modul')"
+                                        class="text-sm text-rose-600 hover:text-rose-900 font-medium">+
+                                        Tambah Modul pertama</button>
+                                @endif
+                            </div>
+                        @endforelse
                     </div>
                     @if ($moduls->hasPages())
                         <div class="p-4 border-t border-gray-100 bg-gray-50/50">

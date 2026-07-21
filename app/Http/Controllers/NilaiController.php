@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Guru;
+use App\Models\Jadwal;
 use App\Models\JenisNilai;
 use App\Models\Kelas;
 use App\Models\LogAktivita;
 use App\Models\Mapel;
 use App\Models\Nilai;
-use App\Models\PengajaranMapel;
 use App\Models\RiwayatKelasSiswa;
 use App\Models\Siswa;
 use App\Models\TahunAjaran;
@@ -93,11 +93,17 @@ class NilaiController extends Controller
             ->where('is_active', true)
             ->first();
 
-        // Mapel yang diampu guru
-        $pengajaran = PengajaranMapel::with(['mapel', 'kelas'])
+        // Ambil kelas + mapel dari jadwal (karena pengajaran_mapels tidak punya kelas_id)
+        $jadwals = Jadwal::with(['mapel', 'kelas'])
             ->where('guru_id', $guru->id)
+            ->where('lembaga_id', $user->lembaga_id)
             ->when($tahunAjaranAktif, fn($q) => $q->where('tahun_ajaran_id', $tahunAjaranAktif->id))
             ->get();
+
+        // Kelas unik yg diajar
+        $kelass = $jadwals->pluck('kelas')->filter()->unique('id')->values();
+        // Mapel unik yg diajar
+        $mapels = $jadwals->pluck('mapel')->filter()->unique('id')->values();
 
         // Jenis nilai yang tersedia
         $jenisNilais = JenisNilai::where('lembaga_id', $user->lembaga_id)->get();
@@ -122,12 +128,7 @@ class NilaiController extends Controller
 
         $nilais = $query->latest()->paginate($this->perPage($request));
 
-        // Ambil semua kelas dari pengajaran (buat filter dropdown)
-        $kelasIds = $pengajaran->pluck('kelas_id')->filter()->unique();
-        $kelass = Kelas::whereIn('id', $kelasIds)->get();
-        $mapels = $pengajaran->pluck('mapel')->unique('id');
-
-        return view('nilai.index', compact('pengajaran', 'nilais', 'jenisNilais', 'mapels', 'kelass', 'tahunAjaranAktif'));
+        return view('nilai.index', compact('kelass', 'mapels', 'nilais', 'jenisNilais', 'tahunAjaranAktif'));
     }
 
     /**
@@ -150,12 +151,12 @@ class NilaiController extends Controller
         $kelas = Kelas::findOrFail($kelasId);
         $jenisNilai = JenisNilai::findOrFail($jenisNilaiId);
 
-        // Verifikasi guru mengajar mapel ini di kelas ini
+        // Verifikasi guru mengajar mapel ini di kelas ini (via jadwal)
         $tahunAjaranAktif = TahunAjaran::where('yayasan_id', $user->yayasan_id)
             ->where('is_active', true)
             ->first();
 
-        $isPengajar = PengajaranMapel::where('guru_id', $guru->id)
+        $isPengajar = Jadwal::where('guru_id', $guru->id)
             ->where('mapel_id', $mapelId)
             ->where('kelas_id', $kelasId)
             ->when($tahunAjaranAktif, fn($q) => $q->where('tahun_ajaran_id', $tahunAjaranAktif->id))
@@ -179,11 +180,20 @@ class NilaiController extends Controller
 
         // TP yang tersedia (untuk jenis Harian)
         $tps = collect();
+        $tpData = [];
         $isHarian = strtolower($jenisNilai->nama) === 'harian';
         if ($isHarian) {
             $tps = Tp::whereHas('cp', fn($q) => $q->where('mapel_id', $mapelId)->where('guru_id', $guru->id))
-                ->with('cp')
+                ->with(['cp'])
                 ->get();
+            $tpData = $tps->map(fn($tp) => [
+                'id' => (string) $tp->id,
+                'kode' => $tp->kode,
+                'deskripsi' => $tp->deskripsi,
+                'cp_kode' => $tp->cp?->kode,
+                'cp_deskripsi' => $tp->cp?->deskripsi,
+                'fase' => $tp->cp?->fase,
+            ])->values();
         }
 
         // Nilai yang sudah ada untuk kombinasi ini
@@ -203,6 +213,7 @@ class NilaiController extends Controller
             'jenisNilai',
             'siswas',
             'tps',
+            'tpData',
             'existingNilai',
             'isHarian',
             'tahunAjaranAktif'
@@ -221,7 +232,7 @@ class NilaiController extends Controller
             'tp_id' => 'nullable|exists:tps,id',
             'nilai' => 'required|array',
             'nilai.*' => 'nullable|numeric|min:0|max:100',
-            'keterangan' => 'nullable|string|max:255',
+            'keterangan' => 'required|string|max:255',
         ]);
 
         $tahunAjaranAktif = TahunAjaran::where('yayasan_id', $user->yayasan_id)
@@ -251,7 +262,7 @@ class NilaiController extends Controller
 
             Nilai::updateOrCreate($key, [
                 'nilai' => $nilai,
-                'keterangan' => $validated['keterangan'] ?? null,
+                'keterangan' => $validated['keterangan'],
             ]);
         }
 
@@ -298,10 +309,19 @@ class NilaiController extends Controller
 
         $isHarian = strtolower($jenisNilai->nama) === 'harian';
         $tps = collect();
+        $tpData = [];
         if ($isHarian) {
             $tps = Tp::whereHas('cp', fn($q) => $q->where('mapel_id', $mapelId)->where('guru_id', $guru->id))
-                ->with('cp')
+                ->with(['cp'])
                 ->get();
+            $tpData = $tps->map(fn($tp) => [
+                'id' => (string) $tp->id,
+                'kode' => $tp->kode,
+                'deskripsi' => $tp->deskripsi,
+                'cp_kode' => $tp->cp?->kode,
+                'cp_deskripsi' => $tp->cp?->deskripsi,
+                'fase' => $tp->cp?->fase,
+            ])->values();
         }
 
         // Untuk non-harian: tampilkan 1 kolom nilai per siswa
@@ -321,6 +341,7 @@ class NilaiController extends Controller
             'jenisNilai',
             'siswas',
             'tps',
+            'tpData',
             'existingNilai',
             'isHarian',
             'tahunAjaranAktif'
@@ -339,7 +360,7 @@ class NilaiController extends Controller
             'tp_id' => 'nullable|exists:tps,id',
             'nilai' => 'required|array',
             'nilai.*' => 'nullable|numeric|min:0|max:100',
-            'keterangan' => 'nullable|string|max:255',
+            'keterangan' => 'required|string|max:255',
         ]);
 
         $tahunAjaranAktif = TahunAjaran::where('yayasan_id', $user->yayasan_id)
@@ -363,7 +384,7 @@ class NilaiController extends Controller
             } else {
                 Nilai::updateOrCreate($key, [
                     'nilai' => $nilai,
-                    'keterangan' => $validated['keterangan'] ?? null,
+                    'keterangan' => $validated['keterangan'],
                 ]);
             }
         }

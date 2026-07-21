@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\AkademikSetting;
 
 class Jadwal extends Model
 {
@@ -72,5 +73,49 @@ class Jadwal extends Model
         }
 
         return null;
+    }
+
+    /**
+     * Status sesi jadwal berdasarkan jam sekarang.
+     *
+     * Return: 'belum_mulai' | 'sedang_berlangsung' | 'selesai'
+     *
+     * Butuh: AkademikSetting::getKbmItems($lembaga_id, $hari)
+     * untuk tau jam_mulai & jam_selesai tiap jam_ke.
+     */
+    public function statusSesi(): string
+    {
+        $kbmItems = AkademikSetting::getKbmItems($this->lembaga_id, $this->hari);
+        $slot = $kbmItems[$this->jam_ke] ?? null;
+
+        if (!$slot) {
+            return 'selesai';
+        }
+
+        $now = now();
+        $mulai = \Carbon\Carbon::createFromFormat('H:i', $slot['jam_mulai']);
+        $selesai = \Carbon\Carbon::createFromFormat('H:i', $slot['jam_selesai']);
+
+        if ($now->lt($mulai)) {
+            return 'belum_mulai';
+        }
+
+        if ($now->between($mulai, $selesai)) {
+            return 'sedang_berlangsung';
+        }
+
+        return 'selesai';
+    }
+
+    /**
+     * Label status sesi yang siap ditampilkan.
+     */
+    public function labelStatusSesi(): string
+    {
+        return match ($this->statusSesi()) {
+            'belum_mulai' => 'Belum Mulai',
+            'sedang_berlangsung' => 'Sedang Berlangsung',
+            'selesai' => 'Selesai',
+        };
     }
 }

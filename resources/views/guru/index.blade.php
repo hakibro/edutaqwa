@@ -241,11 +241,14 @@
             const keterangan = row.querySelector('.tt-keterangan')?.value || '';
             const ta = row.querySelector('.tt-ta')?.value || '';
             const kelasId = row.querySelector('.tt-kelas')?.value || '';
+            const permissions = [];
+            row.querySelectorAll('.tt-perm:checked').forEach(cb => permissions.push(cb.value));
             if (jenis) tugasTambahan.push({
                 jenis,
                 keterangan,
                 tahun_ajaran_id: ta,
-                kelas_id: kelasId
+                kelas_id: kelasId,
+                permissions
             });
         });
         fetch(`/guru/${guruId}/inline-update`, {
@@ -280,6 +283,10 @@
             row.querySelectorAll('.tt-jenis, .tt-keterangan, .tt-ta, .tt-kelas').forEach(el => {
                 el.addEventListener(evt, () => debouncedSaveTT(container));
             });
+        });
+        // Attach change event to permission checkboxes
+        row.querySelectorAll('.tt-perm').forEach(cb => {
+            cb.addEventListener('change', () => debouncedSaveTT(container));
         });
         // Toggle kelas dropdown when jenis changes
         row.querySelector('.tt-jenis')?.addEventListener('change', function() {
@@ -331,6 +338,11 @@
                     <select class="tt-kelas rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500" style="display:none;min-width:120px">
                         <option value="">-- Kelas --</option>
                     </select>
+                    <span class="flex items-center gap-1">
+                        <label class="inline-flex items-center gap-0.5 cursor-pointer text-xs" title="Validator Jurnal"><input type="checkbox" class="tt-perm rounded border-gray-300 text-indigo-600" value="validator_jurnal"> VJ</label>
+                        <label class="inline-flex items-center gap-0.5 cursor-pointer text-xs" title="Perizinan Siswa"><input type="checkbox" class="tt-perm rounded border-gray-300 text-indigo-600" value="perizinan_siswa"> PS</label>
+                        <label class="inline-flex items-center gap-0.5 cursor-pointer text-xs" title="Presensi PTK"><input type="checkbox" class="tt-perm rounded border-gray-300 text-indigo-600" value="presensi_ptk"> PP</label>
+                    </span>
                     <button type="button" class="tt-remove text-red-400 hover:text-red-600 text-xs leading-none">&times;</button>
                 `;
                 container.insertBefore(div, this);

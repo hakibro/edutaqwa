@@ -78,6 +78,7 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 - [x] Upload dokumen guru
 - [x] Bulk Action Guru (aktifkan/nonaktifkan massal via checkbox)
 - [x] Reset Password Guru (admin lembaga reset password user guru, buat akun jika belum ada)
+- [x] Permission tambahan guru via tugas_tambahans.permissions (validator_jurnal, perizinan_siswa, presensi_ptk) + Gate
 
 ### 3.2 Admin Yayasan — Approval Guru
 
@@ -135,6 +136,7 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 - [x] CRUD Jadwal (grid view per kelas)
 - [x] Cek bentrok guru & ruangan
 - [x] Import jadwal (Excel)
+- [ ] **Perbaikan flow pengisian jadwal** — alur saat ini lompat-lompat, perlu disempurnakan (lihat `plan/alur-kerja.md`)
 - [ ] Cetak jadwal kelas & guru
 
 ---
@@ -159,7 +161,6 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 - [x] Check-out (tombol)
 - [x] Status kehadiran otomatis (tepat waktu / terlambat / pulang awal / tidak absen)
 - [x] Riwayat absensi per guru
-- [ ] Notifikasi lupa check-in/check-out
 
 ### 5.3 Agenda Selfie (DIGABUNG ke P10 Jurnal Mengajar)
 
@@ -180,10 +181,9 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 - [x] ~~Input materi pertemuan~~ → digabung ke jurnal mengajar
 - [x] ~~Edit presensi yang sudah ada~~ → old data tetap bisa diakses via route lama
 
-### 6.2 Rekap & Notifikasi
+### 6.2 Rekap
 
 - [x] ~~Rekap presensi harian/bulanan~~ → digabung ke monitoring jurnal
-- [ ] Notifikasi alpha > 3 berturut-turut (P7 notifikasi)
 - [x] ~~Statistik presensi per kelas~~ → digabung ke monitoring jurnal
 
 ---
@@ -211,7 +211,6 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 - [x] Relasi Wali Kelas ke Kelas (kelas_id di tugas_tambahans, dropdown pilih kelas saat set Wali Kelas)
 - [x] Navigasi dinamis guru (Wali Kelas/BK muncul di sidebar & bottom nav otomatis)
 - [x] Akumulasi poin per siswa (P9 dashboard)
-- [x] Notifikasi batas poin (P9 notifikasi)
 
 ### 8.2 Ekstrakurikuler
 
@@ -271,10 +270,128 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 
 - [x] Migration `jurnal_mengajars` — jadwal_id, guru_id, kelas_id, pertemuan_ke, tanggal, jam_mulai, foto_path, latitude, longitude, materi, is_verified, verified_at, verified_by, metadata
 - [x] Migration `detail_jurnal_siswas` — jurnal_mengajar_id, siswa_id, status, keterangan
+- [x] Migration `is_draft` + `draft_step` — per-step draft save di wizard jurnal
+
+### 10.4 Integrasi ATP (Opsional)
+
+- [x] Kolom `atp_id` nullable di `jurnal_mengajars` — relasi ke `atps`
+- [x] Dropdown ATP di step 3 (Materi & Simpan) — tampilkan info CP & TP sebagai referensi
+- [x] ATP opsional — tidak semua guru punya CP/TP/ATP
+- [x] ATP juga tersedia di halaman edit jurnal
+- [x] Simpan `atp_id` di store(), saveDraft(), update()
+
+### 10.3 Per-Step Draft Save (Peningkatan Wizard)
+
+- [x] Kolom `is_draft` dan `draft_step` di `jurnal_mengajars`
+- [x] Simpan foto ke server segera setelah capture (step 1)
+- [x] Simpan presensi ke server segera (step 2) via AJAX
+- [x] Lanjutkan draft yang tersimpan saat buka wizard lagi (resume)
+- [x] Tombol batal draft (hapus & mulai ulang)
+- [x] Final submit → konversi draft jadi jurnal final
 
 ---
 
-## P11 — Finalisasi
+## P11 — Guru Pengganti (Approval Workflow)
+
+### 11.1 Database
+
+- [ ] Migration `jadwal_pengganti` — jadwal_id, guru_pengganti_id, tanggal, status, alasan, catatan_kurikulum, diajukan_oleh, diproses_oleh, diproses_pada
+- [ ] Model `JadwalPengganti` + relasi
+- [ ] Helper `Jadwal::getGuruEfektif()` — cek pengganti aktif hari ini
+
+### 11.2 Pengajuan (Guru)
+
+- [ ] Form ajukan pengganti: pilih guru pengganti + multi-select tanggal + alasan
+- [ ] Simpan pengajuan (1 row per tanggal, status: diajukan)
+- [ ] Riwayat pengajuan guru (filter: status, tanggal)
+- [ ] Batalkan pengajuan (hanya yang status diajukan)
+
+### 11.3 Approval (Kurikulum)
+
+- [ ] Halaman daftar pengajuan pending (filter: tanggal, guru, status)
+- [ ] Setujui pengajuan + catatan (opsional)
+- [ ] Tolak pengajuan + catatan (wajib)
+- [ ] Monitoring pengganti aktif per tanggal
+
+### 11.4 Jurnal Pengganti
+
+- [ ] JurnalMengajarController: izinkan guru pengganti mengisi jurnal (cek jadwal_pengganti status disetujui)
+- [ ] Simpan metadata `is_substitute: true` + `guru_asli_id` di jurnal
+- [ ] Badge "Pengganti" di card jadwal (halaman jurnal guru)
+- [ ] Info "Anda mengisi sebagai pengganti" di wizard jurnal
+
+### 11.5 Tampilan
+
+- [ ] Tombol "Ajukan Pengganti" di halaman jurnal guru (per card jadwal)
+- [ ] Badge kuning "Pengganti" di card jadwal pengganti
+- [ ] Sidebar menu "Approval Pengganti" untuk Kurikulum
+- [ ] Sidebar menu "Riwayat Pengganti" untuk Guru
+
+---
+
+## P12 — Validator Presensi Siswa (Perizinan)
+
+### 12.1 Database
+
+- [ ] Migration `perizinan_siswas` — lembaga_id, siswa_id, kelas_id, validator_id, tanggal, jenis (sakit/izin), keterangan, is_applied, applied_at
+- [ ] Tambah enum `tidak_hadir` di `detail_jurnal_siswas.status` — status sementara dari guru kelas
+- [ ] Model `PerizinanSiswa` + relasi (siswa, kelas, validator/user, lembaga)
+- [ ] Observer/Listener: auto-apply perizinan ke `detail_jurnal_siswas` saat jurnal dibuat
+
+### 12.2 Validator Presensi (Guru dengan Permission)
+
+- [ ] Tambah permission `validator_presensi_siswa` di `tugas_tambahans.permissions`
+- [ ] Gate `validator-presensi-siswa` untuk cek akses
+- [ ] Menu "Validator Presensi" di sidebar & bottom nav guru (jika punya permission)
+- [ ] Dashboard Validator Presensi: rekap siswa tidak hadir, perizinan aktif, filter kelas & tanggal
+
+### 12.3 Input Perizinan
+
+- [ ] Form input perizinan: pilih kelas → daftar siswa → pilih siswa (multi-select)
+- [ ] Pilih tanggal (single / rentang / multi-select)
+- [ ] Pilih jenis: Sakit / Izin
+- [ ] Keterangan (opsional)
+- [ ] Bulk perizinan: multi-select siswa + multi-select tanggal
+- [ ] Validasi: 1 siswa hanya 1 status per tanggal (unique constraint)
+
+### 12.4 Auto-Override Presensi
+
+- [ ] Saat simpan perizinan → cek `detail_jurnal_siswas` untuk siswa+tanggal
+- [ ] Jika jurnal sudah ada → update `status` ke sakit/izin, set `is_applied=true`
+- [ ] Jika jurnal belum ada → simpan pending, auto-apply via observer saat jurnal dibuat
+- [ ] Resolve status akhir saat jurnal dibuat: Tidak Hadir + perizinan → sakit/izin; Tidak Hadir + tanpa perizinan → alpha
+
+### 12.5 Perubahan Jurnal Mengajar (Guru Kelas)
+
+- [ ] Step 2 Presensi: guru hanya pilih **Hadir** / **Tidak Hadir** (bukan 5 opsi)
+- [ ] Tombol cepat: "Semua Hadir" / "Semua Tidak Hadir"
+- [ ] Status `tidak_hadir` sebagai placeholder sebelum di-resolve oleh sistem
+- [ ] Saat jurnal disimpan → resolve status akhir berdasarkan data `perizinan_siswas`
+
+### 12.6 Riwayat & Monitoring
+
+- [ ] Halaman riwayat perizinan (filter: kelas, siswa, tanggal, jenis)
+- [ ] Edit/hapus perizinan (sebelum jurnal diverifikasi)
+- [ ] Export rekap perizinan per bulan (Excel)
+
+---
+
+## P13 — Notifikasi
+
+- [x] Notifikasi in-app (P9)
+- [x] Notifikasi batas poin pelanggaran (P8)
+- [ ] Notifikasi lupa check-in/check-out PTK (P5)
+- [ ] Notifikasi alpha > 3 berturut-turut (P6)
+- [ ] Notifikasi pengajuan guru pengganti ke Kurikulum (P11)
+- [ ] Notifikasi hasil approval pengganti ke guru pengaju & pengganti (P11)
+- [ ] Notifikasi perizinan sakit/izin ke Wali Kelas (P12)
+- [ ] Notifikasi siswa alpha > 3 ke Validator Presensi (P12)
+- [ ] Notifikasi email (opsional)
+- [ ] Notifikasi WhatsApp (opsional)
+
+---
+
+## P14 — Finalisasi
 
 - [ ] Bug fixing & polish
 - [ ] Testing (PHPUnit)
@@ -283,7 +400,7 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 
 ---
 
-## P11 — Rapor
+## P15 — Rapor
 
 - [ ] Generate rapor (hitung nilai akhir)
 - [ ] Rapor draft → final
@@ -291,13 +408,6 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 - [ ] Catatan BK
 - [ ] Cetak PDF rapor format Kurikulum Merdeka
 - [ ] E-Rapor (link digital)
-
----
-
-## P12 — Notifikasi Opsional
-
-- [ ] Notifikasi email (opsional)
-- [ ] Notifikasi WhatsApp (opsional)
 
 ---
 
@@ -314,6 +424,10 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 | P7 Penilaian            | -          | -       | 100%     |
 | P8 Kesiswaan            | -          | -       | 70%      |
 | P9 Advance              | -          | -       | 100%     |
-| P10 Finalisasi          | -          | -       | 0%       |
-| P11 Rapor               | -          | -       | 0%       |
-| **Total**               | **-**      | **-**   | **~80%** |
+| P10 Jurnal Mengajar     | -          | -       | 100%     |
+| P11 Guru Pengganti      | -          | -       | 0%       |
+| P12 Validator Presensi  | -          | -       | 0%       |
+| P13 Notifikasi          | -          | -       | 20%      |
+| P14 Finalisasi          | -          | -       | 0%       |
+| P15 Rapor               | -          | -       | 0%       |
+| **Total**               | **-**      | **-**   | **~75%** |

@@ -10,9 +10,9 @@ class TugasTambahan extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['guru_id', 'jenis', 'keterangan', 'tahun_ajaran_id', 'kelas_id', 'is_active'];
+    protected $fillable = ['guru_id', 'jenis', 'keterangan', 'permissions', 'tahun_ajaran_id', 'kelas_id', 'is_active'];
 
-    protected $casts = ['is_active' => 'boolean'];
+    protected $casts = ['is_active' => 'boolean', 'permissions' => 'array'];
 
     public function guru(): BelongsTo
     {
@@ -27,5 +27,13 @@ class TugasTambahan extends Model
     public function kelas(): BelongsTo
     {
         return $this->belongsTo(Kelas::class);
+    }
+
+    /**
+     * Scope: tugas tambahan yang punya permission tertentu.
+     */
+    public function scopeWithPermission($query, string $permission)
+    {
+        return $query->where('is_active', true)->whereJsonContains('permissions', $permission);
     }
 }

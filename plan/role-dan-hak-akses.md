@@ -42,13 +42,14 @@
 
 ### 2.3 Akademik — Penilaian
 
-| Fitur       | super_admin | admin_yayasan | kepala_lembaga | admin_lembaga | kurikulum | kesiswaan | guru | siswa | orang_tua |
-| ----------- | :---------: | :-----------: | :------------: | :-----------: | :-------: | :-------: | :--: | :---: | :-------: |
-| Input Nilai |      -      |       -       |       -        |       -       |     -     |     -     | CRUD |   -   |     -     |
-| Lihat Nilai |      -      |       -       |       R        |       -       |     R     |     R     |  R   |   R   |     R     |
-| Jenis Nilai |      -      |       -       |       -        |       -       |   CRUD    |     -     |  -   |   -   |     -     |
-| Raport      |      -      |       -       |       R        |       -       |     -     |     -     |  RU  |   R   |     R     |
-| Presensi    |      -      |       -       |       R        |       -       |     -     |     -     | CRUD |   R   |     R     |
+| Fitur           | super_admin | admin_yayasan | kepala_lembaga | admin_lembaga | kurikulum | kesiswaan | guru | siswa | orang_tua | validator_presensi |
+| --------------- | :---------: | :-----------: | :------------: | :-----------: | :-------: | :-------: | :--: | :---: | :-------: | :----------------: |
+| Input Nilai     |      -      |       -       |       -        |       -       |     -     |     -     | CRUD |   -   |     -     |         -          |
+| Lihat Nilai     |      -      |       -       |       R        |       -       |     R     |     R     |  R   |   R   |     R     |         -          |
+| Jenis Nilai     |      -      |       -       |       -        |       -       |   CRUD    |     -     |  -   |   -   |     -     |         -          |
+| Raport          |      -      |       -       |       R        |       -       |     -     |     -     |  RU  |   R   |     R     |         -          |
+| Presensi        |      -      |       -       |       R        |       -       |     -     |     -     | CRUD |   R   |     R     |         R          |
+| Perizinan Siswa |      -      |       -       |       R        |       -       |     -     |     -     |  -   |   -   |     -     |        CRUD        |
 
 ### 2.4 Kepegawaian & Kehadiran Guru
 
@@ -58,6 +59,12 @@
 | Laporan Absensi PTK      |      -      |       -       |       ✓        |       ✓       |     -     |     -     |  R   |   -   |     -     |
 | Agenda Mengajar (Selfie) |      -      |       -       |       R        |       -       |     R     |     -     |  C   |   -   |     -     |
 | Monitoring Agenda        |      -      |       -       |       ✓        |       -       |     ✓     |     -     |  -   |   -   |     -     |
+| **Guru Pengganti**       |             |               |                |               |           |           |      |       |           |
+| - Ajukan Pengganti       |      -      |       -       |       -        |       -       |     -     |     -     |  C   |   -   |     -     |
+| - Riwayat Pengajuan      |      -      |       -       |       -        |       -       |     -     |     -     |  R   |   -   |     -     |
+| - Batalkan Pengajuan     |      -      |       -       |       -        |       -       |     -     |     -     |  U   |   -   |     -     |
+| - Approval Pengganti     |      -      |       -       |       -        |       -       |   CRUD    |     -     |  -   |   -   |     -     |
+| - Isi Jurnal Pengganti   |      -      |       -       |       -        |       -       |     -     |     -     |  C   |   -   |     -     |
 
 ### 2.5 Kesiswaan
 
@@ -124,6 +131,37 @@ Selain akses standar `guru` di atas, guru dengan tugas tambahan tertentu mendapa
 
 - Belum diimplementasikan. Ekskul sudah ada modul di Kesiswaan.
 
+### 3.4 Validator Presensi Siswa
+
+| Fitur                        | Akses VP | Keterangan                                            |
+| ---------------------------- | :------: | ----------------------------------------------------- |
+| Dashboard Validator Presensi |    ✓     | Rekap siswa tidak hadir, perizinan aktif hari ini     |
+| Input Perizinan (Sakit/Izin) |   CRUD   | Pilih siswa + tanggal + jenis + keterangan            |
+| Bulk Perizinan               |    C     | Multi-select siswa & tanggal untuk perizinan massal   |
+| Riwayat Perizinan            |    R     | Filter per kelas, siswa, tanggal, jenis               |
+| Lihat Presensi Semua Kelas   |    R     | Monitoring presensi harian seluruh kelas              |
+| Notifikasi ke Wali Kelas     |   Auto   | Otomatis kirim notifikasi saat siswa diset sakit/izin |
+
+- Permission `validator_presensi_siswa` disimpan di `tugas_tambahans.permissions`.
+- Guru dengan permission ini mendapat menu "Validator Presensi" di sidebar & bottom nav.
+- Auto-override: saat input perizinan, sistem otomatis update `detail_jurnal_siswas.status` di tanggal terkait.
+
+### 3.5 Guru dengan Permission Tambahan
+
+Selain tugas tambahan struktural (Wali Kelas, BK), guru bisa diberi permission fungsional melalui form tugas tambahan. Permission ini memberikan akses ke fitur spesifik tanpa mengubah role user.
+
+| Permission               | Kode                       | Deskripsi                                                      |
+| ------------------------ | -------------------------- | -------------------------------------------------------------- |
+| Validator Jurnal         | `validator_jurnal`         | Akses verifikasi/validasi jurnal mengajar guru lain            |
+| Perizinan Siswa          | `perizinan_siswa`          | Akses approve/reject perizinan siswa                           |
+| Presensi PTK             | `presensi_ptk`             | Akses monitoring & validasi presensi PTK                       |
+| Validator Presensi Siswa | `validator_presensi_siswa` | Akses input perizinan sakit/izin siswa, auto-override presensi |
+
+- Permission disimpan sebagai JSON di kolom `tugas_tambahans.permissions`.
+- Satu guru bisa punya multiple permission dalam satu atau lebih tugas tambahan.
+- Permission dicek via Gate: `Gate::allows('validator-jurnal')`.
+- Menu terkait permission muncul di dashboard guru jika guru memiliki permission tersebut.
+
 ## 4. RBAC Implementation Note
 
 - **Gates & Policies**: Laravel Authorization Gates/Policies untuk tiap fitur.
@@ -152,6 +190,9 @@ Absensi PTK
 
 Agenda Mengajar (Selfie)
   └── Guru selfie saat mengajar → Kurikulum/Kepala Lembaga verifikasi
+
+Perizinan Siswa (Validator Presensi)
+  └── Validator Presensi input sakit/izin → Auto-override presensi harian → Notifikasi Wali Kelas
 
 Tahun Ajaran Baru
   └── Admin Yayasan create & set active → Seluruh lembaga menggunakan

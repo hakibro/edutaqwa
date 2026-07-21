@@ -79,6 +79,14 @@
 | - Export Jadwal             | Export jadwal ke Excel (format sama template import), siap edit & re-import ✓                                                                                                                               |
 | - Cetak Jadwal              | Cetak jadwal kelas & guru                                                                                                                                                                                   |
 | - Cek Bentrok               | Validasi bentrok jadwal otomatis (guru + hari + jam_ke)                                                                                                                                                     |
+| **Guru Pengganti**          |                                                                                                                                                                                                             |
+| - Pengajuan Pengganti       | Guru mengajukan guru pengganti per jadwal & per tanggal (multi-select) + alasan                                                                                                                             |
+| - Approval Pengganti        | Kurikulum menyetujui/menolak pengajuan guru pengganti + catatan                                                                                                                                             |
+| - Batalkan Pengajuan        | Guru membatalkan pengajuan yang belum diproses                                                                                                                                                              |
+| - Riwayat Pengganti         | Guru melihat riwayat pengajuan pengganti (status: diajukan/disetujui/ditolak/dibatalkan)                                                                                                                    |
+| - Jurnal Sebagai Pengganti  | Guru pengganti mengisi jurnal mengajar untuk jadwal yang digantikan (badge "Pengganti", metadata is_substitute)                                                                                             |
+| - Monitoring Pengganti      | Kurikulum melihat daftar pengganti aktif per tanggal                                                                                                                                                        |
+| - Notifikasi                | Notifikasi ke Kurikulum saat ada pengajuan baru; notifikasi ke guru pengaju & guru pengganti saat disetujui/ditolak                                                                                         |
 
 ### 1.5 Kesiswaan
 
@@ -133,7 +141,6 @@
 | Multi Sesi                | Jam berbeda per hari (Senin-Jumat vs Sabtu)      |
 | Riwayat Absensi           | Rekap harian/bulanan per guru                    |
 | Laporan Absensi PTK       | Export rekap kehadiran guru                      |
-| Notifikasi                | Peringatan jika lupa check-in/check-out          |
 
 ### 1.10 Agenda Mengajar (Selfie) — DIGABUNG ke 1.11 Jurnal Mengajar
 
@@ -148,18 +155,33 @@
 
 ### 1.11 Jurnal Mengajar (Phase 10 — Gabungan Selfie + Presensi)
 
-| Fitur                | Deskripsi                                                       |
-| -------------------- | --------------------------------------------------------------- |
-| **Wizard 3 Langkah** | Step 1: Selfie, Step 2: Presensi Siswa, Step 3: Materi & Simpan |
-| Camera Capture       | Foto dari kamera depan device (wajib), tanpa upload file        |
-| GPS Otomatis         | Geolokasi auto-fill dari browser, wajib diisi                   |
-| Presensi Cepat       | "Semua Hadir" / "Semua Alpha" button                            |
-| Materi Pertemuan     | Input materi yang diajarkan                                     |
-| Cek Duplikat         | 1 jurnal per jadwal per hari                                    |
-| Edit Jurnal          | Edit materi + presensi untuk jurnal belum diverifikasi          |
-| Monitoring           | Filter guru, tanggal, status verifikasi                         |
-| Verifikasi           | Kurikulum/Kepala Lembaga verifikasi jurnal                      |
-| Backward Compat      | Data lama (agenda_mengajars, presensis) tetap bisa diakses      |
+| Fitur                  | Deskripsi                                                                                                                                                           |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Wizard 3 Langkah**   | Step 1: Selfie, Step 2: Presensi Siswa, Step 3: Materi & Simpan                                                                                                     |
+| Camera Capture         | Foto dari kamera depan device (wajib), tanpa upload file                                                                                                            |
+| GPS Otomatis           | Geolokasi auto-fill dari browser, wajib diisi                                                                                                                       |
+| Presensi Cepat         | "Semua Hadir" / "Semua Tidak Hadir" button                                                                                                                          |
+| **Presensi Sederhana** | Guru kelas hanya memilih **Hadir** atau **Tidak Hadir** per siswa. Status sakit/izin ditentukan oleh Validator Presensi. Siswa tidak hadir tanpa perizinan = Alpha. |
+| Materi Pertemuan       | Input materi yang diajarkan                                                                                                                                         |
+| **ATP Opsional**       | Pilih ATP (Alur Tujuan Pembelajaran) terkait pertemuan — tampilkan info CP & TP. Opsional, tidak semua guru punya ATP.                                              |
+| Cek Duplikat           | 1 jurnal per jadwal per hari                                                                                                                                        |
+| Edit Jurnal            | Edit materi + presensi + ATP untuk jurnal belum diverifikasi                                                                                                        |
+| Monitoring             | Filter guru, tanggal, status verifikasi                                                                                                                             |
+| Verifikasi             | Kurikulum/Kepala Lembaga verifikasi jurnal                                                                                                                          |
+| Backward Compat        | Data lama (agenda_mengajars, presensis) tetap bisa diakses                                                                                                          |
+
+### 1.11B Validator Presensi Siswa (Phase 12 — Perizinan)
+
+| Fitur                | Deskripsi                                                                    |
+| -------------------- | ---------------------------------------------------------------------------- |
+| **Permission Guru**  | `validator_presensi_siswa` — diberikan via tugas_tambahans.permissions       |
+| Dashboard Validator  | Rekap presensi harian: siswa tidak hadir yang belum/tidak ada perizinan      |
+| Input Perizinan      | Pilih siswa, tanggal, jenis (Sakit/Izin), keterangan                         |
+| Bulk Perizinan       | Multi-select siswa + tanggal untuk perizinan massal                          |
+| Auto-Override        | Set perizinan → otomatis update `detail_jurnal_siswas.status` di tanggal tsb |
+| Riwayat Perizinan    | Filter per kelas, per siswa, per tanggal, per jenis                          |
+| **Integrasi Jurnal** | Guru isi jurnal: hanya Hadir/Tidak Hadir. Validator tentukan sakit/izin.     |
+|                      | Tidak hadir + tidak ada perizinan → otomatis Alpha.                          |
 
 ### 1.11 Dashboard
 
@@ -175,19 +197,25 @@
 | Siswa          | Jadwal hari ini, nilai terbaru, notifikasi                                                      |
 | Orang Tua      | Presensi anak, nilai anak, jadwal, pelanggaran                                                  |
 
-### 1.12 Notifikasi
+### 1.12 Notifikasi (Phase 13 — Terpusat)
 
-| Tipe                      | Penerima                  | Trigger                     |
-| ------------------------- | ------------------------- | --------------------------- |
-| Approval Guru Pending     | Admin Yayasan             | Guru baru daftar            |
-| Approval Disetujui        | Guru                      | Admin yayasan approve       |
-| Jadwal Hari Ini           | Guru, Siswa               | Setiap hari jam 06:00       |
-| Nilai Diinput             | Siswa, Orang Tua          | Guru input nilai            |
-| Pelanggaran               | Orang Tua, BK             | Pelanggaran dicatat         |
-| Presensi Alpha > 3        | Wali Kelas, BK, Orang Tua | Akumulasi alpha             |
-| Jadwal PTS/PAS            | Semua                     | Mendekati PTS/PAS           |
-| Lupa Check-in/Check-out   | Guru, Kepala Lembaga      | Lewat jam tanpa absen       |
-| Selfie Agenda Belum Diisi | Guru, Kurikulum           | Jadwal selesai tanpa selfie |
+| Tipe                         | Penerima                     | Trigger                                 |
+| ---------------------------- | ---------------------------- | --------------------------------------- |
+| Approval Guru Pending        | Admin Yayasan                | Guru baru daftar                        |
+| Approval Disetujui           | Guru                         | Admin yayasan approve                   |
+| Jadwal Hari Ini              | Guru, Siswa                  | Setiap hari jam 06:00                   |
+| Nilai Diinput                | Siswa, Orang Tua             | Guru input nilai                        |
+| Pelanggaran — Batas Poin     | Orang Tua, BK                | Poin pelanggaran melebihi batas         |
+| Presensi Alpha > 3           | Wali Kelas, BK, Orang Tua    | Akumulasi alpha berturut-turut          |
+| Jadwal PTS/PAS               | Semua                        | Mendekati PTS/PAS                       |
+| Lupa Check-in/Check-out      | Guru, Kepala Lembaga         | Lewat jam tanpa absen                   |
+| Pengajuan Guru Pengganti     | Kurikulum                    | Guru ajukan pengganti                   |
+| Approval Pengganti Disetujui | Guru Pengaju, Guru Pengganti | Kurikulum setujui pengajuan             |
+| Approval Pengganti Ditolak   | Guru Pengaju                 | Kurikulum tolak pengajuan               |
+| Perizinan Siswa              | Wali Kelas                   | Siswa di kelas walinya diset sakit/izin |
+| Siswa Alpha > 3 (Validator)  | Validator Presensi           | Siswa alpha > 3 hari tanpa perizinan    |
+| Email (opsional)             | Semua                        | Ringkasan mingguan                      |
+| WhatsApp (opsional)          | Semua                        | Notifikasi penting                      |
 
 ### 1.8 Menu Khusus Guru — Tugas Tambahan
 
@@ -220,10 +248,11 @@
 | **P1 — Foundation**           | Auth & RBAC, Multi-tenant, Manajemen Yayasan, Manajemen Lembaga, Master Data (Guru, Siswa via import) |
 | **P2 — Core Akademik**        | Mapel + CP/TP/ATP, Jadwal                                                                             |
 | **P3 — Absensi PTK & Selfie** | Konfigurasi Jam Kerja, Absensi PTK check-in/check-out, Agenda Selfie                                  |
-| **P4 — Presensi**             | Presensi per pertemuan, rekap, notifikasi alpha                                                       |
+| **P4 — Presensi**             | Presensi per pertemuan, rekap                                                                         |
 | **P5 — Penilaian**            | Nilai Harian, PTS, PAS, UKK                                                                           |
 | **P6 — Kesiswaan**            | Mutasi, Pelanggaran, Ekstrakurikuler, Alumni                                                          |
-| **P7 — Advanced**             | Notifikasi, Dashboard, Kalender Akademik, Laporan-laporan                                             |
+| **P7 — Advanced**             | Dashboard, Kalender Akademik, Laporan-laporan                                                         |
 | **P8 — Rapor**                | Generate rapor, cetak PDF, E-Rapor                                                                    |
+| **P9 — Notifikasi**           | Notifikasi terpusat (in-app, email, WhatsApp)                                                         |
 
 # Belum Pernah disentuh

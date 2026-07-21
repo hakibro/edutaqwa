@@ -211,4 +211,35 @@ class Guru extends Model
 
         return strtoupper($lembaga->yayasan->kode) . '.' . strtoupper($lembaga->kode) . '.' . str_pad($urut, 3, '0', STR_PAD_LEFT);
     }
+
+    /**
+     * Cek apakah guru punya permission tertentu dari tugas tambahan aktif.
+     */
+    public function hasPermission(string $permission, ?int $tahunAjaranId = null): bool
+    {
+        return $this->tugasTambahans()
+            ->where('is_active', true)
+            ->when($tahunAjaranId, fn($q) => $q->where('tahun_ajaran_id', $tahunAjaranId))
+            ->whereJsonContains('permissions', $permission)
+            ->exists();
+    }
+
+    /**
+     * Ambil semua permission unik dari tugas tambahan aktif guru.
+     */
+    public function getActivePermissions(?int $tahunAjaranId = null): array
+    {
+        $perms = [];
+        $this->tugasTambahans()
+            ->where('is_active', true)
+            ->when($tahunAjaranId, fn($q) => $q->where('tahun_ajaran_id', $tahunAjaranId))
+            ->whereNotNull('permissions')
+            ->each(function ($tt) use (&$perms) {
+                foreach ($tt->permissions ?? [] as $p) {
+                    $perms[$p] = true;
+                }
+            });
+
+        return array_keys($perms);
+    }
 }

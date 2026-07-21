@@ -157,6 +157,7 @@ CREATE TABLE tugas_tambahans (
     guru_id BIGINT UNSIGNED NOT NULL,
     jenis VARCHAR(50) NOT NULL,                 -- 'wali_kelas', 'bk', 'pembina_ekskul', dll
     keterangan VARCHAR(255) NULL,               -- Kelas yg diampu, ekskul, dll
+    permissions JSON NULL,                      -- ['validator_jurnal', 'perizinan_siswa', 'presensi_ptk']
     tahun_ajaran_id BIGINT UNSIGNED NOT NULL,
     kelas_id BIGINT UNSIGNED NULL,              -- Kelas yg diwalikan (khusus Wali Kelas)
     is_active BOOLEAN DEFAULT TRUE,
@@ -168,6 +169,8 @@ CREATE TABLE tugas_tambahans (
 );
 
 > **2026-07-20**: Tambah `kelas_id` — relasi ke tabel `kelas` untuk Wali Kelas. Nullable, hanya diisi jika jenis = 'Wali Kelas'. Validasi: 1 kelas hanya boleh punya 1 Wali Kelas per tahun ajaran.
+>
+> **2026-07-21**: Tambah `permissions` JSON — menyimpan array permission fungsional (validator_jurnal, perizinan_siswa, presensi_ptk). Dicek via Gate untuk akses fitur tambahan di luar role guru.
 
 -- === SISWA ===
 
@@ -325,6 +328,35 @@ CREATE TABLE jadwals (
     FOREIGN KEY (tahun_ajaran_id) REFERENCES tahun_ajarans(id) ON DELETE CASCADE
 );
 
+-- === JADWAL PENGGANTI (Approval Workflow) ===
+
+CREATE TABLE jadwal_pengganti (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    jadwal_id BIGINT UNSIGNED NOT NULL,
+    guru_pengganti_id BIGINT UNSIGNED NOT NULL,
+    tanggal DATE NOT NULL,
+    status ENUM('diajukan','disetujui','ditolak','dibatalkan') DEFAULT 'diajukan',
+    alasan TEXT NULL,                               -- Alasan guru mengajukan pengganti
+    catatan_kurikulum TEXT NULL,                    -- Catatan dari kurikulum saat approve/tolak
+    diajukan_oleh BIGINT UNSIGNED NOT NULL,          -- user_id guru pengaju
+    diproses_oleh BIGINT UNSIGNED NULL,              -- user_id kurikulum
+    diproses_pada TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (jadwal_id) REFERENCES jadwals(id) ON DELETE CASCADE,
+    FOREIGN KEY (guru_pengganti_id) REFERENCES gurus(id) ON DELETE CASCADE,
+    FOREIGN KEY (diajukan_oleh) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (diproses_oleh) REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE KEY unique_pengganti_per_tanggal (jadwal_id, tanggal)
+);
+
+> **2026-07-21**: Tabel baru untuk fitur Guru Pengganti dengan approval workflow.
+> - Guru mengajukan pengganti per jadwal & per tanggal (multi-select di UI → insert 1 row per tanggal).
+> - Kurikulum menyetujui/menolak pengajuan.
+> - 1 jadwal hanya boleh 1 pengganti aktif per tanggal (unique constraint).
+> - Guru pengganti mengisi jurnal dengan metadata `is_substitute: true`.
+> - Notifikasi: Kurikulum (pengajuan baru), guru pengaju & guru pengganti (disetujui/ditolak).
+
 -- === JAM KERJA LEMBAGA (Konfigurasi) ===
 
 CREATE TABLE jam_kerja_lembagas (
@@ -421,6 +453,7 @@ CREATE TABLE jurnal_mengajars (
     jadwal_id BIGINT UNSIGNED NOT NULL,
     guru_id BIGINT UNSIGNED NOT NULL,
     kelas_id BIGINT UNSIGNED NOT NULL,
+    atp_id BIGINT UNSIGNED NULL,               -- ATP terkait (opsional)
     pertemuan_ke INT NOT NULL,
     tanggal DATE NOT NULL,
     jam_mulai TIME NULL,
@@ -439,6 +472,7 @@ CREATE TABLE jurnal_mengajars (
     FOREIGN KEY (guru_id) REFERENCES gurus(id) ON DELETE CASCADE,
     FOREIGN KEY (kelas_id) REFERENCES kelas(id) ON DELETE CASCADE,
     FOREIGN KEY (verified_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (atp_id) REFERENCES atps(id) ON DELETE SET NULL,
     UNIQUE (jadwal_id, tanggal)
 );
 
@@ -446,12 +480,46 @@ CREATE TABLE detail_jurnal_siswas (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     jurnal_mengajar_id BIGINT UNSIGNED NOT NULL,
     siswa_id BIGINT UNSIGNED NOT NULL,
-    status ENUM('hadir', 'sakit', 'izin', 'alpha', 'terlambat') DEFAULT 'hadir',
+    status ENUM('hadir', 'tidak_hadir', 'sakit', 'izin', 'alpha', 'terlambat') DEFAULT 'hadir',
     keterangan VARCHAR(255) NULL,
     FOREIGN KEY (jurnal_mengajar_id) REFERENCES jurnal_mengajars(id) ON DELETE CASCADE,
     FOREIGN KEY (siswa_id) REFERENCES siswas(id) ON DELETE CASCADE,
     UNIQUE (jurnal_mengajar_id, siswa_id)
 );
+
+> **2026-07-21**: Tambah enum `tidak_hadir` — status sementara dari guru kelas sebelum di-resolve oleh Validator Presensi. Guru kelas hanya input Hadir/Tidak Hadir. Sistem resolve: Tidak Hadir + perizinan → sakit/izin; Tidak Hadir + tanpa perizinan → alpha.
+>
+> **2026-07-22**: Tambah `atp_id` nullable — relasi opsional ke `atps`. Guru bisa pilih ATP terkait saat isi jurnal. Info CP & TP dari ATP ditampilkan sebagai referensi.
+
+-- === PERIZINAN SISWA (Validator Presensi) ===
+
+CREATE TABLE perizinan_siswas (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    lembaga_id BIGINT UNSIGNED NOT NULL,
+    siswa_id BIGINT UNSIGNED NOT NULL,
+    kelas_id BIGINT UNSIGNED NOT NULL,
+    validator_id BIGINT UNSIGNED NOT NULL,      -- user_id guru validator presensi
+    tanggal DATE NOT NULL,
+    jenis ENUM('sakit', 'izin') NOT NULL,
+    keterangan VARCHAR(255) NULL,
+    is_applied BOOLEAN DEFAULT FALSE,            -- TRUE jika sudah di-apply ke detail_jurnal_siswas
+    applied_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (lembaga_id) REFERENCES lembagas(id) ON DELETE CASCADE,
+    FOREIGN KEY (siswa_id) REFERENCES siswas(id) ON DELETE CASCADE,
+    FOREIGN KEY (kelas_id) REFERENCES kelas(id) ON DELETE CASCADE,
+    FOREIGN KEY (validator_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE (siswa_id, tanggal)
+);
+
+> **2026-07-21**: Tabel baru untuk fitur Validator Presensi Siswa (Phase 12).
+> - Validator Presensi (guru dengan permission `validator_presensi_siswa`) input perizinan sakit/izin.
+> - Auto-override: saat perizinan disimpan, sistem cek `detail_jurnal_siswas` untuk siswa+tanggal.
+>   - Jika jurnal sudah ada → update status ke sakit/izin, set `is_applied=true`.
+>   - Jika jurnal belum ada → simpan perizinan, auto-apply saat jurnal dibuat (observer/listener).
+> - Unique constraint `(siswa_id, tanggal)` — 1 siswa hanya 1 status per hari.
+> - Notifikasi otomatis ke Wali Kelas saat siswa di kelas walinya diset sakit/izin.
 
 -- === PENILAIAN ===
 

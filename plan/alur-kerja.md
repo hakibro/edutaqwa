@@ -193,8 +193,8 @@
    STEP 2 — Presensi Siswa:
    ├── Daftar siswa kelas tersebut
    ├── Status default: Hadir
-   ├── Tombol cepat: "Semua Hadir" / "Semua Alpha"
-   ├── Opsi: hadir, sakit, izin, alpha, terlambat
+   ├── Tombol cepat: "Semua Hadir" / "Semua Tidak Hadir"
+   ├── Opsi guru kelas: HANYA Hadir / Tidak Hadir (sakit/izin/alpha ditentukan oleh Validator Presensi)
    └── Klik "Lanjut ke Materi"
         │
    STEP 3 — Materi & Simpan:
@@ -247,6 +247,48 @@
    ├── Guru lihat riwayat absensi sendiri
    ├── Admin Lembaga / Kepala Lembaga lihat rekap semua guru
    └── Export laporan kehadiran guru bulanan
+```
+
+## 7B. Alur Validator Presensi Siswa (Perizinan)
+
+```
+1. Validator Presensi (guru dengan permission validator_presensi_siswa) buka menu Validator Presensi
+       │
+2. Dashboard Validator Presensi:
+   ├── Rekap siswa tidak hadir hari ini (belum ada perizinan)
+   ├── Daftar perizinan aktif hari ini
+   ├── Filter per kelas & per tanggal
+   └── Statistik: jumlah sakit, izin, alpha hari ini
+       │
+3. Input Perizinan:
+   ├── Pilih kelas → daftar siswa muncul
+   ├── Pilih siswa (bisa multi-select)
+   ├── Pilih tanggal (bisa multi-select / rentang)
+   ├── Pilih jenis: Sakit / Izin
+   ├── Isi keterangan (opsional)
+   └── Klik "Simpan Perizinan"
+       │
+4. Sistem proses:
+   ├── Insert/update record di tabel perizinan_siswas
+   ├── Cek detail_jurnal_siswas untuk siswa + tanggal terkait:
+   │   ├── Jika sudah ada record → update status ke sakit/izin
+   │   └── Jika belum ada → create record dengan status sakit/izin (auto-generate dari jurnal jika jurnal sudah ada)
+   ├── Jika jurnal belum ada → simpan pending, auto-apply saat jurnal dibuat
+   └── Notifikasi ke Wali Kelas (jika siswa di kelas walinya)
+       │
+5. Alur Harian — Integrasi Jurnal Guru:
+   ├── Pagi/Siang: Validator Presensi input perizinan (siswa sakit/izin)
+   ├── Saat mengajar: Guru isi jurnal → hanya pilih Hadir/Tidak Hadir
+   ├── Sistem resolve status akhir:
+   │   ├── Hadir (dari guru) → status = hadir
+   │   ├── Tidak Hadir + ada perizinan → status = sakit/izin (sesuai perizinan)
+   │   └── Tidak Hadir + tidak ada perizinan → status = alpha
+   └── Wali Kelas lihat rekap presensi siswa walinya (real-time)
+       │
+6. Riwayat Perizinan:
+   ├── Filter per kelas, per siswa, per tanggal, per jenis
+   ├── Edit/hapus perizinan (sebelum jurnal diverifikasi)
+   └── Export rekap perizinan per bulan
 ```
 
 ## 8. Alur Jurnal Mengajar — Monitoring & Verifikasi
@@ -343,4 +385,62 @@ Alumni:
    └── Notifikasi ke Wali Kelas, BK, Orang Tua
         │
 4. BK bisa lihat history pelanggaran & pembinaan
+```
+
+---
+
+## 13. Alur Guru Pengganti (Phase 11)
+
+### 13.1 Pengajuan oleh Guru
+
+```
+1. Guru Login → Buka Jurnal/Halaman Jadwal
+2. Klik "Ajukan Pengganti" pada jadwal tertentu
+3. Isi form:
+   ├── Pilih Guru Pengganti (dropdown semua guru di lembaga)
+   ├── Pilih Tanggal (multi-select checkbox kalender)
+   └── Isi Alasan (wajib)
+4. Submit
+5. Sistem Insert ke jadwal_pengganti (1 row per tanggal, status: diajukan)
+6. Notifikasi ke semua user Kurikulum di lembaga
+```
+
+### 13.2 Approval oleh Kurikulum
+
+```
+1. Kurikulum Login → Buka Menu "Approval Pengganti"
+2. Lihat daftar pengajuan pending (filter: tanggal, guru, status)
+3. Klik "Setujui" → Isi catatan (opsional) → Status: disetujui
+   └── Atau klik "Tolak" → Isi catatan (wajib) → Status: ditolak
+4. Notifikasi ke guru pengaju & guru pengganti
+```
+
+### 13.3 Pembatalan oleh Guru
+
+```
+1. Guru Login → Buka "Riwayat Pengganti"
+2. Lihat pengajuan dengan status "diajukan"
+3. Klik "Batalkan" → Status: dibatalkan
+   └── Tidak bisa batalkan yang sudah disetujui/ditolak
+```
+
+### 13.4 Jurnal oleh Guru Pengganti
+
+```
+1. Guru Pengganti Login → Buka Jurnal Mengajar
+2. Muncul jadwal tambahan dengan badge "Pengganti — menggantikan [Nama Guru Asli]"
+3. Klik "Isi Jurnal" → Wizard 3 Langkah normal
+4. Sistem cek: user adalah guru_pengganti_id di jadwal_pengganti dengan status disetujui & tanggal hari ini
+5. Jurnal tersimpan dengan metadata: { "is_substitute": true, "guru_asli_id": X }
+6. Jurnal muncul di monitoring Kurikulum dengan badge "Pengganti"
+```
+
+### 13.5 Monitoring oleh Kurikulum
+
+```
+1. Kurikulum Login → Buka Menu "Monitoring Pengganti"
+2. Lihat daftar pengganti aktif per tanggal
+3. Filter: tanggal, guru asli, guru pengganti
+4. Klik jurnal untuk verifikasi
+5. Verifikasi jurnal pengganti (flow sama dengan jurnal normal)
 ```

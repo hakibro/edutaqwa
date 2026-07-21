@@ -3,43 +3,33 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    <title>{{ config('app.name', 'EduTaqwa') }} — Dashboard Guru</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:400,500,600,700,800&display=swap" rel="stylesheet" />
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <style>
+        .content-safe-bottom {
+            padding-bottom: calc(128px + env(safe-area-inset-bottom, 16px));
+        }
+
+        .nav-safe-bottom {
+            padding-bottom: env(safe-area-inset-bottom, 8px);
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+        }
+    </style>
 </head>
 
-<body class="font-sans antialiased">
-    <div class="min-h-screen bg-gray-100 flex">
-        <!-- Desktop Sidebar -->
-        @include('layouts.sidebar')
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen">
+    {{ $slot }}
 
-        <!-- Main Content -->
-        <div class="flex-1 flex flex-col lg:ml-64 pb-20 lg:pb-0">
-            <!-- Page Heading -->
-            @isset($header)
-                <header class="bg-white shadow">
-                    <div class="py-6 px-4 sm:px-6 lg:px-8">
-                        {{ $header }}
-                    </div>
-                </header>
-            @endisset
-
-            <!-- Page Content -->
-            <main class="flex-1">
-                {{ $slot }}
-            </main>
-        </div>
-    </div>
-
-    <!-- Bottom Navbar (Mobile only) -->
     @include('layouts.guru-bottom-nav')
 
     @stack('scripts')
