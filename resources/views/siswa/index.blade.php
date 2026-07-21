@@ -115,11 +115,11 @@
                                             {{ $s->nis ?? '-' }}</td>
                                         <td class="px-6 py-4 text-sm text-gray-900">{{ $s->nama }}</td>
                                         <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
-                                            @if ($s->kelasAktif)
-                                                {{ $s->kelasAktif->nama }}
-                                                @if ($s->kelasAktif->jurusan)
-                                                    <span
-                                                        class="text-gray-400">({{ $s->kelasAktif->jurusan->nama }})</span>
+                                            @php $k = $s->kelasAktif->first(); @endphp
+                                            @if ($k)
+                                                {{ $k->nama }}
+                                                @if ($k->jurusan)
+                                                    <span class="text-gray-400">({{ $k->jurusan->nama }})</span>
                                                 @endif
                                             @else
                                                 <span class="text-gray-400">-</span>
