@@ -144,16 +144,16 @@
 
 ### 1.9 Absensi PTK (Kehadiran Harian Guru)
 
-| Fitur                     | Deskripsi                                        |
-| ------------------------- | ------------------------------------------------ |
-| **Konfigurasi Jam Kerja** | Admin Lembaga set jam masuk & pulang per hari    |
-| **Setting Absensi**       | Lokasi absen, radius GPS, toggle wajib selfie    |
-| Check-in                  | Guru check-in saat tiba (QR / tombol)            |
-| Check-out                 | Guru check-out saat pulang                       |
-| Status Kehadiran          | Tepat waktu, Terlambat, Pulang awal, Tidak absen |
-| Multi Sesi                | Jam berbeda per hari (Senin-Jumat vs Sabtu)      |
-| Riwayat Absensi           | Rekap harian/bulanan per guru                    |
-| Laporan Absensi PTK       | Export rekap kehadiran guru                      |
+| Fitur                      | Deskripsi                                                                         |
+| -------------------------- | --------------------------------------------------------------------------------- |
+| **Konfigurasi Jam Kerja**  | Admin Lembaga set jam masuk & pulang per hari                                     |
+| **Setting Absensi**        | Lokasi absen, radius GPS, toggle wajib selfie                                     |
+| Check-in                   | Guru check-in saat tiba (QR / tombol)                                             |
+| Check-out                  | Guru check-out saat pulang                                                        |
+| Status Kehadiran           | Tepat waktu, Terlambat, Pulang awal, Tidak absen                                  |
+| Multi Sesi                 | Jam berbeda per hari (Senin-Jumat vs Sabtu)                                       |
+| Riwayat Absensi            | Rekap harian/bulanan per guru                                                     |
+| Laporan Absensi Harian PTK | Rekap harian absensi guru PTK, filter tanggal & guru, auto-apply, mobile-friendly |
 
 ### 1.8B Dashboard Wali Kelas v2 (Redesign Komprehensif)
 

@@ -78,12 +78,21 @@ class AbsensiPtkController extends Controller
         $user = auth()->user();
         $lembagaId = $user->lembaga_id;
 
-        $bulan = $request->get('bulan', Carbon::now()->format('Y-m'));
+        $range = $request->get('range', 'today');
+        $tanggal = $request->get('tanggal', Carbon::now()->format('Y-m-d'));
         $guruId = $request->get('guru_id');
 
         $query = AbsensiPtk::with('guru')
-            ->where('lembaga_id', $lembagaId)
-            ->whereRaw("DATE_FORMAT(tanggal, '%Y-%m') = ?", [$bulan]);
+            ->where('lembaga_id', $lembagaId);
+
+        match ($range) {
+            'today' => $query->whereDate('tanggal', Carbon::today()),
+            'yesterday' => $query->whereDate('tanggal', Carbon::yesterday()),
+            'week' => $query->whereBetween('tanggal', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]),
+            'month' => $query->whereRaw("DATE_FORMAT(tanggal, '%Y-%m') = ?", [Carbon::now()->format('Y-m')]),
+            'date' => $query->whereDate('tanggal', $tanggal),
+            default => null, // 'all' — no date filter
+        };
 
         if ($guruId) {
             $query->where('guru_id', $guruId);
@@ -91,17 +100,34 @@ class AbsensiPtkController extends Controller
 
         $absensis = $query->orderBy('tanggal')->orderBy('guru_id')->paginate($this->perPage($request));
 
+        // Only PTK (struktural) gurus
         $gurus = Guru::where('lembaga_id', $lembagaId)
+            ->whereNotNull('jenis_ptk_id')
             ->where('is_approved', true)
             ->where('is_active', true)
             ->orderBy('nama')
             ->get();
 
-        // Summary per guru
+        $isSingleDay = in_array($range, ['today', 'yesterday', 'date']);
+
+        // Summary per guru — for all ranges
         $summary = [];
         if (!$guruId) {
-            $summaryQuery = AbsensiPtk::where('lembaga_id', $lembagaId)
-                ->whereRaw("DATE_FORMAT(tanggal, '%Y-%m') = ?", [$bulan])
+            $summaryQuery = clone $query;
+            $summaryQuery = $summaryQuery->getQuery()->orders = [];
+            $summaryQuery = AbsensiPtk::where('lembaga_id', $lembagaId);
+
+            // Apply same date filter as main query
+            match ($range) {
+                'today' => $summaryQuery->whereDate('tanggal', Carbon::today()),
+                'yesterday' => $summaryQuery->whereDate('tanggal', Carbon::yesterday()),
+                'week' => $summaryQuery->whereBetween('tanggal', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]),
+                'month' => $summaryQuery->whereRaw("DATE_FORMAT(tanggal, '%Y-%m') = ?", [Carbon::now()->format('Y-m')]),
+                'date' => $summaryQuery->whereDate('tanggal', $tanggal),
+                default => null,
+            };
+
+            $summaryQuery = $summaryQuery
                 ->selectRaw('guru_id, status, COUNT(*) as jumlah')
                 ->groupBy('guru_id', 'status')
                 ->get();
@@ -111,7 +137,7 @@ class AbsensiPtkController extends Controller
             }
         }
 
-        return view('absensi-ptk.laporan', compact('absensis', 'gurus', 'bulan', 'guruId', 'summary'));
+        return view('absensi-ptk.laporan', compact('absensis', 'gurus', 'tanggal', 'guruId', 'summary', 'range', 'isSingleDay'));
     }
 
     /**
