@@ -22,6 +22,7 @@ use App\Http\Controllers\NilaiController;
 use App\Http\Controllers\PelanggaranController;
 use App\Http\Controllers\PengajaranMapelController;
 use App\Http\Controllers\PerangkatAjarController;
+use App\Http\Controllers\PerizinanSiswaController;
 use App\Http\Controllers\PresensiController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SiswaController;
@@ -126,6 +127,7 @@ Route::middleware('auth')->group(function () {
         Route::post('guru/import', [GuruController::class, 'import'])->name('guru.import');
         Route::get('guru/template', [GuruController::class, 'template'])->name('guru.template');
         Route::put('guru/{guru}/inline-update', [GuruController::class, 'inlineUpdate'])->name('guru.inline-update');
+        Route::get('guru/{guru}/tugas-tambahan', [GuruController::class, 'tugasTambahan'])->name('guru.tugas-tambahan');
         Route::post('guru/bulk-update', [GuruController::class, 'bulkUpdate'])->name('guru.bulk-update');
         Route::post('guru/bulk-delete', [GuruController::class, 'bulkDestroy'])->name('guru.bulk-delete');
         Route::get('guru/export', [GuruController::class, 'export'])->name('guru.export');
@@ -214,9 +216,17 @@ Route::middleware('auth')->group(function () {
 
     // Jurnal — Monitoring & Verifikasi (Kurikulum, Kepala Lembaga, Admin Lembaga)
     // DILETAKKAN SEBELUM route {jurnal} biar 'monitoring' gak ketangkap sbg parameter wildcard
-    Route::middleware('role:kurikulum,kepala_lembaga,admin_lembaga')->group(function () {
+    Route::middleware('role:kurikulum,kepala_lembaga,admin_lembaga,guru')->group(function () {
         Route::get('/jurnal-mengajar/monitoring', [JurnalMengajarController::class, 'monitoring'])->name('jurnal-mengajar.monitoring');
         Route::post('/jurnal-mengajar/{jurnal}/verify', [JurnalMengajarController::class, 'verify'])->name('jurnal-mengajar.verify');
+        Route::post('/jurnal-mengajar/{jurnal}/unverify', [JurnalMengajarController::class, 'unverify'])->name('jurnal-mengajar.unverify');
+        Route::post('/jurnal-mengajar/bulk-verify', [JurnalMengajarController::class, 'bulkVerify'])->name('jurnal-mengajar.bulk-verify');
+        Route::post('/jurnal-mengajar/bulk-unverify', [JurnalMengajarController::class, 'bulkUnverify'])->name('jurnal-mengajar.bulk-unverify');
+    });
+
+    // Jurnal — Show (Guru + Admin/Kurikulum/Kepala Lembaga)
+    Route::middleware('role:guru,admin_lembaga,kurikulum,kepala_lembaga')->group(function () {
+        Route::get('/jurnal-mengajar/{jurnal}', [JurnalMengajarController::class, 'show'])->name('jurnal-mengajar.show');
     });
 
     // Jurnal — Guru
@@ -224,13 +234,23 @@ Route::middleware('auth')->group(function () {
         Route::get('/jurnal-mengajar', [JurnalMengajarController::class, 'index'])->name('jurnal-mengajar.index');
         Route::get('/jurnal-mengajar/create', [JurnalMengajarController::class, 'create'])->name('jurnal-mengajar.create');
         Route::post('/jurnal-mengajar', [JurnalMengajarController::class, 'store'])->name('jurnal-mengajar.store');
-        Route::get('/jurnal-mengajar/{jurnal}', [JurnalMengajarController::class, 'show'])->name('jurnal-mengajar.show');
         Route::get('/jurnal-mengajar/{jurnal}/edit', [JurnalMengajarController::class, 'edit'])->name('jurnal-mengajar.edit');
         Route::put('/jurnal-mengajar/{jurnal}', [JurnalMengajarController::class, 'update'])->name('jurnal-mengajar.update');
         Route::delete('/jurnal-mengajar/{jurnal}', [JurnalMengajarController::class, 'destroy'])->name('jurnal-mengajar.destroy');
         // Draft save per-step wizard
         Route::post('/jurnal-mengajar/save-draft', [JurnalMengajarController::class, 'saveDraft'])->name('jurnal-mengajar.save-draft');
         Route::delete('/jurnal-mengajar/draft/{jurnal}', [JurnalMengajarController::class, 'destroyDraft'])->name('jurnal-mengajar.destroy-draft');
+    });
+
+    // === PERIZINAN SISWA (Phase 12) — Guru dengan permission perizinan_siswa ===
+    Route::middleware('role:guru')->prefix('perizinan')->name('perizinan.')->group(function () {
+        Route::get('/', [PerizinanSiswaController::class, 'index'])->name('index');
+        Route::get('/create', [PerizinanSiswaController::class, 'create'])->name('create');
+        Route::post('/', [PerizinanSiswaController::class, 'store'])->name('store');
+        Route::get('/{perizinan}/edit', [PerizinanSiswaController::class, 'edit'])->name('edit');
+        Route::put('/{perizinan}', [PerizinanSiswaController::class, 'update'])->name('update');
+        Route::delete('/{perizinan}', [PerizinanSiswaController::class, 'destroy'])->name('destroy');
+        Route::get('/get-siswa', [PerizinanSiswaController::class, 'getSiswaByKelas'])->name('get-siswa');
     });
 
     // === PRESENSI SISWA (Phase 6) === (DIKEEP utk backward compat, redirect ke jurnal)
@@ -290,8 +310,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/absensi-ptk/check-out', [AbsensiPtkController::class, 'checkOut'])->name('absensi-ptk.check-out');
     });
 
-    // Absensi PTK — Laporan (Admin Lembaga, Kepala Lembaga)
-    Route::middleware('role:admin_lembaga,kepala_lembaga')->group(function () {
+    // Absensi PTK — Laporan (Admin Lembaga, Kepala Lembaga, Guru dengan permission presensi_ptk)
+    Route::middleware('role:admin_lembaga,kepala_lembaga,guru')->group(function () {
         Route::get('/absensi-ptk/laporan', [AbsensiPtkController::class, 'laporan'])->name('absensi-ptk.laporan');
     });
 

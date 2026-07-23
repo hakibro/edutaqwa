@@ -249,35 +249,33 @@
    └── Export laporan kehadiran guru bulanan
 ```
 
-## 7B. Alur Validator Presensi Siswa (Perizinan)
+## 7B. Alur Validator Presensi Siswa (Perizinan) — ✅ Diimplementasikan 2026-07-23
 
 ```
-1. Validator Presensi (guru dengan permission validator_presensi_siswa) buka menu Validator Presensi
+1. Guru dengan tugas tambahan 'Perizinan Siswa' buka menu Perizinan Siswa
        │
-2. Dashboard Validator Presensi:
-   ├── Rekap siswa tidak hadir hari ini (belum ada perizinan)
-   ├── Daftar perizinan aktif hari ini
-   ├── Filter per kelas & per tanggal
-   └── Statistik: jumlah sakit, izin, alpha hari ini
+2. Halaman Daftar Perizinan:
+   ├── Filter per kelas, per tanggal, per jenis (sakit/izin)
+   ├── Tabel: tanggal, siswa, kelas, jenis, keterangan, status (applied/pending)
+   └── Tombol "Input Perizinan" & hapus perizinan
        │
 3. Input Perizinan:
-   ├── Pilih kelas → daftar siswa muncul
-   ├── Pilih siswa (bisa multi-select)
-   ├── Pilih tanggal (bisa multi-select / rentang)
+   ├── Pilih kelas → AJAX load daftar siswa
+   ├── Pilih siswa (single select)
+   ├── Pilih tanggal (single date)
    ├── Pilih jenis: Sakit / Izin
    ├── Isi keterangan (opsional)
    └── Klik "Simpan Perizinan"
        │
 4. Sistem proses:
-   ├── Insert/update record di tabel perizinan_siswas
+   ├── Insert/update record di tabel perizinan_siswas (unique: siswa_id + tanggal)
    ├── Cek detail_jurnal_siswas untuk siswa + tanggal terkait:
-   │   ├── Jika sudah ada record → update status ke sakit/izin
-   │   └── Jika belum ada → create record dengan status sakit/izin (auto-generate dari jurnal jika jurnal sudah ada)
-   ├── Jika jurnal belum ada → simpan pending, auto-apply saat jurnal dibuat
+   │   ├── Jika sudah ada record → update status ke sakit/izin, set is_applied=true
+   │   └── Jika belum ada → simpan pending (is_applied=false)
    └── Notifikasi ke Wali Kelas (jika siswa di kelas walinya)
        │
 5. Alur Harian — Integrasi Jurnal Guru:
-   ├── Pagi/Siang: Validator Presensi input perizinan (siswa sakit/izin)
+   ├── Pagi/Siang: Guru Perizinan input perizinan (siswa sakit/izin)
    ├── Saat mengajar: Guru isi jurnal → hanya pilih Hadir/Tidak Hadir
    ├── Sistem resolve status akhir:
    │   ├── Hadir (dari guru) → status = hadir
@@ -285,10 +283,9 @@
    │   └── Tidak Hadir + tidak ada perizinan → status = alpha
    └── Wali Kelas lihat rekap presensi siswa walinya (real-time)
        │
-6. Riwayat Perizinan:
-   ├── Filter per kelas, per siswa, per tanggal, per jenis
-   ├── Edit/hapus perizinan (sebelum jurnal diverifikasi)
-   └── Export rekap perizinan per bulan
+6. Hapus Perizinan:
+   ├── Balikkan status di detail_jurnal_siswas ke alpha
+   └── Hapus record perizinan
 ```
 
 ## 8. Alur Jurnal Mengajar — Monitoring & Verifikasi

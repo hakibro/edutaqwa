@@ -181,67 +181,101 @@
 
             {{-- Riwayat --}}
             <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <div class="flex items-center justify-between mb-4">
+                <div class="p-4 sm:p-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                         <h3 class="text-lg font-semibold text-gray-900">Riwayat Absensi</h3>
                         <form method="GET" class="flex items-center gap-2">
                             <input type="month" name="bulan" value="{{ $bulan }}"
-                                class="rounded-md border-gray-300 shadow-sm text-sm" onchange="this.form.submit()">
+                                class="rounded-md border-gray-300 shadow-sm text-sm w-full sm:w-auto"
+                                onchange="this.form.submit()">
                         </form>
                     </div>
 
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th
-                                    class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                    Tanggal</th>
-                                <th
-                                    class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                    Check-in</th>
-                                <th
-                                    class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                    Check-out</th>
-                                <th
-                                    class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                    Status</th>
-                                <th
-                                    class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                    Keterlambatan</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 bg-white">
-                            @forelse ($absensis as $a)
+                    {{-- Desktop table --}}
+                    <div class="hidden sm:block overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
                                 <tr>
-                                    <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-900">
-                                        {{ $a->tanggal->format('d/m/Y') }}</td>
-                                    <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
-                                        {{ $a->check_in?->format('H:i') ?? '-' }}</td>
-                                    <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
-                                        {{ $a->check_out?->format('H:i') ?? '-' }}</td>
-                                    <td class="whitespace-nowrap px-4 py-3 text-sm">
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                        Tanggal</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                        Check-in</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                        Check-out</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                        Status</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                        Keterlambatan</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 bg-white">
+                                @forelse ($absensis as $a)
+                                    <tr>
+                                        <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-900">
+                                            {{ $a->tanggal->format('d/m/Y') }}</td>
+                                        <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
+                                            {{ $a->check_in?->format('H:i') ?? '-' }}</td>
+                                        <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
+                                            {{ $a->check_out?->format('H:i') ?? '-' }}</td>
+                                        <td class="whitespace-nowrap px-4 py-3 text-sm">
+                                            <span
+                                                class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold
+                                                {{ $a->status === 'tepat_waktu' ? 'bg-green-100 text-green-700' : '' }}
+                                                {{ $a->status === 'terlambat' ? 'bg-yellow-100 text-yellow-700' : '' }}
+                                                {{ $a->status === 'pulang_awal' ? 'bg-orange-100 text-orange-700' : '' }}
+                                                {{ $a->status === 'tidak_absen' ? 'bg-red-100 text-red-700' : '' }}
+                                                {{ $a->status === 'libur' ? 'bg-gray-100 text-gray-700' : '' }}">
+                                                {{ str_replace('_', ' ', ucfirst($a->status)) }}
+                                            </span>
+                                        </td>
+                                        <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
+                                            {{ $a->keterlambatan_menit > 0 ? $a->keterlambatan_menit . ' menit' : '-' }}
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="px-4 py-6 text-center text-sm text-gray-400">Belum
+                                            ada data absensi.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {{-- Mobile card list --}}
+                    <div class="sm:hidden space-y-2">
+                        @forelse ($absensis as $a)
+                            <div
+                                class="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2.5 text-xs">
+                                <div>
+                                    <span
+                                        class="font-semibold text-gray-900">{{ $a->tanggal->format('d/m/Y') }}</span>
+                                    <span class="ml-2 text-gray-500">{{ $a->check_in?->format('H:i') ?? '-' }} –
+                                        {{ $a->check_out?->format('H:i') ?? '-' }}</span>
+                                    @if ($a->keterlambatan_menit > 0)
                                         <span
-                                            class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold
-                                            {{ $a->status === 'tepat_waktu' ? 'bg-green-100 text-green-700' : '' }}
-                                            {{ $a->status === 'terlambat' ? 'bg-yellow-100 text-yellow-700' : '' }}
-                                            {{ $a->status === 'pulang_awal' ? 'bg-orange-100 text-orange-700' : '' }}
-                                            {{ $a->status === 'tidak_absen' ? 'bg-red-100 text-red-700' : '' }}
-                                            {{ $a->status === 'libur' ? 'bg-gray-100 text-gray-700' : '' }}">
-                                            {{ str_replace('_', ' ', ucfirst($a->status)) }}
-                                        </span>
-                                    </td>
-                                    <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
-                                        {{ $a->keterlambatan_menit > 0 ? $a->keterlambatan_menit . ' menit' : '-' }}
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="px-4 py-6 text-center text-sm text-gray-400">Belum ada
-                                        data absensi.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                                            class="ml-1 text-yellow-600">+{{ intdiv($a->keterlambatan_menit, 60) }}:{{ str_pad($a->keterlambatan_menit % 60, 2, '0', STR_PAD_LEFT) }}</span>
+                                    @endif
+                                </div>
+                                <span
+                                    class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold shrink-0
+                                    {{ $a->status === 'tepat_waktu' ? 'bg-green-100 text-green-700' : '' }}
+                                    {{ $a->status === 'terlambat' ? 'bg-yellow-100 text-yellow-700' : '' }}
+                                    {{ $a->status === 'pulang_awal' ? 'bg-orange-100 text-orange-700' : '' }}
+                                    {{ $a->status === 'tidak_absen' ? 'bg-red-100 text-red-700' : '' }}
+                                    {{ $a->status === 'libur' ? 'bg-gray-100 text-gray-700' : '' }}">
+                                    {{ str_replace('_', ' ', ucfirst($a->status)) }}
+                                </span>
+                            </div>
+                        @empty
+                            <p class="py-6 text-center text-sm text-gray-400">Belum ada data absensi.</p>
+                        @endforelse
+                    </div>
                 </div>
             </div>
         </div>

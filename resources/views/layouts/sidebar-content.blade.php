@@ -14,6 +14,11 @@
             <span>{{ __('Dashboard') }}</span>
         </x-sidebar-nav-link>
 
+        @php
+            $guru = Auth::user()->guru;
+            $tahunAjaranAktif = \App\Models\TahunAjaran::where('is_active', true)->first();
+        @endphp
+
         {{-- Absensi Harian & Kehadiran Guru --}}
         @if (Auth::user()->isGuru())
             <div class="pt-4 pb-1 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
@@ -37,19 +42,28 @@
 
         {{-- Guru: Wali Kelas & BK --}}
         @if (Auth::user()->isGuru())
-            @php
-                $guru = \App\Models\Guru::find(Auth::user()->guru_id);
-            @endphp
-            @if ($guru && $guru->isWaliKelas())
+            @if ($guru && $guru->isWaliKelas($tahunAjaranAktif?->id))
                 <x-sidebar-nav-link :href="route('guru.wali-kelas')" :active="request()->routeIs('guru.wali-kelas')">
                     <x-heroicon-o-users class="h-5 w-5 shrink-0" />
                     <span>{{ __('Wali Kelas') }}</span>
                 </x-sidebar-nav-link>
             @endif
-            @if ($guru && $guru->isBK())
+            @if ($guru && $guru->isBK($tahunAjaranAktif?->id))
                 <x-sidebar-nav-link :href="route('guru.bk')" :active="request()->routeIs('guru.bk')">
                     <x-heroicon-o-shield-exclamation class="h-5 w-5 shrink-0" />
                     <span>{{ __('BK') }}</span>
+                </x-sidebar-nav-link>
+            @endif
+            @if ($guru && $guru->hasPermission('perizinan_siswa', $tahunAjaranAktif?->id))
+                <x-sidebar-nav-link :href="route('perizinan.index')" :active="request()->routeIs('perizinan.*')">
+                    <x-heroicon-o-clipboard-document-check class="h-5 w-5 shrink-0" />
+                    <span>{{ __('Perizinan Siswa') }}</span>
+                </x-sidebar-nav-link>
+            @endif
+            @if ($guru && $guru->hasPermission('validator_jurnal', $tahunAjaranAktif?->id))
+                <x-sidebar-nav-link :href="route('jurnal-mengajar.monitoring')" :active="request()->routeIs('jurnal-mengajar.monitoring*')">
+                    <x-heroicon-o-document-chart-bar class="h-5 w-5 shrink-0" />
+                    <span>{{ __('Monitoring Jurnal') }}</span>
                 </x-sidebar-nav-link>
             @endif
         @endif
@@ -200,8 +214,15 @@
             </x-sidebar-nav-link>
         @endif
 
-        {{-- Monitoring (Kurikulum / Kepala Lembaga / Admin Lembaga) --}}
-        @if (Auth::user()->isKurikulum() || Auth::user()->isKepalaLembaga() || Auth::user()->isAdminLembaga())
+        {{-- Monitoring (Kurikulum / Kepala Lembaga / Admin Lembaga / Guru dengan permission presensi_ptk) --}}
+        @php
+            $canSeeLaporanAbsensi =
+                Auth::user()->isKurikulum() ||
+                Auth::user()->isKepalaLembaga() ||
+                Auth::user()->isAdminLembaga() ||
+                ($guru && $guru->hasPermission('presensi_ptk', $tahunAjaranAktif?->id));
+        @endphp
+        @if ($canSeeLaporanAbsensi)
             <div class="pt-4 pb-1 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
                 Monitoring
             </div>

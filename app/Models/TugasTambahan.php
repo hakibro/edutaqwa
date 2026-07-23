@@ -10,9 +10,9 @@ class TugasTambahan extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['guru_id', 'jenis', 'keterangan', 'permissions', 'tahun_ajaran_id', 'kelas_id', 'is_active'];
+    protected $fillable = ['guru_id', 'jenis', 'keterangan', 'tahun_ajaran_id', 'kelas_id', 'is_active'];
 
-    protected $casts = ['is_active' => 'boolean', 'permissions' => 'array'];
+    protected $casts = ['is_active' => 'boolean'];
 
     public function guru(): BelongsTo
     {
@@ -30,10 +30,15 @@ class TugasTambahan extends Model
     }
 
     /**
-     * Scope: tugas tambahan yang punya permission tertentu.
+     * Scope: tugas tambahan yang punya permission tertentu
+     * (sekarang berdasarkan field `jenis`, bukan `permissions` JSON).
      */
     public function scopeWithPermission($query, string $permission)
     {
-        return $query->where('is_active', true)->whereJsonContains('permissions', $permission);
+        $jenisName = \App\Models\Guru::PERMISSION_JENIS_MAP[$permission] ?? null;
+        if (!$jenisName) {
+            return $query->whereRaw('1 = 0'); // no match
+        }
+        return $query->where('is_active', true)->where('jenis', $jenisName);
     }
 }

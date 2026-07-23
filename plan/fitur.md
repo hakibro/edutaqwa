@@ -87,6 +87,13 @@
 | - Jurnal Sebagai Pengganti  | Guru pengganti mengisi jurnal mengajar untuk jadwal yang digantikan (badge "Pengganti", metadata is_substitute)                                                                                             |
 | - Monitoring Pengganti      | Kurikulum melihat daftar pengganti aktif per tanggal                                                                                                                                                        |
 | - Notifikasi                | Notifikasi ke Kurikulum saat ada pengajuan baru; notifikasi ke guru pengaju & guru pengganti saat disetujui/ditolak                                                                                         |
+| **Perangkat Ajar v2**       | (Paralel dengan sistem lama — lihat P16 roadmap)                                                                                                                                                            |
+| - Konsep Benar              | CP → TP (1:N, TP punya urutan). ATP = header menampung banyak TP via pivot `mapel_atp_tps`. Modul Ajar → TP (M:N via `mapel_modul_tps`).                                                                    |
+| - Tabel Baru (prefix mapel) | `mapel_cps`, `mapel_tps`, `mapel_atps`, `mapel_atp_tps`, `mapel_modul_ajars`, `mapel_modul_tps` — paralel dengan tabel lama                                                                                 |
+| - UI ATP v2                 | Card per ATP header, expand lihat daftar TP terurut, drag-drop urutan                                                                                                                                       |
+| - UI Modul Ajar v2          | Multi-select TP saat create/edit modul                                                                                                                                                                      |
+| - Migrasi Data              | Self-service: tombol "Pindahkan Data Saya" — copy dari tabel lama ke baru. ATP lama (per-TP) di-grouping jadi ATP header.                                                                                   |
+| - Transisi                  | Dua sistem jalan paralel, menu "Perangkat Ajar (Baru)" di sidebar                                                                                                                                           |
 
 ### 1.5 Kesiswaan
 
@@ -167,21 +174,32 @@
 | Cek Duplikat           | 1 jurnal per jadwal per hari                                                                                                                                        |
 | Edit Jurnal            | Edit materi + presensi + ATP untuk jurnal belum diverifikasi                                                                                                        |
 | Monitoring             | Filter guru, tanggal, status verifikasi                                                                                                                             |
-| Verifikasi             | Kurikulum/Kepala Lembaga verifikasi jurnal                                                                                                                          |
+| **Monitoring v2**      | **Peningkatan view monitoring agar petugas mudah memahami keseluruhan data dalam satu halaman:**                                                                    |
+|                        | - Summary Cards: Total Jurnal, Terverifikasi, Belum Verifikasi, Belum Mengisi (klik = auto-filter)                                                                  |
+|                        | - Progress Bar per Kelas: % jurnal terisi vs total jadwal (contoh: "X-A: 5/8")                                                                                      |
+|                        | - Tabel Compact: 1 baris per guru+kelas, tampilkan semua info (kelas, guru, mapel, jam, status, ringkasan presensi) tanpa accordion                                 |
+|                        | - Highlight Warna: merah muda (pending), hijau muda (verified), merah (belum mengisi)                                                                               |
+|                        | - Quick Filter Chips: Hari Ini, Kemarin, Minggu Ini, Belum Verifikasi, per tingkat kelas                                                                            |
+|                        | - Statistik Presensi Inline: Hadir: X, Tidak Hadir: Y (Sakit: A, Izin: B) per jurnal                                                                                |
+|                        | - Timestamp & Badge ATP: jam mengajar + badge 📚 ATP jika ada                                                                                                       |
+|                        | - Export ke Excel untuk data yang sedang difilter                                                                                                                   |
+|                        | - Auto-refresh toggle (setiap 5 menit)                                                                                                                              |
+|                        | - Responsive Card View di mobile                                                                                                                                    |
+| Verifikasi             | Kurikulum/Kepala Lembaga verifikasi jurnal (individual, bulk, undo)                                                                                                 |
 | Backward Compat        | Data lama (agenda_mengajars, presensis) tetap bisa diakses                                                                                                          |
 
-### 1.11B Validator Presensi Siswa (Phase 12 — Perizinan)
+### 1.11B Validator Presensi Siswa (Phase 12 — Perizinan) ✅ Diimplementasikan 2026-07-23
 
-| Fitur                | Deskripsi                                                                    |
-| -------------------- | ---------------------------------------------------------------------------- |
-| **Permission Guru**  | `validator_presensi_siswa` — diberikan via tugas_tambahans.permissions       |
-| Dashboard Validator  | Rekap presensi harian: siswa tidak hadir yang belum/tidak ada perizinan      |
-| Input Perizinan      | Pilih siswa, tanggal, jenis (Sakit/Izin), keterangan                         |
-| Bulk Perizinan       | Multi-select siswa + tanggal untuk perizinan massal                          |
-| Auto-Override        | Set perizinan → otomatis update `detail_jurnal_siswas.status` di tanggal tsb |
-| Riwayat Perizinan    | Filter per kelas, per siswa, per tanggal, per jenis                          |
-| **Integrasi Jurnal** | Guru isi jurnal: hanya Hadir/Tidak Hadir. Validator tentukan sakit/izin.     |
-|                      | Tidak hadir + tidak ada perizinan → otomatis Alpha.                          |
+| Fitur                 | Deskripsi                                                                     |
+| --------------------- | ----------------------------------------------------------------------------- |
+| **Permission Guru**   | `perizinan_siswa` — dikenali via `tugas_tambahans.jenis` = 'Perizinan Siswa'  |
+| Daftar Perizinan      | Filter per kelas, tanggal, jenis (Sakit/Izin)                                 |
+| Input Perizinan       | Pilih kelas → AJAX load siswa → pilih siswa, tanggal, jenis, keterangan       |
+| Auto-Override         | Set perizinan → otomatis update `detail_jurnal_siswas.status` jika jurnal ada |
+| Hapus Perizinan       | Balikkan status jurnal ke alpha                                               |
+| Notifikasi Wali Kelas | Otomatis kirim notifikasi saat siswa diset sakit/izin                         |
+| **Integrasi Jurnal**  | Guru isi jurnal: hanya Hadir/Tidak Hadir. Perizinan tentukan sakit/izin.      |
+|                       | Tidak hadir + tidak ada perizinan → otomatis Alpha.                           |
 
 ### 1.11 Dashboard
 

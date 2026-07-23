@@ -262,7 +262,9 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 - [x] Cek duplikat (1 jurnal per jadwal per hari)
 - [x] Edit jurnal (materi + presensi) untuk jurnal belum diverifikasi
 - [x] Monitoring + filter (guru, tanggal, status verifikasi)
-- [x] Verifikasi jurnal oleh Kurikulum/Kepala Lembaga
+- [x] Verifikasi jurnal oleh Kurikulum/Kepala Lembaga (individual, bulk, undo)
+- [x] Unverify / batalkan verifikasi jurnal (per item & bulk)
+- [x] Bulk action: verifikasi & batalkan verifikasi massal dengan checkbox
 - [x] Sidebar: "Presensi Siswa" + "Agenda Selfie" diganti "Jurnal Mengajar"
 - [x] Backward compat: route lama masih bisa akses data lama
 
@@ -280,7 +282,18 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 - [x] ATP juga tersedia di halaman edit jurnal
 - [x] Simpan `atp_id` di store(), saveDraft(), update()
 
-### 10.3 Per-Step Draft Save (Peningkatan Wizard)
+### 10.5 Peningkatan View Monitoring Jurnal
+
+- [ ] **Summary Cards** — 4 kartu ringkasan di atas tabel: Total Jurnal Hari Ini, Sudah Terverifikasi, Belum Terverifikasi, Guru Belum Mengisi. Warna aksen per kartu (biru/hijau/kuning/merah). Klik kartu otomatis filter.
+- [ ] **Progress Bar per Kelas** — visualisasi % jurnal terisi vs total jadwal per kelas hari ini. Bar horizontal dengan label kelas + angka (misal "X-A: 5/8").
+- [ ] **Tabel Compact View** — satu baris per guru+kelas langsung tampilkan semua info penting tanpa perlu accordion expand: kelas, guru, mapel, jam ke, status verifikasi (badge), jumlah siswa hadir/tidak hadir/alpha, aksi (lihat/verifikasi). Informasi ringkas dalam satu pandangan.
+- [ ] **Highlight Warna Baris** — baris merah muda untuk jurnal pending (belum verifikasi), hijau muda untuk terverifikasi. Grup guru+kelas yang belum mengisi = baris merah dengan ikon ⚠️.
+- [ ] **Quick Filter Chips** — chips horizontal: "Hari Ini", "Kemarin", "Minggu Ini", "Belum Verifikasi", "Kelas X", "Kelas XI", "Kelas XII". Klik chip langsung filter tanpa reload dropdown.
+- [ ] **Statistik Presensi per Jurnal** — di dalam row (atau tooltip hover), tampilkan ringkasan: Hadir: 30, Tidak Hadir: 2 (Sakit: 1, Izin: 1). Data dari `detail_jurnal_siswas`.
+- [ ] **Timestamp & Badge ATP** — tampilkan jam mengajar (jam_mulai) + badge kecil "📚 ATP" jika jurnal punya ATP terkait.
+- [ ] **Export Monitoring** — tombol export ke Excel untuk data monitoring yang sedang difilter (termasuk ringkasan presensi).
+- [ ] **Auto-refresh Toggle** — checkbox "Auto-refresh setiap 5 menit" untuk pantau real-time tanpa reload manual.
+- [ ] **Responsive Card View (Mobile)** — di layar kecil, tabel berubah jadi card stack: 1 card per guru+kelas dengan info ditata vertikal, mudah dibaca petugas di HP.
 
 - [x] Kolom `is_draft` dan `draft_step` di `jurnal_mengajars`
 - [x] Simpan foto ke server segera setelah capture (step 1)
@@ -333,45 +346,44 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 
 ### 12.1 Database
 
-- [ ] Migration `perizinan_siswas` — lembaga_id, siswa_id, kelas_id, validator_id, tanggal, jenis (sakit/izin), keterangan, is_applied, applied_at
-- [ ] Tambah enum `tidak_hadir` di `detail_jurnal_siswas.status` — status sementara dari guru kelas
-- [ ] Model `PerizinanSiswa` + relasi (siswa, kelas, validator/user, lembaga)
+- [x] Migration `perizinan_siswas` — lembaga_id, siswa_id, kelas_id, validator_id, tanggal, jenis (sakit/izin), keterangan, is_applied, applied_at
+- [x] Tambah enum `tidak_hadir` di `detail_jurnal_siswas.status` — status sementara dari guru kelas
+- [x] Model `PerizinanSiswa` + relasi (siswa, kelas, validator/user, lembaga)
 - [ ] Observer/Listener: auto-apply perizinan ke `detail_jurnal_siswas` saat jurnal dibuat
 
 ### 12.2 Validator Presensi (Guru dengan Permission)
 
-- [ ] Tambah permission `validator_presensi_siswa` di `tugas_tambahans.permissions`
-- [ ] Gate `validator-presensi-siswa` untuk cek akses
-- [ ] Menu "Validator Presensi" di sidebar & bottom nav guru (jika punya permission)
-- [ ] Dashboard Validator Presensi: rekap siswa tidak hadir, perizinan aktif, filter kelas & tanggal
+- [x] Permission `perizinan_siswa` via `tugas_tambahans.jenis` (nilai: 'Perizinan Siswa')
+- [x] Gate check via `Guru::hasPermission('perizinan_siswa')`
+- [x] Menu "Perizinan Siswa" di sidebar & bottom nav guru (jika punya permission)
 
 ### 12.3 Input Perizinan
 
-- [ ] Form input perizinan: pilih kelas → daftar siswa → pilih siswa (multi-select)
-- [ ] Pilih tanggal (single / rentang / multi-select)
-- [ ] Pilih jenis: Sakit / Izin
-- [ ] Keterangan (opsional)
+- [x] Form input perizinan: pilih kelas → AJAX load siswa → pilih siswa
+- [x] Pilih tanggal (single date)
+- [x] Pilih jenis: Sakit / Izin
+- [x] Keterangan (opsional)
 - [ ] Bulk perizinan: multi-select siswa + multi-select tanggal
-- [ ] Validasi: 1 siswa hanya 1 status per tanggal (unique constraint)
+- [x] Validasi: 1 siswa hanya 1 status per tanggal (unique constraint)
 
 ### 12.4 Auto-Override Presensi
 
-- [ ] Saat simpan perizinan → cek `detail_jurnal_siswas` untuk siswa+tanggal
-- [ ] Jika jurnal sudah ada → update `status` ke sakit/izin, set `is_applied=true`
-- [ ] Jika jurnal belum ada → simpan pending, auto-apply via observer saat jurnal dibuat
+- [x] Saat simpan perizinan → cek `detail_jurnal_siswas` untuk siswa+tanggal
+- [x] Jika jurnal sudah ada → update `status` ke sakit/izin, set `is_applied=true`
+- [x] Jika jurnal belum ada → simpan pending (is_applied=false)
 - [ ] Resolve status akhir saat jurnal dibuat: Tidak Hadir + perizinan → sakit/izin; Tidak Hadir + tanpa perizinan → alpha
 
 ### 12.5 Perubahan Jurnal Mengajar (Guru Kelas)
 
-- [ ] Step 2 Presensi: guru hanya pilih **Hadir** / **Tidak Hadir** (bukan 5 opsi)
-- [ ] Tombol cepat: "Semua Hadir" / "Semua Tidak Hadir"
-- [ ] Status `tidak_hadir` sebagai placeholder sebelum di-resolve oleh sistem
+- [x] Step 2 Presensi: guru hanya pilih **Hadir** / **Tidak Hadir** (sudah ada)
+- [x] Tombol cepat: "Semua Hadir" / "Semua Tidak Hadir" (sudah ada)
+- [x] Status `tidak_hadir` sebagai placeholder sebelum di-resolve oleh sistem (sudah ada di enum)
 - [ ] Saat jurnal disimpan → resolve status akhir berdasarkan data `perizinan_siswas`
 
 ### 12.6 Riwayat & Monitoring
 
-- [ ] Halaman riwayat perizinan (filter: kelas, siswa, tanggal, jenis)
-- [ ] Edit/hapus perizinan (sebelum jurnal diverifikasi)
+- [x] Halaman riwayat perizinan (filter: kelas, tanggal, jenis)
+- [x] Hapus perizinan (balikkan status ke alpha)
 - [ ] Export rekap perizinan per bulan (Excel)
 
 ---
@@ -411,6 +423,71 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 
 ---
 
+## P16 — Perangkat Ajar v2 (Restruktur CP/TP/ATP/Modul Ajar)
+
+> **2026-07-23**: Restruktur total tabel perangkat ajar sesuai konsep Kurikulum Merdeka yang benar.
+> Sistem lama (P4.2) tetap berjalan — tabel baru dibuat paralel, zero data loss, backward compatible.
+
+### 16.1 Konsep Kurikulum Merdeka (Benar)
+
+- CP (Capaian Pembelajaran) per mapel+fase → dijabarkan menjadi beberapa TP
+- TP (Tujuan Pembelajaran) — penjabaran CP, punya urutan
+- ATP (Alur Tujuan Pembelajaran) — urutan TP untuk satu mapel+fase+kelas dalam satu semester. ATP adalah entitas header yang menampung banyak TP, bukan anak TP.
+- Modul Ajar — bisa mencakup beberapa TP (many-to-many)
+
+### 16.2 Database — Tabel Baru (prefix `mapel_`)
+
+- [ ] Migration `mapel_cps` — mapel_id, guru_id, fase, kode, deskripsi
+- [ ] Migration `mapel_tps` — cp_id (FK mapel_cps), kode, deskripsi, urutan
+- [ ] Migration `mapel_atps` — mapel_id, guru_id, kelas_id (nullable), tahun_ajaran_id (nullable), fase, judul, semester
+- [ ] Migration `mapel_atp_tps` — pivot: atp_id (FK mapel_atps), tp_id (FK mapel_tps), urutan, minggu_ke. Unique (atp_id, tp_id) & (atp_id, urutan)
+- [ ] Migration `mapel_modul_ajars` — lembaga_id, mapel_id, guru_id, judul, deskripsi, file_path
+- [ ] Migration `mapel_modul_tps` — pivot: modul_ajar_id (FK mapel_modul_ajars), tp_id (FK mapel_tps). Unique (modul_ajar_id, tp_id)
+
+### 16.3 Model Baru
+
+- [ ] `MapelCp` — extends Model, relasi ke Mapel, Guru, MapelTp
+- [ ] `MapelTp` — extends Model, relasi ke MapelCp, MapelAtp (via pivot), MapelModulAjar (via pivot)
+- [ ] `MapelAtp` — extends Model, relasi ke Mapel, Guru, Kelas, MapelTp (via pivot `mapel_atp_tps`)
+- [ ] `MapelAtpTp` — extends Pivot, tabel `mapel_atp_tps`
+- [ ] `MapelModulAjar` — extends Model, relasi ke Mapel, Guru, MapelTp (via pivot)
+- [ ] `MapelModulTp` — extends Pivot, tabel `mapel_modul_tps`
+
+### 16.4 Controller & Route Baru
+
+- [ ] `MapelPerangkatAjarController` — CRUD CP, TP, ATP, Modul Ajar dengan struktur baru
+- [ ] Route group `/mapel-perangkat-ajar` — prefix `mapel-perangkat-ajar.`
+- [ ] Import Excel format baru — ATP sebagai header + baris TP di bawahnya
+
+### 16.5 View Baru
+
+- [ ] `mapel-perangkat-ajar/index.blade.php` — 4 tab: CP, TP, ATP, Modul Ajar
+- [ ] Tab ATP — card per ATP header, expand lihat daftar TP terurut dengan minggu_ke
+- [ ] Tab Modul Ajar — multi-select TP saat create/edit
+- [ ] Form ATP — drag-drop urutan TP
+
+### 16.6 Migrasi Data (Self-Service per Guru)
+
+- [ ] Tombol "Pindahkan Data Saya" di halaman baru — copy CP, TP, ATP, Modul Ajar dari tabel lama ke tabel baru
+- [ ] Mapping otomatis: ATP lama (per-TP) → grouping jadi ATP header baru per mapel+fase+guru
+- [ ] Jurnal Mengajar — tambah kolom `atp_header_id` (nullable) untuk relasi ke `mapel_atps`
+
+### 16.7 Transisi
+
+- [ ] Tambah menu "Perangkat Ajar (Baru)" di sidebar guru — parallel dengan menu lama
+- [ ] Banner info di halaman perangkat ajar lama — arahkan ke versi baru
+- [ ] Setelah semua guru migrasi: hapus route/controller/view lama, drop tabel `cps`, `tps`, `atps`, `modul_ajars` lama
+- [ ] Rename `mapel_cps` → `cps`, dst (opsional)
+
+### 16.8 Update Plan Docs
+
+- [ ] Update `plan/database.md` — tambah DDL tabel baru
+- [ ] Update `plan/fitur.md` — tambah deskripsi fitur perangkat ajar v2
+- [ ] Update `plan/alur-kerja.md` — alur baru pembuatan ATP
+- [ ] Update `plan/role-dan-hak-akses.md` — akses guru ke perangkat ajar v2
+
+---
+
 ## Progress
 
 | Phase                   | Total Item | Selesai | %        |
@@ -430,4 +507,5 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 | P13 Notifikasi          | -          | -       | 20%      |
 | P14 Finalisasi          | -          | -       | 0%       |
 | P15 Rapor               | -          | -       | 0%       |
-| **Total**               | **-**      | **-**   | **~75%** |
+| P16 Perangkat Ajar v2   | -          | -       | 0%       |
+| **Total**               | **-**      | **-**   | **~70%** |

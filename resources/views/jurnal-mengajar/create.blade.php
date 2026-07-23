@@ -7,7 +7,7 @@
         </div>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-12 content-safe-bottom">
         <div class="mx-auto max-w-3xl sm:px-6 lg:px-8">
             @if ($errors->any())
                 <div class="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-800">
@@ -29,7 +29,7 @@
 
             {{-- Wizard Steps --}}
             <div class="mb-6">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-center">
                     <div class="flex items-center gap-2 text-sm" id="step-indicators">
                         <span
                             class="step-indicator active rounded-full bg-indigo-600 px-3 py-1 text-white font-semibold"
@@ -160,85 +160,59 @@
                             @if ($siswas->isEmpty())
                                 <p class="text-sm text-gray-500">Tidak ada siswa di kelas ini.</p>
                             @else
-                                <div class="overflow-x-auto max-h-96 overflow-y-auto">
-                                    <table class="min-w-full text-sm">
-                                        <thead class="sticky top-0 bg-gray-50">
-                                            <tr class="border-b">
-                                                <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 w-8">#
-                                                </th>
-                                                <th class="px-2 py-2 text-left text-xs font-medium text-gray-500">Nama
-                                                </th>
-                                                <th
-                                                    class="px-2 py-2 text-center text-xs font-medium text-green-700 w-10">
-                                                    H</th>
-                                                <th
-                                                    class="px-2 py-2 text-center text-xs font-medium text-yellow-700 w-10">
-                                                    S</th>
-                                                <th
-                                                    class="px-2 py-2 text-center text-xs font-medium text-orange-700 w-10">
-                                                    I</th>
-                                                <th
-                                                    class="px-2 py-2 text-center text-xs font-medium text-red-700 w-10">
-                                                    A</th>
-                                                <th
-                                                    class="px-2 py-2 text-center text-xs font-medium text-purple-700 w-10">
-                                                    T</th>
-                                                <th class="px-2 py-2 text-xs font-medium text-gray-500 w-28">Ket</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-gray-100">
-                                            @foreach ($siswas as $i => $s)
-                                                <tr class="hover:bg-gray-50">
-                                                    <td class="px-2 py-2 text-gray-400">{{ $i + 1 }}</td>
-                                                    <td class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap">
-                                                        {{ $s->nama }}
-                                                        <span
-                                                            class="ml-1 text-xs text-gray-400">{{ $s->nis }}</span>
-                                                    </td>
-                                                    <td class="px-2 py-2 text-center">
-                                                        <input type="radio"
-                                                            name="siswa[{{ $i }}][status]" value="hadir"
-                                                            checked
-                                                            class="h-4 w-4 text-green-600 focus:ring-green-500 cursor-pointer"
-                                                            onchange="toggleKet({{ $i }}, this)">
-                                                    </td>
-                                                    <td class="px-2 py-2 text-center">
-                                                        <input type="radio"
-                                                            name="siswa[{{ $i }}][status]" value="sakit"
-                                                            class="h-4 w-4 text-yellow-600 focus:ring-yellow-500 cursor-pointer"
-                                                            onchange="toggleKet({{ $i }}, this)">
-                                                    </td>
-                                                    <td class="px-2 py-2 text-center">
-                                                        <input type="radio"
-                                                            name="siswa[{{ $i }}][status]" value="izin"
-                                                            class="h-4 w-4 text-orange-600 focus:ring-orange-500 cursor-pointer"
-                                                            onchange="toggleKet({{ $i }}, this)">
-                                                    </td>
-                                                    <td class="px-2 py-2 text-center">
-                                                        <input type="radio"
+                                <div class="divide-y divide-gray-100 border rounded-lg">
+                                    @foreach ($siswas as $i => $s)
+                                        @php
+                                            $perizinan = $perizinanHariIni->get($s->id);
+                                        @endphp
+                                        <div class="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50">
+                                            <span
+                                                class="text-xs text-gray-400 w-5 shrink-0">{{ $i + 1 }}</span>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-medium text-gray-900 truncate">
+                                                    {{ \Illuminate\Support\Str::title($s->nama) }}</p>
+                                                <p class="text-xs text-gray-400">{{ $s->nis }}</p>
+                                            </div>
+                                            <div class="shrink-0 text-center">
+                                                @if ($perizinan)
+                                                    <span
+                                                        class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold
+                                                        {{ $perizinan->jenis === 'sakit' ? 'bg-yellow-100 text-yellow-700' : 'bg-orange-100 text-orange-700' }}">
+                                                        {{ ucfirst($perizinan->jenis) }}
+                                                    </span>
+                                                    <span
+                                                        class="block text-[10px] text-gray-400 mt-0.5">perizinan</span>
+                                                    <input type="hidden" name="siswa[{{ $i }}][status]"
+                                                        value="hadir">
+                                                    <input type="hidden"
+                                                        name="siswa[{{ $i }}][keterangan]"
+                                                        value="{{ $perizinan->keterangan }}">
+                                                    <p class="text-[10px] text-gray-400 mt-0.5">
+                                                        {{ $perizinan->keterangan }}</p>
+                                                @else
+                                                    <input type="hidden" name="siswa[{{ $i }}][id]"
+                                                        value="{{ $s->id }}">
+                                                    <label
+                                                        class="relative inline-flex items-center cursor-pointer gap-2">
+                                                        <input type="checkbox"
                                                             name="siswa[{{ $i }}][status]" value="alpha"
-                                                            class="h-4 w-4 text-red-600 focus:ring-red-500 cursor-pointer"
+                                                            class="sr-only peer"
                                                             onchange="toggleKet({{ $i }}, this)">
-                                                    </td>
-                                                    <td class="px-2 py-2 text-center">
-                                                        <input type="radio"
-                                                            name="siswa[{{ $i }}][status]"
-                                                            value="terlambat"
-                                                            class="h-4 w-4 text-purple-600 focus:ring-purple-500 cursor-pointer"
-                                                            onchange="toggleKet({{ $i }}, this)">
-                                                    </td>
-                                                    <td class="px-2 py-2">
-                                                        <input type="hidden" name="siswa[{{ $i }}][id]"
-                                                            value="{{ $s->id }}">
-                                                        <input type="text"
-                                                            name="siswa[{{ $i }}][keterangan]"
-                                                            placeholder="Ket." id="ket-{{ $i }}"
-                                                            class="w-full rounded-md border-gray-300 text-sm py-1 hidden">
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
+                                                        <span
+                                                            class="text-[11px] font-medium text-green-600 peer-checked:text-gray-400">Hadir</span>
+                                                        <span
+                                                            class="relative w-9 h-5 bg-green-500 rounded-full after:absolute after:top-0.5 after:start-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500 peer-checked:after:translate-x-4"></span>
+                                                        <span
+                                                            class="text-[11px] font-medium text-gray-400 peer-checked:text-red-600">Alpha</span>
+                                                    </label>
+                                                    <input type="text"
+                                                        name="siswa[{{ $i }}][keterangan]"
+                                                        placeholder="Keterangan…" id="ket-{{ $i }}"
+                                                        class="mt-1 w-24 rounded-md border-gray-300 text-[11px] py-1 hidden">
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endforeach
                                 </div>
                             @endif
 
@@ -447,16 +421,16 @@
                             $existingPresensi->map(function ($p) {
                                     return ['siswa_id' => $p->siswa_id, 'status' => $p->status, 'keterangan' => $p->keterangan];
                                 })->keyBy('siswa_id'));
-                        document.querySelectorAll('input[type="radio"][name$="[status]"]').forEach(function(r) {
-                            const match = r.name.match(/siswa\[(\d+)\]\[status\]/);
+                        document.querySelectorAll('input[type="checkbox"][name$="[status]"]').forEach(function(cb) {
+                            const match = cb.name.match(/siswa\[(\d+)\]\[status\]/);
                             if (match) {
                                 const idx = match[1];
                                 const siswaRow = document.querySelector('input[name="siswa[' + idx + '][id]"]');
                                 if (siswaRow) {
                                     const sId = siswaRow.value;
                                     if (presensi[sId]) {
-                                        r.checked = r.value === presensi[sId].status;
-                                        if (r.value !== 'hadir') r.dispatchEvent(new Event('change'));
+                                        cb.checked = presensi[sId].status === 'alpha';
+                                        if (cb.checked) cb.dispatchEvent(new Event('change'));
                                     }
                                 }
                             }
@@ -491,6 +465,17 @@
                 if (oldIndicators) {
                     oldIndicators.classList.toggle('hidden', step === 1);
                 }
+
+                // Update step indicator pills
+                document.querySelectorAll('.step-indicator').forEach(ind => {
+                    const s = parseInt(ind.dataset.step);
+                    if (s === step) {
+                        ind.className =
+                            'step-indicator active rounded-full bg-indigo-600 px-3 py-1 text-white font-semibold';
+                    } else {
+                        ind.className = 'step-indicator rounded-full bg-gray-200 px-3 py-1 text-gray-500';
+                    }
+                });
 
                 // Update step dots (fullscreen top bar)
                 document.querySelectorAll('.step-dot').forEach(d => {
@@ -578,18 +563,18 @@
 
             // Set all students status
             function setAll(status) {
-                document.querySelectorAll('input[type="radio"][name$="[status]"]').forEach(r => {
-                    if (r.value === status) r.checked = true;
-                    r.dispatchEvent(new Event('change'));
+                document.querySelectorAll('input[type="checkbox"][name$="[status]"]').forEach(cb => {
+                    cb.checked = (status === 'alpha');
+                    cb.dispatchEvent(new Event('change'));
                 });
             }
 
-            // Toggle keterangan input — visible only when NOT hadir
-            function toggleKet(idx, radio) {
+            // Toggle keterangan input — visible when Alpha (checkbox checked)
+            function toggleKet(idx, checkbox) {
                 const ket = document.getElementById('ket-' + idx);
                 if (ket) {
-                    ket.classList.toggle('hidden', radio.value === 'hadir');
-                    if (radio.value === 'hadir') ket.value = '';
+                    ket.classList.toggle('hidden', !checkbox.checked);
+                    if (!checkbox.checked) ket.value = '';
                 }
             }
 

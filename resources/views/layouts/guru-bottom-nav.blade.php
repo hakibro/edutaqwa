@@ -1,8 +1,45 @@
 @php
     $guru = optional(Auth::user()->guru);
+    $tahunAjaranAktif = \App\Models\TahunAjaran::where('is_active', true)->first();
+    $taId = $tahunAjaranAktif?->id;
     $isPtk = $guru && $guru->isStruktural();
-    $isWaliKelas = $guru && $guru->isWaliKelas();
-    $isBk = $guru && $guru->isBK();
+    $isWaliKelas = $guru && $guru->isWaliKelas($taId);
+    $isBk = $guru && $guru->isBK($taId);
+    $isValidatorJurnal = $guru && $guru->hasPermission('validator_jurnal', $taId);
+    $isPerizinanSiswa = $guru && $guru->hasPermission('perizinan_siswa', $taId);
+    $isPresensiPtk = $guru && $guru->hasPermission('presensi_ptk', $taId);
+
+    // Kumpulkan semua peran untuk slot ke-4
+    $peranItems = collect();
+    if ($isPtk) {
+        $peranItems->push(['label' => 'Absensi GTK', 'route' => 'absensi-ptk.index', 'active' => 'absensi-ptk.*']);
+    }
+    if ($isWaliKelas) {
+        $peranItems->push(['label' => 'Wali Kelas', 'route' => 'guru.wali-kelas', 'active' => 'guru.wali-kelas']);
+    }
+    if ($isBk) {
+        $peranItems->push(['label' => 'BK', 'route' => 'guru.bk', 'active' => 'guru.bk']);
+    }
+    if ($isValidatorJurnal) {
+        $peranItems->push([
+            'label' => 'Monitoring Jurnal',
+            'route' => 'jurnal-mengajar.monitoring',
+            'active' => 'jurnal-mengajar.monitoring*',
+        ]);
+    }
+    if ($isPerizinanSiswa) {
+        $peranItems->push(['label' => 'Perizinan', 'route' => 'perizinan.index', 'active' => 'perizinan.*']);
+    }
+    if ($isPresensiPtk) {
+        $peranItems->push([
+            'label' => 'Laporan Absensi',
+            'route' => 'absensi-ptk.laporan',
+            'active' => 'absensi-ptk.laporan*',
+        ]);
+    }
+    $peranCount = $peranItems->count();
+    $hasPeran = $peranCount > 0;
+    $peranActive = $peranItems->contains(fn($p) => $p['active'] && request()->routeIs($p['active']));
 @endphp
 <nav class="fixed left-4 right-4 z-40 nav-safe-bottom" x-data="{ menuOpen: false }">
     <div
@@ -83,34 +120,95 @@
             </button>
         </div>
 
-        {{-- Absensi (PTK only) / Wali Kelas --}}
-        @if ($isPtk)
-            <a href="{{ route('absensi-ptk.index') }}"
-                class="flex items-center justify-center w-11 h-11 rounded-full hover:bg-slate-50 transition
-                {{ request()->routeIs('absensi-ptk.*') ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600' }}">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
-                </svg>
-            </a>
-        @elseif ($isWaliKelas)
-            <a href="{{ route('guru.wali-kelas') }}"
-                class="flex items-center justify-center w-11 h-11 rounded-full hover:bg-slate-50 transition
-                {{ request()->routeIs('guru.wali-kelas') ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600' }}">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
-                </svg>
-            </a>
-        @elseif ($isBk)
-            <a href="{{ route('guru.bk') }}"
-                class="flex items-center justify-center w-11 h-11 rounded-full hover:bg-slate-50 transition
-                {{ request()->routeIs('guru.bk') ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600' }}">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
-                </svg>
-            </a>
+        {{-- Peran Tambahan (PTK / Wali Kelas / BK / Validator / Perizinan) --}}
+        @if ($hasPeran)
+            @if ($peranCount === 1)
+                @php $p = $peranItems->first(); @endphp
+                <a href="{{ $p['route'] ? route($p['route']) : '#' }}"
+                    class="flex items-center justify-center w-11 h-11 rounded-full hover:bg-slate-50 transition
+                    {{ $p['active'] && request()->routeIs($p['active']) ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600' }}">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        @if ($isPtk)
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
+                        @elseif ($isWaliKelas)
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                        @elseif ($isBk)
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                        @elseif ($isPerizinanSiswa)
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        @else
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                        @endif
+                    </svg>
+                </a>
+            @else
+                {{-- Multi-peran: tombol dengan popover --}}
+                <div x-data="{ peranOpen: false }" class="relative">
+                    <button @click="peranOpen = !peranOpen"
+                        class="flex items-center justify-center w-11 h-11 rounded-full hover:bg-slate-50 transition
+                        {{ $peranActive ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600' }}">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125Z" />
+                        </svg>
+                    </button>
+                    <div x-show="peranOpen" @click.away="peranOpen = false" x-transition x-cloak
+                        class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-48 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-40">
+                        @foreach ($peranItems as $p)
+                            <a href="{{ $p['route'] ? route($p['route']) : '#' }}"
+                                class="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-slate-50
+                                {{ $p['active'] && request()->routeIs($p['active']) ? 'text-emerald-700 font-semibold bg-emerald-50/50' : 'text-slate-700' }}">
+                                @if ($loop->first && $isPtk)
+                                    <svg class="w-4 h-4 shrink-0 text-emerald-600" fill="none"
+                                        stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
+                                    </svg>
+                                @elseif ($p['label'] === 'Wali Kelas')
+                                    <svg class="w-4 h-4 shrink-0 text-teal-600" fill="none" stroke="currentColor"
+                                        stroke-width="1.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                                    </svg>
+                                @elseif ($p['label'] === 'BK')
+                                    <svg class="w-4 h-4 shrink-0 text-amber-600" fill="none" stroke="currentColor"
+                                        stroke-width="1.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                                    </svg>
+                                @elseif ($p['label'] === 'Monitoring Jurnal')
+                                    <svg class="w-4 h-4 shrink-0 text-indigo-600" fill="none"
+                                        stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                    </svg>
+                                @elseif ($p['label'] === 'Perizinan')
+                                    <svg class="w-4 h-4 shrink-0 text-rose-600" fill="none" stroke="currentColor"
+                                        stroke-width="1.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                    </svg>
+                                @else
+                                    <svg class="w-4 h-4 shrink-0 text-slate-500" fill="none" stroke="currentColor"
+                                        stroke-width="1.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                                    </svg>
+                                @endif
+                                <span>{{ $p['label'] }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
         @endif
 
         {{-- Profil + Notif --}}
@@ -122,13 +220,10 @@
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                 </svg>
-                <span id="notif-badge"
-                    class="absolute -top-0.5 right-0 hidden rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white min-w-[18px] text-center">
-                </span>
             </button>
 
             <div x-show="open" @click.away="open = false" x-transition x-cloak
-                class="absolute bottom-full mb-3 right-0 w-48 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-40">
+                class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-48 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-40">
                 <a href="{{ route('profile.edit') }}"
                     class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
                     {{ __('Profile') }}

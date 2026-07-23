@@ -250,6 +250,11 @@ class AbsensiPtkController extends Controller
             }
         }
 
+        // Validasi selfie jika wajib
+        if ($lembaga->wajib_selfie && !$request->hasFile('foto') && !$request->filled('foto')) {
+            return back()->with('error', 'Wajib upload foto selfie untuk check-out.');
+        }
+
         $fotoPath = $absensi->foto_check_out;
         if ($request->hasFile('foto')) {
             $fotoPath = $request->file('foto')->store('absensi-ptk/checkout', 'public');

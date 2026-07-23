@@ -151,13 +151,12 @@ CREATE TABLE gurus (
     FOREIGN KEY (lembaga_id) REFERENCES lembagas(id) ON DELETE CASCADE
 );
 
--- Tugas Tambahan Guru (Wali Kelas, BK)
+-- Tugas Tambahan Guru (Wali Kelas, BK, Validator Jurnal, dll)
 CREATE TABLE tugas_tambahans (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     guru_id BIGINT UNSIGNED NOT NULL,
-    jenis VARCHAR(50) NOT NULL,                 -- 'wali_kelas', 'bk', 'pembina_ekskul', dll
-    keterangan VARCHAR(255) NULL,               -- Kelas yg diampu, ekskul, dll
-    permissions JSON NULL,                      -- ['validator_jurnal', 'perizinan_siswa', 'presensi_ptk']
+    jenis VARCHAR(50) NOT NULL,                 -- 'Guru Mapel', 'BK', 'Wali Kelas', 'Pembina Ekskul', 'Koordinator', 'Validator Jurnal', 'Perizinan Siswa', 'Presensi PTK'
+    keterangan VARCHAR(255) NULL,               -- Keterangan tambahan
     tahun_ajaran_id BIGINT UNSIGNED NOT NULL,
     kelas_id BIGINT UNSIGNED NULL,              -- Kelas yg diwalikan (khusus Wali Kelas)
     is_active BOOLEAN DEFAULT TRUE,
@@ -170,7 +169,9 @@ CREATE TABLE tugas_tambahans (
 
 > **2026-07-20**: Tambah `kelas_id` — relasi ke tabel `kelas` untuk Wali Kelas. Nullable, hanya diisi jika jenis = 'Wali Kelas'. Validasi: 1 kelas hanya boleh punya 1 Wali Kelas per tahun ajaran.
 >
-> **2026-07-21**: Tambah `permissions` JSON — menyimpan array permission fungsional (validator_jurnal, perizinan_siswa, presensi_ptk). Dicek via Gate untuk akses fitur tambahan di luar role guru.
+> **2026-07-21**: ~~Tambah `permissions` JSON — menyimpan array permission fungsional (validator_jurnal, perizinan_siswa, presensi_ptk).~~ **(Dihapus 2026-07-23)**
+>
+> **2026-07-23**: Kolom `permissions` JSON dihapus. Permission fungsional (Validator Jurnal, Perizinan Siswa, Presensi PTK) sekarang menjadi nilai `jenis` langsung. `hasPermission()` membaca dari field `jenis` dengan mapping konstanta `Guru::PERMISSION_JENIS_MAP`. Tahun ajaran auto-fill dari TA aktif saat edit via popup.
 
 -- === SISWA ===
 
@@ -308,6 +309,112 @@ CREATE TABLE modul_ajars (
     FOREIGN KEY (mapel_id) REFERENCES mapels(id) ON DELETE CASCADE,
     FOREIGN KEY (guru_id) REFERENCES gurus(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- PERANGKAT AJAR V2 — Struktur Kurikulum Merdeka (Benar)
+-- Dibuat paralel dengan tabel CP/TP/ATP/Modul Ajar lama (P4.2)
+-- Prefix mapel_ untuk menghindari konflik nama
+-- ============================================================
+
+-- === MAPEL CP (Capaian Pembelajaran) ===
+
+CREATE TABLE mapel_cps (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    mapel_id BIGINT UNSIGNED NOT NULL,
+    guru_id BIGINT UNSIGNED NOT NULL,
+    fase VARCHAR(20) NOT NULL,                  -- 'A', 'B', 'C', 'D', 'E', 'F'
+    kode VARCHAR(50) NULL,
+    deskripsi TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (mapel_id) REFERENCES mapels(id) ON DELETE CASCADE,
+    FOREIGN KEY (guru_id) REFERENCES gurus(id) ON DELETE CASCADE
+);
+
+-- === MAPEL TP (Tujuan Pembelajaran) ===
+
+CREATE TABLE mapel_tps (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    cp_id BIGINT UNSIGNED NOT NULL,             -- FK ke mapel_cps
+    kode VARCHAR(50) NULL,
+    deskripsi TEXT NOT NULL,
+    urutan INT UNSIGNED NULL,                   -- Urutan TP dalam CP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (cp_id) REFERENCES mapel_cps(id) ON DELETE CASCADE
+);
+
+-- === MAPEL ATP (Alur Tujuan Pembelajaran) ===
+-- ATP adalah HEADER — satu ATP menampung banyak TP (via pivot mapel_atp_tps)
+-- Bukan anak TP seperti struktur lama
+
+CREATE TABLE mapel_atps (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    mapel_id BIGINT UNSIGNED NOT NULL,
+    guru_id BIGINT UNSIGNED NOT NULL,
+    kelas_id BIGINT UNSIGNED NULL,              -- Nullable: bisa per kelas atau umum
+    tahun_ajaran_id BIGINT UNSIGNED NULL,
+    fase VARCHAR(20) NOT NULL,
+    judul VARCHAR(255) NULL,                    -- "ATP Matematika Fase D Kelas 7"
+    semester ENUM('ganjil', 'genap') NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (mapel_id) REFERENCES mapels(id) ON DELETE CASCADE,
+    FOREIGN KEY (guru_id) REFERENCES gurus(id) ON DELETE CASCADE,
+    FOREIGN KEY (kelas_id) REFERENCES kelas(id) ON DELETE SET NULL,
+    FOREIGN KEY (tahun_ajaran_id) REFERENCES tahun_ajarans(id) ON DELETE SET NULL
+);
+
+-- === MAPEL ATP_TP (Pivot: ATP mana memuat TP mana, dengan urutan) ===
+
+CREATE TABLE mapel_atp_tps (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    atp_id BIGINT UNSIGNED NOT NULL,            -- FK ke mapel_atps
+    tp_id BIGINT UNSIGNED NOT NULL,             -- FK ke mapel_tps
+    urutan INT UNSIGNED NOT NULL,               -- Urutan TP dalam ATP ini
+    minggu_ke INT UNSIGNED NULL,                -- Estimasi minggu ke berapa
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (atp_id) REFERENCES mapel_atps(id) ON DELETE CASCADE,
+    FOREIGN KEY (tp_id) REFERENCES mapel_tps(id) ON DELETE CASCADE,
+    UNIQUE (atp_id, tp_id),
+    UNIQUE (atp_id, urutan)
+);
+
+-- === MAPEL MODUL AJAR ===
+
+CREATE TABLE mapel_modul_ajars (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    lembaga_id BIGINT UNSIGNED NOT NULL,
+    mapel_id BIGINT UNSIGNED NOT NULL,
+    guru_id BIGINT UNSIGNED NOT NULL,
+    judul VARCHAR(255) NOT NULL,
+    deskripsi TEXT NULL,
+    file_path VARCHAR(255) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (lembaga_id) REFERENCES lembagas(id) ON DELETE CASCADE,
+    FOREIGN KEY (mapel_id) REFERENCES mapels(id) ON DELETE CASCADE,
+    FOREIGN KEY (guru_id) REFERENCES gurus(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- === MAPEL MODUL_TP (Pivot: Modul Ajar mencakup TP mana) ===
+
+CREATE TABLE mapel_modul_tps (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    modul_ajar_id BIGINT UNSIGNED NOT NULL,     -- FK ke mapel_modul_ajars
+    tp_id BIGINT UNSIGNED NOT NULL,             -- FK ke mapel_tps
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (modul_ajar_id) REFERENCES mapel_modul_ajars(id) ON DELETE CASCADE,
+    FOREIGN KEY (tp_id) REFERENCES mapel_tps(id) ON DELETE CASCADE,
+    UNIQUE (modul_ajar_id, tp_id)
+);
+
+> **2026-07-23**: Tabel baru untuk Perangkat Ajar v2 — sesuai konsep Kurikulum Merdeka yang benar.
+> - CP → TP (1:N, TP punya kolom `urutan`)
+> - ATP → TP (M:N via `mapel_atp_tps`, dengan kolom `urutan` dan `minggu_ke`)
+> - Modul Ajar → TP (M:N via `mapel_modul_tps`)
+> - Tabel lama (`cps`, `tps`, `atps`, `modul_ajars`) tetap ada — sistem berjalan paralel.
+> - Guru bisa migrasi data sendiri via tombol "Pindahkan Data Saya".
 
 -- === JADWAL ===
 
@@ -514,12 +621,14 @@ CREATE TABLE perizinan_siswas (
 );
 
 > **2026-07-21**: Tabel baru untuk fitur Validator Presensi Siswa (Phase 12).
-> - Validator Presensi (guru dengan permission `validator_presensi_siswa`) input perizinan sakit/izin.
+> - Validator Presensi (guru dengan tugas tambahan jenis 'Perizinan Siswa') input perizinan sakit/izin.
 > - Auto-override: saat perizinan disimpan, sistem cek `detail_jurnal_siswas` untuk siswa+tanggal.
 >   - Jika jurnal sudah ada → update status ke sakit/izin, set `is_applied=true`.
->   - Jika jurnal belum ada → simpan perizinan, auto-apply saat jurnal dibuat (observer/listener).
+>   - Jika jurnal belum ada → simpan perizinan (is_applied=false), perlu di-resolve saat jurnal dibuat.
 > - Unique constraint `(siswa_id, tanggal)` — 1 siswa hanya 1 status per hari.
 > - Notifikasi otomatis ke Wali Kelas saat siswa di kelas walinya diset sakit/izin.
+>
+> **2026-07-23**: Implementasi — migration, model, controller, views, routes, sidebar & bottom nav selesai.
 
 -- === PENILAIAN ===
 

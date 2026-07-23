@@ -184,7 +184,10 @@
                                         Tugas Tambahan</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        Status</th>
+                                        Satminkal</th>
+                                    <th
+                                        class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                                        Aktif</th>
                                     <th
                                         class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
                                         Peringatan</th>
@@ -200,6 +203,27 @@
                     </div>
                     <div id="guruPagination" class="mt-4">{{ $gurus->links() }}</div>
                 </div>
+            </div>
+        </div>
+    </div>
+    {{-- Tugas Tambahan Edit Popup --}}
+    <div id="ttPopup" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40"
+        onclick="if(event.target===this)closeTTPopup()">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 p-6 max-h-[85vh] overflow-y-auto"
+            onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Edit Tugas Tambahan</h3>
+                <button onclick="closeTTPopup()"
+                    class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+            </div>
+            <div id="ttPopupRows"></div>
+            <button type="button" id="ttPopupAdd" class="mt-3 text-sm text-indigo-600 hover:text-indigo-800">+
+                Tambah</button>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeTTPopup()"
+                    class="px-4 py-2 text-sm rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50">Batal</button>
+                <button onclick="saveTTPopup()"
+                    class="px-4 py-2 text-sm rounded-md bg-indigo-600 text-white hover:bg-indigo-700">Simpan</button>
             </div>
         </div>
     </div>
@@ -232,26 +256,91 @@
         });
     }
 
-    function saveTugasTambahan(container) {
-        const guruId = container.dataset.guruId;
-        const rows = container.querySelectorAll('.tt-row');
+    // ===== Tugas Tambahan Popup =====
+    let ttPopupGuruId = null;
+    const kelasOptions = @json($kelasOptions ?? []);
+    const activeTahunAjaranId = '{{ $activeTahunAjaran?->id }}';
+
+    function openTTPopup(guruId, lembagaId) {
+        ttPopupGuruId = guruId;
+        fetch(`/guru/${guruId}/tugas-tambahan`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        }).then(r => r.json()).then(data => {
+            const rows = document.getElementById('ttPopupRows');
+            rows.innerHTML = '';
+            if (data.length > 0) {
+                data.forEach(tt => addTTRow(tt, lembagaId));
+            }
+            document.getElementById('ttPopup').classList.remove('hidden');
+            document.getElementById('ttPopup').classList.add('flex');
+        });
+    }
+
+    function addTTRow(data, lembagaId) {
+        data = data || {};
+        const rows = document.getElementById('ttPopupRows');
+        const div = document.createElement('div');
+        div.className = 'tt-popup-row border rounded-lg p-3 mb-2 bg-gray-50';
+        const kelasOptionsHtml = kelasOptions
+            .filter(k => k.lembaga_id == lembagaId)
+            .map(k => `<option value="${k.id}" ${data.kelas_id==k.id?'selected':''}>${k.nama}</option>`).join('');
+        div.innerHTML = `
+            <div class="grid grid-cols-2 gap-2 mb-2">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-0.5">Jenis</label>
+                    <select class="tt-popup-jenis w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="">-- Pilih --</option>
+                        <option value="Guru Mapel" ${data.jenis==='Guru Mapel'?'selected':''}>Guru Mapel</option>
+                        <option value="BK" ${data.jenis==='BK'?'selected':''}>BK</option>
+                        <option value="Wali Kelas" ${data.jenis==='Wali Kelas'?'selected':''}>Wali Kelas</option>
+                        <option value="Pembina Ekskul" ${data.jenis==='Pembina Ekskul'?'selected':''}>Pembina Ekskul</option>
+                        <option value="Koordinator" ${data.jenis==='Koordinator'?'selected':''}>Koordinator</option>
+                        <option value="Validator Jurnal" ${data.jenis==='Validator Jurnal'?'selected':''}>Validator Jurnal</option>
+                        <option value="Perizinan Siswa" ${data.jenis==='Perizinan Siswa'?'selected':''}>Perizinan Siswa</option>
+                        <option value="Presensi PTK" ${data.jenis==='Presensi PTK'?'selected':''}>Presensi PTK</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-0.5">Keterangan</label>
+                    <input type="text" value="${data.keterangan||''}" class="tt-popup-ket w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Keterangan">
+                </div>
+            </div>
+            <div class="tt-popup-kelas-wrapper" style="${data.jenis==='Wali Kelas'?'':'display:none'}">
+                <label class="block text-xs font-medium text-gray-600 mb-0.5">Kelas</label>
+                <select class="tt-popup-kelas w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <option value="">-- Kelas --</option>
+                    ${kelasOptionsHtml}
+                </select>
+            </div>
+            <button type="button" class="tt-popup-remove text-xs text-red-400 hover:text-red-600 mt-2">&times; Hapus</button>
+        `;
+        const jenisSelect = div.querySelector('.tt-popup-jenis');
+        const kelasWrapper = div.querySelector('.tt-popup-kelas-wrapper');
+        jenisSelect.addEventListener('change', function() {
+            kelasWrapper.style.display = this.value === 'Wali Kelas' ? '' : 'none';
+        });
+        div.querySelector('.tt-popup-remove').addEventListener('click', () => div.remove());
+        rows.appendChild(div);
+    }
+
+    function saveTTPopup() {
+        const rows = document.querySelectorAll('#ttPopupRows .tt-popup-row');
         const tugasTambahan = [];
         rows.forEach(row => {
-            const jenis = row.querySelector('.tt-jenis')?.value || '';
-            const keterangan = row.querySelector('.tt-keterangan')?.value || '';
-            const ta = row.querySelector('.tt-ta')?.value || '';
-            const kelasId = row.querySelector('.tt-kelas')?.value || '';
-            const permissions = [];
-            row.querySelectorAll('.tt-perm:checked').forEach(cb => permissions.push(cb.value));
+            const jenis = row.querySelector('.tt-popup-jenis')?.value || '';
+            const keterangan = row.querySelector('.tt-popup-ket')?.value || '';
+            const kelasId = row.querySelector('.tt-popup-kelas')?.value || '';
             if (jenis) tugasTambahan.push({
                 jenis,
                 keterangan,
-                tahun_ajaran_id: ta,
-                kelas_id: kelasId,
-                permissions
+                tahun_ajaran_id: activeTahunAjaranId,
+                kelas_id: kelasId
             });
         });
-        fetch(`/guru/${guruId}/inline-update`, {
+        fetch(`/guru/${ttPopupGuruId}/inline-update`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -262,99 +351,34 @@
                 tugas_tambahan: tugasTambahan
             })
         }).then(r => r.json()).then(d => {
-            if (!d.success) alert('Gagal update Tugas Tambahan');
-        });
-    }
-
-    const debouncedSaveTT = debounce(saveTugasTambahan, 500);
-
-    function attachTTEvents(row, container) {
-        row.querySelector('.tt-remove')?.addEventListener('click', function() {
-            row.remove();
-            if (!container.querySelector('.tt-row')) {
-                const span = document.createElement('span');
-                span.className = 'tt-empty text-xs text-gray-400';
-                span.textContent = '-';
-                container.insertBefore(span, container.querySelector('.tt-add'));
+            if (d.success) {
+                closeTTPopup();
+                fetchGuru(); // refresh table
+            } else {
+                alert('Gagal menyimpan tugas tambahan');
             }
-            saveTugasTambahan(container);
-        });
-        ['change', 'input'].forEach(evt => {
-            row.querySelectorAll('.tt-jenis, .tt-keterangan, .tt-ta, .tt-kelas').forEach(el => {
-                el.addEventListener(evt, () => debouncedSaveTT(container));
-            });
-        });
-        // Attach change event to permission checkboxes
-        row.querySelectorAll('.tt-perm').forEach(cb => {
-            cb.addEventListener('change', () => debouncedSaveTT(container));
-        });
-        // Toggle kelas dropdown when jenis changes
-        row.querySelector('.tt-jenis')?.addEventListener('change', function() {
-            const kelasSelect = row.querySelector('.tt-kelas');
-            if (kelasSelect) {
-                if (this.value === 'Wali Kelas') {
-                    kelasSelect.style.display = '';
-                    if (kelasSelect.options.length <= 1) populateKelasSelect(kelasSelect);
-                } else {
-                    kelasSelect.style.display = 'none';
-                }
-            }
-            debouncedSaveTT(container);
         });
     }
 
-    function initTTEvents() {
-        document.querySelectorAll('.tugas-tambahan-inline').forEach(container => {
-            container.querySelectorAll('.tt-row').forEach(row => {
-                attachTTEvents(row, container);
-                // Init kelas visibility for existing rows
-                const jenis = row.querySelector('.tt-jenis')?.value;
-                const kelasSelect = row.querySelector('.tt-kelas');
-                if (kelasSelect) {
-                    kelasSelect.style.display = jenis === 'Wali Kelas' ? '' : 'none';
-                }
-            });
-            container.querySelector('.tt-add')?.addEventListener('click', function() {
-                const empty = container.querySelector('.tt-empty');
-                if (empty) empty.remove();
-                const div = document.createElement('div');
-                div.className = 'tt-row flex flex-wrap items-center gap-1 mb-1';
-                div.innerHTML = `
-                    <select class="tt-jenis rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500" style="min-width:120px">
-                        <option value="">-- Pilih --</option>
-                        <option value="Guru Mapel">Guru Mapel</option>
-                        <option value="BK">BK</option>
-                        <option value="Wali Kelas">Wali Kelas</option>
-                        <option value="Pembina Ekskul">Pembina Ekskul</option>
-                        <option value="Koordinator">Koordinator</option>
-                    </select>
-                    <input type="text" value="" class="tt-keterangan w-24 rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Ket">
-                    <select class="tt-ta rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <option value="">-- TA --</option>
-                        @foreach ($tahunAjarans as $ta)
-                            <option value="{{ $ta->id }}">{{ $ta->nama }}</option>
-                        @endforeach
-                    </select>
-                    <select class="tt-kelas rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500" style="display:none;min-width:120px">
-                        <option value="">-- Kelas --</option>
-                    </select>
-                    <span class="flex items-center gap-1">
-                        <label class="inline-flex items-center gap-0.5 cursor-pointer text-xs" title="Validator Jurnal"><input type="checkbox" class="tt-perm rounded border-gray-300 text-indigo-600" value="validator_jurnal"> VJ</label>
-                        <label class="inline-flex items-center gap-0.5 cursor-pointer text-xs" title="Perizinan Siswa"><input type="checkbox" class="tt-perm rounded border-gray-300 text-indigo-600" value="perizinan_siswa"> PS</label>
-                        <label class="inline-flex items-center gap-0.5 cursor-pointer text-xs" title="Presensi PTK"><input type="checkbox" class="tt-perm rounded border-gray-300 text-indigo-600" value="presensi_ptk"> PP</label>
-                    </span>
-                    <button type="button" class="tt-remove text-red-400 hover:text-red-600 text-xs leading-none">&times;</button>
-                `;
-                container.insertBefore(div, this);
-                attachTTEvents(div, container);
-            });
-        });
-        document.querySelectorAll('.inline-update-jenis-ptk').forEach(el => {
-            el.addEventListener('change', function() {
-                saveJenisPtk(this);
+    function closeTTPopup() {
+        document.getElementById('ttPopup').classList.add('hidden');
+        document.getElementById('ttPopup').classList.remove('flex');
+        ttPopupGuruId = null;
+    }
+
+    // Attach edit button clicks
+    function initTTEditButtons() {
+        document.querySelectorAll('.tt-edit-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                openTTPopup(this.dataset.guruId, this.dataset.lembagaId);
             });
         });
     }
+
+    document.getElementById('ttPopupAdd')?.addEventListener('click', function() {
+        const lembagaId = document.querySelector('.tt-edit-btn')?.dataset?.lembagaId;
+        addTTRow(null, lembagaId);
+    });
 
     // ===== AJAX Search / Filter =====
     function fetchGuru() {
@@ -376,7 +400,8 @@
         }).then(r => r.json()).then(d => {
             document.getElementById('guruTableBody').innerHTML = d.html;
             document.getElementById('guruPagination').innerHTML = d.pagination;
-            initTTEvents();
+            initTTEditButtons();
+            initInlineJenisPtk();
             initBulkCheckboxes();
         }).catch(() => {});
     }
@@ -397,7 +422,8 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        initTTEvents();
+        initTTEditButtons();
+        initInlineJenisPtk();
 
         document.getElementById('searchGuru')?.addEventListener('input', debouncedFetch);
         document.getElementById('filterSatminkal')?.addEventListener('change', fetchGuru);
@@ -419,7 +445,8 @@
             }).then(r => r.json()).then(d => {
                 document.getElementById('guruTableBody').innerHTML = d.html;
                 document.getElementById('guruPagination').innerHTML = d.pagination;
-                initTTEvents();
+                initTTEditButtons();
+                initInlineJenisPtk();
                 initBulkCheckboxes();
             }).catch(() => {});
         });
@@ -452,13 +479,11 @@
         initBulkCheckboxes();
     });
 
-    // Kelas options for inline TT add (keyed by lembaga_id for future multi-lembaga support)
-    const kelasOptions = @json($kelasOptions ?? []);
-
-    function populateKelasSelect(select) {
-        const lembagaId = select.closest('.tugas-tambahan-inline')?.dataset?.lembagaId;
-        const filtered = lembagaId ? kelasOptions.filter(k => k.lembaga_id == lembagaId) : kelasOptions;
-        select.innerHTML = '<option value="">-- Kelas --</option>' + filtered.map(k =>
-            `<option value="${k.id}">${k.nama}</option>`).join('');
+    function initInlineJenisPtk() {
+        document.querySelectorAll('.inline-update-jenis-ptk').forEach(el => {
+            el.addEventListener('change', function() {
+                saveJenisPtk(this);
+            });
+        });
     }
 </script>

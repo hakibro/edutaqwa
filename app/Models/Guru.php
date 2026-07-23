@@ -213,33 +213,49 @@ class Guru extends Model
     }
 
     /**
-     * Cek apakah guru punya permission tertentu dari tugas tambahan aktif.
+     * Mapping: permission slug → jenis display name.
+     */
+    public const PERMISSION_JENIS_MAP = [
+        'validator_jurnal' => 'Validator Jurnal',
+        'perizinan_siswa' => 'Perizinan Siswa',
+        'presensi_ptk' => 'Presensi PTK',
+    ];
+
+    /**
+     * Cek apakah guru punya permission tertentu dari tugas tambahan aktif
+     * (sekarang berdasarkan field `jenis`, bukan `permissions` JSON).
      */
     public function hasPermission(string $permission, ?int $tahunAjaranId = null): bool
     {
+        $jenisName = self::PERMISSION_JENIS_MAP[$permission] ?? null;
+        if (!$jenisName) {
+            return false;
+        }
+
         return $this->tugasTambahans()
             ->where('is_active', true)
             ->when($tahunAjaranId, fn($q) => $q->where('tahun_ajaran_id', $tahunAjaranId))
-            ->whereJsonContains('permissions', $permission)
+            ->where('jenis', $jenisName)
             ->exists();
     }
 
     /**
-     * Ambil semua permission unik dari tugas tambahan aktif guru.
+     * Ambil semua permission unik dari tugas tambahan aktif guru
+     * (dari field `jenis`, mapping balik ke slug).
      */
     public function getActivePermissions(?int $tahunAjaranId = null): array
     {
-        $perms = [];
-        $this->tugasTambahans()
+        $reverseMap = array_flip(self::PERMISSION_JENIS_MAP);
+
+        return $this->tugasTambahans()
             ->where('is_active', true)
             ->when($tahunAjaranId, fn($q) => $q->where('tahun_ajaran_id', $tahunAjaranId))
-            ->whereNotNull('permissions')
-            ->each(function ($tt) use (&$perms) {
-                foreach ($tt->permissions ?? [] as $p) {
-                    $perms[$p] = true;
-                }
-            });
-
-        return array_keys($perms);
+            ->whereIn('jenis', array_values(self::PERMISSION_JENIS_MAP))
+            ->pluck('jenis')
+            ->map(fn($jenis) => $reverseMap[$jenis] ?? null)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 }

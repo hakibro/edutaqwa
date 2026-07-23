@@ -64,7 +64,7 @@ class GuruController extends Controller
         }
 
         $perPage = $this->perPage($request, 10);
-        $gurus = $query->latest()->paginate($perPage)->appends($request->except('page'));
+        $gurus = $query->with(['tugasTambahans.kelas', 'tugasTambahans.tahunAjaran'])->latest()->paginate($perPage)->appends($request->except('page'));
 
         $jenisPtks = JenisPtk::whereIn('lembaga_id', $allowedLembagaIds)->where('is_active', true)->get();
         $tahunAjarans = TahunAjaran::where('is_active', true)->get();
@@ -72,12 +72,14 @@ class GuruController extends Controller
         $kelasOptions = \App\Models\Kelas::whereIn('lembaga_id', $gurus->pluck('lembaga_id')->unique())
             ->orderBy('nama')->get(['id', 'nama', 'lembaga_id']);
 
+        $activeTahunAjaran = TahunAjaran::where('is_active', true)->first();
+
         if ($request->ajax() || $request->wantsJson()) {
             $html = view('guru._table', compact('gurus', 'jenisPtks', 'tahunAjarans'))->render();
             return response()->json(['html' => $html, 'pagination' => $gurus->links()->toHtml()]);
         }
 
-        return view('guru.index', compact('gurus', 'jenisPtks', 'tahunAjarans', 'kelasOptions'));
+        return view('guru.index', compact('gurus', 'jenisPtks', 'tahunAjarans', 'kelasOptions', 'activeTahunAjaran'));
     }
 
     public function create(): View
@@ -132,8 +134,6 @@ class GuruController extends Controller
             'tugas_tambahan.*.jenis' => 'required_with:tugas_tambahan|string|max:50',
             'tugas_tambahan.*.tahun_ajaran_id' => 'required_with:tugas_tambahan|exists:tahun_ajarans,id',
             'tugas_tambahan.*.kelas_id' => 'nullable|exists:kelas,id',
-            'tugas_tambahan.*.permissions' => 'nullable|array',
-            'tugas_tambahan.*.permissions.*' => 'string|in:validator_jurnal,perizinan_siswa,presensi_ptk',
         ]);
 
         $lembaga = Lembaga::findOrFail($lembagaId);
@@ -158,7 +158,6 @@ class GuruController extends Controller
                         'guru_id' => $guru->id,
                         'jenis' => $tt['jenis'],
                         'keterangan' => $tt['keterangan'] ?? null,
-                        'permissions' => $tt['permissions'] ?? null,
                         'tahun_ajaran_id' => $tt['tahun_ajaran_id'],
                         'kelas_id' => ($tt['jenis'] === 'Wali Kelas') ? ($tt['kelas_id'] ?? null) : null,
                         'is_active' => true,
@@ -234,8 +233,6 @@ class GuruController extends Controller
             'tugas_tambahan.*.jenis' => 'required_with:tugas_tambahan|string|max:50',
             'tugas_tambahan.*.tahun_ajaran_id' => 'required_with:tugas_tambahan|exists:tahun_ajarans,id',
             'tugas_tambahan.*.kelas_id' => 'nullable|exists:kelas,id',
-            'tugas_tambahan.*.permissions' => 'nullable|array',
-            'tugas_tambahan.*.permissions.*' => 'string|in:validator_jurnal,perizinan_siswa,presensi_ptk',
         ]);
 
         $lembaga = Lembaga::findOrFail($lembagaId);
@@ -261,7 +258,6 @@ class GuruController extends Controller
                         'guru_id' => $guru->id,
                         'jenis' => $tt['jenis'],
                         'keterangan' => $tt['keterangan'] ?? null,
-                        'permissions' => $tt['permissions'] ?? null,
                         'tahun_ajaran_id' => $tt['tahun_ajaran_id'],
                         'kelas_id' => ($tt['jenis'] === 'Wali Kelas') ? ($tt['kelas_id'] ?? null) : null,
                         'is_active' => true,
@@ -317,7 +313,6 @@ class GuruController extends Controller
                         'guru_id' => $guru->id,
                         'jenis' => $tt['jenis'],
                         'keterangan' => $tt['keterangan'] ?? null,
-                        'permissions' => $tt['permissions'] ?? null,
                         'tahun_ajaran_id' => $tt['tahun_ajaran_id'] ?? null,
                         'kelas_id' => ($tt['jenis'] === 'Wali Kelas') ? ($tt['kelas_id'] ?? null) : null,
                         'is_active' => true,
@@ -329,6 +324,22 @@ class GuruController extends Controller
         }
 
         return response()->json(['success' => false, 'message' => 'Field tidak dikenali.'], 400);
+    }
+
+    /**
+     * Get tugas tambahan for a guru (JSON for popup).
+     */
+    public function tugasTambahan(Guru $guru): JsonResponse
+    {
+        return response()->json(
+            $guru->tugasTambahans()->with('kelas', 'tahunAjaran')->get()->map(fn($tt) => [
+                'id' => $tt->id,
+                'jenis' => $tt->jenis,
+                'keterangan' => $tt->keterangan,
+                'tahun_ajaran_id' => $tt->tahun_ajaran_id,
+                'kelas_id' => $tt->kelas_id,
+            ])
+        );
     }
 
     /**

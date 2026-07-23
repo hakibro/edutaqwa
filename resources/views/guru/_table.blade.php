@@ -26,53 +26,38 @@
                 @endforeach
             </select>
         </td>
-        <td class="px-6 py-4 text-sm text-gray-700 max-w-[320px]">
-            <div class="tugas-tambahan-inline" data-guru-id="{{ $g->id }}"
-                data-lembaga-id="{{ $g->lembaga_id }}">
-                @php $ttList = $g->tugasTambahans; @endphp
-                @if ($ttList->isNotEmpty())
-                    @foreach ($ttList as $tt)
-                        <div class="tt-row flex flex-wrap items-center gap-1 mb-1">
-                            <select
-                                class="tt-jenis rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                style="min-width:120px">
-                                <option value="">-- Pilih --</option>
-                                <option value="Guru Mapel" @selected($tt->jenis == 'Guru Mapel')>Guru Mapel</option>
-                                <option value="BK" @selected($tt->jenis == 'BK')>BK</option>
-                                <option value="Wali Kelas" @selected($tt->jenis == 'Wali Kelas')>Wali Kelas</option>
-                                <option value="Pembina Ekskul" @selected($tt->jenis == 'Pembina Ekskul')>Pembina Ekskul</option>
-                                <option value="Koordinator" @selected($tt->jenis == 'Koordinator')>Koordinator</option>
-                            </select>
-                            <input type="text" value="{{ $tt->keterangan }}"
-                                class="tt-keterangan w-24 rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                placeholder="Ket">
-                            <select
-                                class="tt-ta rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <option value="">-- TA --</option>
-                                @foreach ($tahunAjarans as $ta)
-                                    <option value="{{ $ta->id }}" @selected($tt->tahun_ajaran_id == $ta->id)>
-                                        {{ $ta->nama }}</option>
-                                @endforeach
-                            </select>
-                            <select
-                                class="tt-kelas rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                style="{{ $tt->jenis === 'Wali Kelas' ? '' : 'display:none' }};min-width:120px">
-                                <option value="">-- Kelas --</option>
-                                @php $kelasOptions = \App\Models\Kelas::where('lembaga_id', $g->lembaga_id)->orderBy('nama')->get(); @endphp
-                                @foreach ($kelasOptions as $k)
-                                    <option value="{{ $k->id }}" @selected($tt->kelas_id == $k->id)>
-                                        {{ $k->nama }}</option>
-                                @endforeach
-                            </select>
-                            <button type="button"
-                                class="tt-remove text-red-400 hover:text-red-600 text-xs leading-none">&times;</button>
-                        </div>
-                    @endforeach
-                @else
-                    <span class="tt-empty text-xs text-gray-400">-</span>
-                @endif
-                <button type="button" class="tt-add text-xs text-indigo-600 hover:text-indigo-800 mt-1">+
-                    Tambah</button>
+        <td class="px-6 py-4 text-sm text-gray-700 max-w-[280px]">
+            <div class="flex items-start gap-2">
+                <div class="tt-info flex-1 min-w-0">
+                    @php $ttList = $g->tugasTambahans; @endphp
+                    @if ($ttList->isNotEmpty())
+                        @foreach ($ttList as $tt)
+                            <div class="text-xs leading-relaxed">
+                                <span class="font-medium">{{ $tt->jenis }}</span>
+                                @if ($tt->keterangan)
+                                    <span class="text-gray-400"> — {{ $tt->keterangan }}</span>
+                                @endif
+                                @if ($tt->jenis === 'Wali Kelas' && $tt->kelas)
+                                    <span class="text-indigo-500"> • {{ $tt->kelas->nama }}</span>
+                                @endif
+                                @if ($tt->tahunAjaran)
+                                    <span class="text-gray-400"> • {{ $tt->tahunAjaran->nama }}</span>
+                                @endif
+                            </div>
+                        @endforeach
+                    @else
+                        <span class="text-xs text-gray-400">-</span>
+                    @endif
+                </div>
+                <button type="button"
+                    class="tt-edit-btn flex-shrink-0 text-gray-400 hover:text-indigo-600 transition-colors"
+                    data-guru-id="{{ $g->id }}" data-lembaga-id="{{ $g->lembaga_id }}"
+                    title="Edit Tugas Tambahan">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                </button>
             </div>
         </td>
         <td class="whitespace-nowrap px-6 py-4 text-sm">
@@ -81,7 +66,7 @@
                 {{ $g->status_satminkal ? 'Satminkal' : 'Non-Satminkal' }}
             </span>
         </td>
-        <td class="whitespace-nowrap px-6 py-4 text-sm">
+        <td class="whitespace-nowrap px-6 py-4 text-sm text-center">
             <span
                 class="rounded-full px-2 py-1 text-xs font-semibold {{ $g->is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
                 {{ $g->is_active ? 'Aktif' : 'Nonaktif' }}
@@ -121,6 +106,6 @@
     </tr>
 @empty
     <tr>
-        <td colspan="10" class="px-6 py-8 text-center text-sm text-gray-500">Belum ada data guru.</td>
+        <td colspan="11" class="px-6 py-8 text-center text-sm text-gray-500">Belum ada data guru.</td>
     </tr>
 @endforelse

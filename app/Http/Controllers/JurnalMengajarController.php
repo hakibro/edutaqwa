@@ -8,6 +8,7 @@ use App\Models\DetailJurnalSiswa;
 use App\Models\Jadwal;
 use App\Models\JurnalMengajar;
 use App\Models\LogAktivita;
+use App\Models\PerizinanSiswa;
 use App\Models\RiwayatKelasSiswa;
 use App\Models\TahunAjaran;
 use Carbon\Carbon;
@@ -16,6 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use App\Services\PerPageTrait;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 
 class JurnalMengajarController extends Controller
@@ -33,7 +35,6 @@ class JurnalMengajarController extends Controller
 
         $jurnals = JurnalMengajar::with(['jadwal.mapel', 'jadwal.kelas', 'kelas', 'detailSiswas'])
             ->where('guru_id', $guruId)
-            ->where('is_draft', false)
             ->when($request->filled('tanggal'), fn($q) => $q->where('tanggal', $request->tanggal))
             ->orderByDesc('tanggal')
             ->orderByDesc('created_at')
@@ -75,17 +76,17 @@ class JurnalMengajarController extends Controller
                 ->whereNull('tanggal_keluar')
                 ->get()
                 ->pluck('siswa')
-                ->filter();
+                ->filter()
+                ->sortBy('nama')
+                ->values();
         }
 
         $lastPertemuan = JurnalMengajar::where('jadwal_id', $jadwal->id)
-            ->where('is_draft', false)
             ->max('pertemuan_ke') ?? 0;
         $pertemuanKe = $lastPertemuan + 1;
 
         $existingToday = JurnalMengajar::where('jadwal_id', $jadwal->id)
             ->where('tanggal', Carbon::today()->toDateString())
-            ->where('is_draft', false)
             ->exists();
 
         // Cek draft tersimpan (per-step save)
@@ -122,7 +123,14 @@ class JurnalMengajarController extends Controller
             ->orderBy('minggu_ke')
             ->get();
 
-        return view('jurnal-mengajar.create', compact('jadwal', 'siswas', 'pertemuanKe', 'existingToday', 'nextJadwals', 'draft', 'existingPresensi', 'atps'));
+        // Ambil perizinan siswa hari ini untuk kelas ini
+        $perizinanHariIni = PerizinanSiswa::where('lembaga_id', $user->lembaga_id)
+            ->where('kelas_id', $jadwal->kelas_id)
+            ->where('tanggal', Carbon::today()->toDateString())
+            ->get()
+            ->keyBy('siswa_id');
+
+        return view('jurnal-mengajar.create', compact('jadwal', 'siswas', 'pertemuanKe', 'existingToday', 'nextJadwals', 'draft', 'existingPresensi', 'atps', 'perizinanHariIni'));
     }
 
     /**
@@ -144,7 +152,7 @@ class JurnalMengajarController extends Controller
             'atp_id' => 'nullable|exists:atps,id',
             'siswa' => 'required|array',
             'siswa.*.id' => 'required|exists:siswas,id',
-            'siswa.*.status' => 'required|in:hadir,sakit,izin,alpha,terlambat',
+            'siswa.*.status' => 'nullable|in:alpha',
             'siswa.*.keterangan' => 'nullable|string|max:255',
             'next_jadwal_ids' => 'nullable|array',
             'next_jadwal_ids.*' => 'exists:jadwals,id',
@@ -177,7 +185,6 @@ class JurnalMengajarController extends Controller
 
             // Hitung pertemuan_ke saat finalisasi
             $lastPertemuan = JurnalMengajar::where('jadwal_id', $jadwal->id)
-                ->where('is_draft', false)
                 ->where('id', '!=', $draftId)
                 ->max('pertemuan_ke') ?? 0;
             $jurnal->pertemuan_ke = $lastPertemuan + 1;
@@ -214,17 +221,15 @@ class JurnalMengajarController extends Controller
             // $path untuk next_jadwal copy
             $path = $jurnal->foto_path;
         } else {
-            // Cek duplikat (non-draft only)
+            // Cek duplikat
             $exists = JurnalMengajar::where('jadwal_id', $jadwal->id)
                 ->where('tanggal', $today->toDateString())
-                ->where('is_draft', false)
                 ->exists();
             if ($exists) {
                 return back()->with('error', 'Jurnal untuk jadwal ini hari ini sudah ada.');
             }
 
             $lastPertemuan = JurnalMengajar::where('jadwal_id', $jadwal->id)
-                ->where('is_draft', false)
                 ->max('pertemuan_ke') ?? 0;
             $pertemuanKe = $lastPertemuan + 1;
 
@@ -254,14 +259,28 @@ class JurnalMengajarController extends Controller
             ]);
         }
 
-        // Batch insert detail siswa
+        // Ambil perizinan hari ini untuk overlay status siswa
+        $perizinanHariIni = PerizinanSiswa::where('lembaga_id', $lembagaId)
+            ->where('kelas_id', $jadwal->kelas_id)
+            ->where('tanggal', $today->toDateString())
+            ->get()
+            ->keyBy('siswa_id');
+
+        // Batch insert detail siswa — overlay perizinan
         $siswaData = [];
         foreach ($validated['siswa'] as $s) {
+            $perizinan = $perizinanHariIni->get($s['id']);
+            $status = $s['status'] ?? 'hadir';
+            $keterangan = $s['keterangan'] ?? null;
+            if ($perizinan) {
+                $status = $perizinan->jenis; // sakit / izin
+                $keterangan = $perizinan->keterangan;
+            }
             $siswaData[] = [
                 'jurnal_mengajar_id' => $jurnal->id,
                 'siswa_id' => $s['id'],
-                'status' => $s['status'],
-                'keterangan' => $s['keterangan'] ?? null,
+                'status' => $status,
+                'keterangan' => $keterangan,
             ];
         }
         DetailJurnalSiswa::insert($siswaData);
@@ -305,6 +324,8 @@ class JurnalMengajarController extends Controller
                 'latitude' => $validated['latitude'] ?? null,
                 'longitude' => $validated['longitude'] ?? null,
                 'materi' => $validated['materi'] ?? null,
+                'is_draft' => false,
+                'draft_step' => 0,
                 'metadata' => json_encode([
                     'mapel' => $nextJadwal->mapel->nama,
                     'kelas' => $nextJadwal->kelas->nama,
@@ -315,11 +336,18 @@ class JurnalMengajarController extends Controller
 
             $nextSiswaData = [];
             foreach ($validated['siswa'] as $s) {
+                $perizinan = $perizinanHariIni->get($s['id']);
+                $status = $s['status'] ?? 'hadir';
+                $keterangan = $s['keterangan'] ?? null;
+                if ($perizinan) {
+                    $status = $perizinan->jenis;
+                    $keterangan = $perizinan->keterangan;
+                }
                 $nextSiswaData[] = [
                     'jurnal_mengajar_id' => $nextJurnal->id,
                     'siswa_id' => $s['id'],
-                    'status' => $s['status'],
-                    'keterangan' => $s['keterangan'] ?? null,
+                    'status' => $status,
+                    'keterangan' => $keterangan,
                 ];
             }
             DetailJurnalSiswa::insert($nextSiswaData);
@@ -341,43 +369,106 @@ class JurnalMengajarController extends Controller
         $jurnal->load(['jadwal.mapel', 'jadwal.kelas', 'kelas', 'guru', 'verifikator', 'detailSiswas.siswa', 'atp.tp.cp']);
 
         $user = auth()->user();
+        // Guru hanya bisa lihat jurnal miliknya
         if ($user->isGuru() && $jurnal->jadwal->guru_id != $user->guru_id) {
             abort(403);
+        }
+        // Admin lembaga / kurikulum / kepala lembaga hanya bisa lihat jurnal di lembaganya
+        if ($user->isAdminLembaga() || $user->isKurikulum() || $user->isKepalaLembaga()) {
+            if ($jurnal->jadwal->lembaga_id != $user->lembaga_id) {
+                abort(403);
+            }
         }
 
         return view('jurnal-mengajar.show', compact('jurnal'));
     }
 
     /**
-     * Monitoring jurnal (Kurikulum / Kepala Lembaga / Admin Lembaga).
+     * Monitoring jurnal (Kurikulum / Kepala Lembaga / Admin Lembaga / Validator Jurnal).
      */
     public function monitoring(Request $request): View
     {
         $user = auth()->user();
+
+        // Guru hanya bisa akses jika punya tugas tambahan Validator Jurnal
+        if ($user->role === 'guru') {
+            Gate::authorize('validator-jurnal');
+        }
+
         $lembagaId = $user->lembaga_id;
 
         $query = JurnalMengajar::with(['jadwal.mapel', 'jadwal.kelas', 'guru', 'kelas', 'detailSiswas'])
-            ->where('is_draft', false)
             ->whereHas('jadwal', fn($q) => $q->where('lembaga_id', $lembagaId));
 
         if ($request->filled('guru_id')) {
             $query->where('guru_id', $request->guru_id);
         }
-        if ($request->filled('tanggal')) {
-            $query->where('tanggal', $request->tanggal);
-        }
+
+        // Default: hari ini
+        $tanggal = $request->filled('tanggal') ? $request->tanggal : now()->toDateString();
+        $query->where('tanggal', $tanggal);
+
         if ($request->filled('verified')) {
             $query->where('is_verified', $request->verified === '1');
         }
 
-        $jurnals = $query->orderByDesc('tanggal')->orderByDesc('created_at')->paginate($this->perPage($request));
+        if ($request->filled('tingkat')) {
+            $query->whereHas('kelas', fn($q) => $q->where('tingkat', $request->tingkat));
+        }
+
+        if ($request->filled('kelas_id')) {
+            $query->where('kelas_id', $request->kelas_id);
+        }
+
+        $jurnals = $query
+            ->join('kelas', 'jurnal_mengajars.kelas_id', '=', 'kelas.id')
+            ->join('jadwals', 'jurnal_mengajars.jadwal_id', '=', 'jadwals.id')
+            ->orderBy('kelas.nama')
+            ->orderBy('jadwals.jam_ke')
+            ->orderBy('guru_id')
+            ->select('jurnal_mengajars.*')
+            ->get()
+            ->groupBy(fn($j) => $j->kelas_id . '-' . $j->guru_id);
+
+        // Guru yang belum mengisi jurnal hari ini
+        $hariIni = Carbon::parse($tanggal)->locale('id')->dayName;
+
+        // Jadwal hari ini yang belum ada jurnalnya
+        $jadwalTerisi = JurnalMengajar::where('tanggal', $tanggal)
+            ->whereHas('jadwal', fn($q) => $q->where('lembaga_id', $lembagaId))
+            ->pluck('jadwal_id');
+
+        $jadwalBelum = Jadwal::with(['guru', 'kelas', 'mapel'])
+            ->join('kelas', 'jadwals.kelas_id', '=', 'kelas.id')
+            ->where('jadwals.lembaga_id', $lembagaId)
+            ->where('jadwals.hari', $hariIni)
+            ->whereNotIn('jadwals.id', $jadwalTerisi)
+            ->when($request->filled('guru_id'), fn($q) => $q->where('jadwals.guru_id', $request->guru_id))
+            ->when($request->filled('tingkat'), fn($q) => $q->where('kelas.tingkat', $request->tingkat))
+            ->when($request->filled('kelas_id'), fn($q) => $q->where('jadwals.kelas_id', $request->kelas_id))
+            ->orderBy('kelas.nama')
+            ->orderBy('jadwals.jam_ke')
+            ->orderBy('jadwals.guru_id')
+            ->select('jadwals.*')
+            ->get()
+            ->groupBy(fn($j) => $j->kelas_id . '-' . $j->guru_id);
 
         $gurus = \App\Models\Guru::where('lembaga_id', $lembagaId)
             ->where('is_approved', true)
             ->orderBy('nama')
             ->get();
 
-        return view('jurnal-mengajar.monitoring', compact('jurnals', 'gurus'));
+        $tingkats = \App\Models\Kelas::where('lembaga_id', $lembagaId)
+            ->distinct()
+            ->orderBy('tingkat')
+            ->pluck('tingkat');
+
+        $kelases = \App\Models\Kelas::where('lembaga_id', $lembagaId)
+            ->when($request->filled('tingkat'), fn($q) => $q->where('tingkat', $request->tingkat))
+            ->orderBy('nama')
+            ->get();
+
+        return view('jurnal-mengajar.monitoring', compact('jurnals', 'jadwalBelum', 'gurus', 'tingkats', 'kelases', 'tanggal'));
     }
 
     /**
@@ -385,6 +476,10 @@ class JurnalMengajarController extends Controller
      */
     public function verify(JurnalMengajar $jurnal): RedirectResponse
     {
+        if (auth()->user()->role === 'guru') {
+            Gate::authorize('validator-jurnal');
+        }
+
         $jurnal->update([
             'is_verified' => true,
             'verified_at' => now(),
@@ -394,6 +489,82 @@ class JurnalMengajarController extends Controller
         LogAktivita::log('verify', 'Verifikasi jurnal mengajar ID ' . $jurnal->id);
 
         return back()->with('success', 'Jurnal berhasil diverifikasi.');
+    }
+
+    /**
+     * Batalkan verifikasi jurnal.
+     */
+    public function unverify(JurnalMengajar $jurnal): RedirectResponse
+    {
+        if (auth()->user()->role === 'guru') {
+            Gate::authorize('validator-jurnal');
+        }
+
+        $jurnal->update([
+            'is_verified' => false,
+            'verified_at' => null,
+            'verified_by' => null,
+        ]);
+
+        LogAktivita::log('unverify', 'Batalkan verifikasi jurnal mengajar ID ' . $jurnal->id);
+
+        return back()->with('success', 'Verifikasi jurnal dibatalkan.');
+    }
+
+    /**
+     * Bulk verify jurnal.
+     */
+    public function bulkVerify(Request $request): RedirectResponse
+    {
+        if (auth()->user()->role === 'guru') {
+            Gate::authorize('validator-jurnal');
+        }
+
+        $ids = $request->input('ids', []);
+        if (empty($ids)) {
+            return back()->with('error', 'Tidak ada jurnal dipilih.');
+        }
+
+        $user = auth()->user();
+        JurnalMengajar::whereIn('id', $ids)
+            ->whereHas('jadwal', fn($q) => $q->where('lembaga_id', $user->lembaga_id))
+            ->update([
+                'is_verified' => true,
+                'verified_at' => now(),
+                'verified_by' => auth()->id(),
+            ]);
+
+        LogAktivita::log('verify', 'Bulk verifikasi ' . count($ids) . ' jurnal mengajar');
+
+        return back()->with('success', count($ids) . ' jurnal berhasil diverifikasi.');
+    }
+
+    /**
+     * Bulk batalkan verifikasi jurnal.
+     */
+    public function bulkUnverify(Request $request): RedirectResponse
+    {
+        if (auth()->user()->role === 'guru') {
+            Gate::authorize('validator-jurnal');
+        }
+
+        $ids = $request->input('ids', []);
+        if (empty($ids)) {
+            return back()->with('error', 'Tidak ada jurnal dipilih.');
+        }
+
+        $user = auth()->user();
+        JurnalMengajar::whereIn('id', $ids)
+            ->whereHas('jadwal', fn($q) => $q->where('lembaga_id', $user->lembaga_id))
+            ->update([
+                'is_verified' => false,
+                'verified_at' => null,
+                'verified_by' => null,
+            ]);
+
+        LogAktivita::log('unverify', 'Bulk batalkan verifikasi ' . count($ids) . ' jurnal mengajar');
+
+        return back()->with('success', count($ids) . ' jurnal verifikasinya dibatalkan.');
     }
 
     /**
@@ -421,7 +592,9 @@ class JurnalMengajarController extends Controller
                 ->whereNull('tanggal_keluar')
                 ->get()
                 ->pluck('siswa')
-                ->filter();
+                ->filter()
+                ->sortBy('nama')
+                ->values();
         }
 
         // Map existing presensi by siswa_id
@@ -436,7 +609,14 @@ class JurnalMengajarController extends Controller
             ->orderBy('minggu_ke')
             ->get();
 
-        return view('jurnal-mengajar.edit', compact('jurnal', 'siswas', 'presensiMap', 'atps'));
+        // Ambil perizinan siswa pada tanggal jurnal ini
+        $perizinanHariIni = PerizinanSiswa::where('lembaga_id', $user->lembaga_id)
+            ->where('kelas_id', $jurnal->kelas_id)
+            ->where('tanggal', $jurnal->tanggal->toDateString())
+            ->get()
+            ->keyBy('siswa_id');
+
+        return view('jurnal-mengajar.edit', compact('jurnal', 'siswas', 'presensiMap', 'atps', 'perizinanHariIni'));
     }
 
     /**
@@ -454,7 +634,7 @@ class JurnalMengajarController extends Controller
             'atp_id' => 'nullable|exists:atps,id',
             'siswa' => 'required|array',
             'siswa.*.id' => 'required|exists:siswas,id',
-            'siswa.*.status' => 'required|in:hadir,sakit,izin,alpha,terlambat',
+            'siswa.*.status' => 'nullable|in:alpha',
             'siswa.*.keterangan' => 'nullable|string|max:255',
         ]);
 
@@ -465,15 +645,29 @@ class JurnalMengajarController extends Controller
             'jam_selesai' => $jurnal->jam_selesai ?? Carbon::now()->format('H:i'),
         ]);
 
-        // Sync presensi siswa: delete existing, insert new
+        // Ambil perizinan untuk overlay
+        $perizinanHariIni = PerizinanSiswa::where('lembaga_id', $user->lembaga_id)
+            ->where('kelas_id', $jurnal->kelas_id)
+            ->where('tanggal', $jurnal->tanggal->toDateString())
+            ->get()
+            ->keyBy('siswa_id');
+
+        // Sync presensi siswa: delete existing, insert new — overlay perizinan
         $jurnal->detailSiswas()->delete();
         $siswaData = [];
         foreach ($validated['siswa'] as $s) {
+            $perizinan = $perizinanHariIni->get($s['id']);
+            $status = $s['status'] ?? 'hadir';
+            $keterangan = $s['keterangan'] ?? null;
+            if ($perizinan) {
+                $status = $perizinan->jenis;
+                $keterangan = $perizinan->keterangan;
+            }
             $siswaData[] = [
                 'jurnal_mengajar_id' => $jurnal->id,
                 'siswa_id' => $s['id'],
-                'status' => $s['status'],
-                'keterangan' => $s['keterangan'] ?? null,
+                'status' => $status,
+                'keterangan' => $keterangan,
             ];
         }
         DetailJurnalSiswa::insert($siswaData);
@@ -589,18 +783,33 @@ class JurnalMengajarController extends Controller
             $draft = JurnalMengajar::create($createData);
         }
 
-        // Simpan presensi siswa (step 2)
+        // Simpan presensi siswa (step 2) — overlay perizinan
         if ($step >= 2 && $request->has('siswa')) {
             DetailJurnalSiswa::where('jurnal_mengajar_id', $draft->id)->delete();
+
+            // Ambil perizinan hari ini
+            $perizinanHariIni = PerizinanSiswa::where('lembaga_id', $lembagaId)
+                ->where('kelas_id', $jadwal->kelas_id)
+                ->where('tanggal', $today)
+                ->get()
+                ->keyBy('siswa_id');
+
             $siswaData = [];
             foreach ($request->input('siswa', []) as $s) {
                 if (!isset($s['id']))
                     continue;
+                $perizinan = $perizinanHariIni->get($s['id']);
+                $status = $s['status'] ?? 'hadir';
+                $keterangan = $s['keterangan'] ?? null;
+                if ($perizinan) {
+                    $status = $perizinan->jenis;
+                    $keterangan = $perizinan->keterangan;
+                }
                 $siswaData[] = [
                     'jurnal_mengajar_id' => $draft->id,
                     'siswa_id' => $s['id'],
-                    'status' => $s['status'] ?? 'hadir',
-                    'keterangan' => $s['keterangan'] ?? null,
+                    'status' => $status,
+                    'keterangan' => $keterangan,
                 ];
             }
             if (!empty($siswaData)) {

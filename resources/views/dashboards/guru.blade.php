@@ -68,8 +68,15 @@
     }
 
     // Wali kelas
-    $isWaliKelas = $guru && $guru->isWaliKelas();
-    $kelasWali = $isWaliKelas ? $guru->kelasWali() : null;
+    $tahunAjaranAktif = \App\Models\TahunAjaran::where('is_active', true)->first();
+    $isWaliKelas = $guru && $guru->isWaliKelas($tahunAjaranAktif?->id);
+    $kelasWali = $isWaliKelas ? $guru->kelasWali($tahunAjaranAktif?->id) : null;
+
+    // Perizinan siswa
+    $isPerizinanSiswa = $guru && $guru->hasPermission('perizinan_siswa', $tahunAjaranAktif?->id);
+    $perizinanHariIni = $isPerizinanSiswa
+        ? \App\Models\PerizinanSiswa::where('lembaga_id', $lembagaId)->whereDate('tanggal', $today)->count()
+        : 0;
 
     // Greeting
     $hour = now()->hour;
@@ -376,6 +383,46 @@
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                     d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                             </svg>
+                        </a>
+                    </div>
+                </div>
+            @endif
+
+            @if ($isPerizinanSiswa)
+                <!-- SEPARATOR -->
+                <div class="flex items-center gap-3 pt-2">
+                    <div class="h-px flex-1 bg-slate-200"></div>
+                    <span class="text-sm font-medium text-slate-400">Perizinan</span>
+                    <div class="h-px flex-1 bg-slate-200"></div>
+                </div>
+
+                <div class="rounded-3xl bg-white p-6 shadow-sm shadow-slate-100 border border-slate-100/80">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="w-10 h-10 rounded-2xl bg-rose-50 flex items-center justify-center shadow-sm">
+                            <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor"
+                                stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            </svg>
+                        </div>
+                        <span
+                            class="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-3 py-1 text-sm font-semibold text-rose-800">Perizinan</span>
+                    </div>
+                    <h3 class="text-base font-semibold text-slate-900 mb-1">Perizinan Siswa</h3>
+                    <p class="text-sm font-normal text-slate-500 leading-relaxed mb-4">
+                        {{ $perizinanHariIni }} perizinan tercatat hari ini.
+                    </p>
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-sm text-slate-500">Kelola perizinan sakit/izin siswa.</p>
+                        </div>
+                        <a href="{{ route('perizinan.create') }}"
+                            class="flex items-center gap-1.5 rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-rose-200 active:scale-[0.98] transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            Input Perizinan
                         </a>
                     </div>
                 </div>

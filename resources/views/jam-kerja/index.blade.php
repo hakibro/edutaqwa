@@ -55,7 +55,7 @@
                                 {{ old('wajib_selfie', $lembaga->wajib_selfie) ? 'checked' : '' }}
                                 class="rounded border-gray-300 text-indigo-600 shadow-sm">
                             <label for="wajib_selfie" class="text-sm font-medium text-gray-700">Wajib upload selfie saat
-                                check-in</label>
+                                check-in &amp; check-out</label>
                         </div>
                         <div>
                             <button type="submit"

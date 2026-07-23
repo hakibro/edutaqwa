@@ -56,4 +56,9 @@ class Siswa extends Model
             ->withPivot('tahun_ajaran_id', 'tanggal_masuk', 'tanggal_keluar')
             ->wherePivotNull('tanggal_keluar');
     }
+
+    public function perizinanSiswas(): HasMany
+    {
+        return $this->hasMany(PerizinanSiswa::class);
+    }
 }

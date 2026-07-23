@@ -133,34 +133,32 @@ Selain akses standar `guru` di atas, guru dengan tugas tambahan tertentu mendapa
 
 ### 3.4 Validator Presensi Siswa
 
-| Fitur                        | Akses VP | Keterangan                                            |
-| ---------------------------- | :------: | ----------------------------------------------------- |
-| Dashboard Validator Presensi |    ✓     | Rekap siswa tidak hadir, perizinan aktif hari ini     |
-| Input Perizinan (Sakit/Izin) |   CRUD   | Pilih siswa + tanggal + jenis + keterangan            |
-| Bulk Perizinan               |    C     | Multi-select siswa & tanggal untuk perizinan massal   |
-| Riwayat Perizinan            |    R     | Filter per kelas, siswa, tanggal, jenis               |
-| Lihat Presensi Semua Kelas   |    R     | Monitoring presensi harian seluruh kelas              |
-| Notifikasi ke Wali Kelas     |   Auto   | Otomatis kirim notifikasi saat siswa diset sakit/izin |
+| Fitur                        | Akses VP | Keterangan                                                                 |
+| ---------------------------- | :------: | -------------------------------------------------------------------------- |
+| Daftar Perizinan             |    R     | Filter per kelas, tanggal, jenis                                           |
+| Input Perizinan (Sakit/Izin) |   CRUD   | Pilih kelas → AJAX load siswa → pilih siswa + tanggal + jenis + keterangan |
+| Hapus Perizinan              |    D     | Balikkan status jurnal ke alpha                                            |
+| Notifikasi ke Wali Kelas     |   Auto   | Otomatis kirim notifikasi saat siswa diset sakit/izin                      |
 
-- Permission `validator_presensi_siswa` disimpan di `tugas_tambahans.permissions`.
-- Guru dengan permission ini mendapat menu "Validator Presensi" di sidebar & bottom nav.
-- Auto-override: saat input perizinan, sistem otomatis update `detail_jurnal_siswas.status` di tanggal terkait.
+- Permission `perizinan_siswa` dikenali via `tugas_tambahans.jenis` = 'Perizinan Siswa'.
+- Guru dengan jenis tugas tambahan ini mendapat menu "Perizinan Siswa" di sidebar & bottom nav.
+- Auto-override: saat input perizinan, sistem otomatis update `detail_jurnal_siswas.status` di tanggal terkait jika jurnal sudah ada.
+- Jika jurnal belum ada → perizinan disimpan pending (is_applied=false), perlu resolve saat jurnal dibuat.
 
 ### 3.5 Guru dengan Permission Tambahan
 
-Selain tugas tambahan struktural (Wali Kelas, BK), guru bisa diberi permission fungsional melalui form tugas tambahan. Permission ini memberikan akses ke fitur spesifik tanpa mengubah role user.
+Selain tugas tambahan struktural (Wali Kelas, BK), guru bisa diberi permission fungsional melalui form tugas tambahan (field `jenis`). Permission ini memberikan akses ke fitur spesifik tanpa mengubah role user.
 
-| Permission               | Kode                       | Deskripsi                                                      |
-| ------------------------ | -------------------------- | -------------------------------------------------------------- |
-| Validator Jurnal         | `validator_jurnal`         | Akses verifikasi/validasi jurnal mengajar guru lain            |
-| Perizinan Siswa          | `perizinan_siswa`          | Akses approve/reject perizinan siswa                           |
-| Presensi PTK             | `presensi_ptk`             | Akses monitoring & validasi presensi PTK                       |
-| Validator Presensi Siswa | `validator_presensi_siswa` | Akses input perizinan sakit/izin siswa, auto-override presensi |
+| Permission       | Jenis di tugas_tambahans | Deskripsi                                                      |
+| ---------------- | ------------------------ | -------------------------------------------------------------- |
+| Validator Jurnal | `Validator Jurnal`       | Akses verifikasi/validasi jurnal mengajar guru lain            |
+| Perizinan Siswa  | `Perizinan Siswa`        | Akses input perizinan sakit/izin siswa, auto-override presensi |
+| Presensi PTK     | `Presensi PTK`           | Akses monitoring & validasi presensi PTK                       |
 
-- Permission disimpan sebagai JSON di kolom `tugas_tambahans.permissions`.
+- Permission dikenali via `Guru::hasPermission('permission_slug')` dengan mapping `Guru::PERMISSION_JENIS_MAP`.
 - Satu guru bisa punya multiple permission dalam satu atau lebih tugas tambahan.
-- Permission dicek via Gate: `Gate::allows('validator-jurnal')`.
-- Menu terkait permission muncul di dashboard guru jika guru memiliki permission tersebut.
+- Menu terkait permission muncul di sidebar & bottom nav guru jika guru memiliki permission tersebut.
+- **2026-07-23**: Kolom `permissions` JSON dihapus, permission fungsional sekarang jadi nilai `jenis` langsung.
 
 ## 4. RBAC Implementation Note
 

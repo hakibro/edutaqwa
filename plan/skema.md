@@ -24,7 +24,8 @@ LEMBAGA (Sekolah/Madrasah)
 │   ├── Guru Biasa
 │   ├── Wali Kelas        (tugas tambahan)
 │   ├── BK/Konselor       (tugas tambahan)
-│   ├── Validator Presensi (tugas tambahan — permission fungsional)
+│   ├── Validator Jurnal  (tugas tambahan — permission fungsional)
+│   ├── Perizinan Siswa   (tugas tambahan — permission fungsional)
 │   ├── Satminkal         (PTK tetap di lembaga)
 │   └── Non-Satminkal     (PTK tidak tetap)
 ├── Siswa                 (melihat jadwal, nilai, rapor)
@@ -37,36 +38,36 @@ LEMBAGA (Sekolah/Madrasah)
 
 ### 3.1 Daftar Lengkap Fitur
 
-| Fitur                                   | Role Terkait                 | Prioritas |
-| --------------------------------------- | ---------------------------- | --------- |
-| Manajemen Pengguna & RBAC               | Super Admin, Admin Yayasan\* | 🔴 Tinggi |
-| Autentikasi (Multi-Role)                | Semua                        | 🔴 Tinggi |
-| CRUD Yayasan                            | Super Admin                  | 🔴 Tinggi |
-| CRUD Lembaga                            | Admin Yayasan                | 🔴 Tinggi |
-| Tahun Ajaran                            | Admin Yayasan                | 🔴 Tinggi |
-| Approval Guru (baru, satminkal)         | Admin Yayasan                | 🔴 Tinggi |
-| NIY (generate otomatis saat approve)    | Admin Yayasan                | 🔴 Tinggi |
-| Kode Guru Lembaga & Satminkal           | Admin Lembaga                | 🔴 Tinggi |
-| Master Data Guru                        | Admin Lembaga                | 🔴 Tinggi |
-| Master Data Siswa (import Sisda API)    | Admin Lembaga                | 🔴 Tinggi |
-| Master Data Kelas (auto dari import)    | Admin Lembaga                | 🔴 Tinggi |
-| Master Data Jurusan (auto dari import)  | Admin Lembaga                | 🔴 Tinggi |
-| Kelola Mapel (kelompok, penugasan guru) | Kurikulum                    | 🔴 Tinggi |
-| Detail Mapel (CP, TP, ATP)              | Guru                         | 🔴 Tinggi |
-| Jadwal Per Kelas                        | Kurikulum                    | 🔴 Tinggi |
-| Absensi PTK — Check-in/out Harian       | Guru                         | 🔴 Tinggi |
-| Jurnal Mengajar (Selfie + Presensi)     | Guru                         | 🔴 Tinggi |
-| Validator Presensi Siswa                | Guru (Validator Presensi)    | 🟡 Sedang |
-| Perizinan Siswa (Sakit/Izin)            | Guru (Validator Presensi)    | 🟡 Sedang |
-| Penilaian (Harian, PTS, PAS, UKK)       | Guru                         | 🔴 Tinggi |
-| Rapor (Cetak, E-Rapor)                  | Guru, Kurikulum              | 🔴 Tinggi |
-| Kalender Akademik                       | Admin Yayasan                | 🟡 Sedang |
-| Dashboard Per Role                      | Semua                        | 🟡 Sedang |
-| Manajemen Ekstrakurikuler               | Kesiswaan                    | 🟡 Sedang |
-| Pelanggaran & Tata Tertib               | Kesiswaan, BK                | 🟡 Sedang |
-| Mutasi Siswa                            | Kesiswaan, Admin Lembaga     | 🟡 Sedang |
-| Laporan Akademik                        | Kurikulum, Kepala Lembaga    | 🟡 Sedang |
-| Notifikasi (In-App)                     | Semua                        | 🟡 Sedang |
+| Fitur                                   | Role Terkait                 | Prioritas    |
+| --------------------------------------- | ---------------------------- | ------------ |
+| Manajemen Pengguna & RBAC               | Super Admin, Admin Yayasan\* | 🔴 Tinggi    |
+| Autentikasi (Multi-Role)                | Semua                        | 🔴 Tinggi    |
+| CRUD Yayasan                            | Super Admin                  | 🔴 Tinggi    |
+| CRUD Lembaga                            | Admin Yayasan                | 🔴 Tinggi    |
+| Tahun Ajaran                            | Admin Yayasan                | 🔴 Tinggi    |
+| Approval Guru (baru, satminkal)         | Admin Yayasan                | 🔴 Tinggi    |
+| NIY (generate otomatis saat approve)    | Admin Yayasan                | 🔴 Tinggi    |
+| Kode Guru Lembaga & Satminkal           | Admin Lembaga                | 🔴 Tinggi    |
+| Master Data Guru                        | Admin Lembaga                | 🔴 Tinggi    |
+| Master Data Siswa (import Sisda API)    | Admin Lembaga                | 🔴 Tinggi    |
+| Master Data Kelas (auto dari import)    | Admin Lembaga                | 🔴 Tinggi    |
+| Master Data Jurusan (auto dari import)  | Admin Lembaga                | 🔴 Tinggi    |
+| Kelola Mapel (kelompok, penugasan guru) | Kurikulum                    | 🔴 Tinggi    |
+| Detail Mapel (CP, TP, ATP)              | Guru                         | 🔴 Tinggi    |
+| Jadwal Per Kelas                        | Kurikulum                    | 🔴 Tinggi    |
+| Absensi PTK — Check-in/out Harian       | Guru                         | 🔴 Tinggi    |
+| Jurnal Mengajar (Selfie + Presensi)     | Guru                         | 🔴 Tinggi    |
+| Validator Presensi Siswa                | Guru (Validator Presensi)    | 🟡 Sedang    |
+| Perizinan Siswa (Sakit/Izin)            | Guru (Perizinan Siswa)       | 🟡 Sedang ✅ |
+| Penilaian (Harian, PTS, PAS, UKK)       | Guru                         | 🔴 Tinggi    |
+| Rapor (Cetak, E-Rapor)                  | Guru, Kurikulum              | 🔴 Tinggi    |
+| Kalender Akademik                       | Admin Yayasan                | 🟡 Sedang    |
+| Dashboard Per Role                      | Semua                        | 🟡 Sedang    |
+| Manajemen Ekstrakurikuler               | Kesiswaan                    | 🟡 Sedang    |
+| Pelanggaran & Tata Tertib               | Kesiswaan, BK                | 🟡 Sedang    |
+| Mutasi Siswa                            | Kesiswaan, Admin Lembaga     | 🟡 Sedang    |
+| Laporan Akademik                        | Kurikulum, Kepala Lembaga    | 🟡 Sedang    |
+| Notifikasi (In-App)                     | Semua                        | 🟡 Sedang    |
 
 ---
 
@@ -181,20 +182,36 @@ Wizard 3 langkah menggabungkan selfie, presensi siswa, dan materi pertemuan dala
 | Penyimpanan | File di storage `storage/app/public/agenda/`                                                                                   |
 | Duplikat    | Unique constraint (jadwal_id, tanggal)                                                                                         |
 
-### 6.6 Validator Presensi Siswa & Perizinan
+### 6.5B Monitoring Jurnal (View Enhancement)
 
-Guru dengan tugas tambahan **Validator Presensi** (permission `validator_presensi_siswa`) mengelola perizinan siswa.
+Tampilan monitoring jurnal untuk Kurikulum/Kepala Lembaga/Admin Lembaga yang memudahkan pemahaman data dalam satu halaman.
 
-| Atribut          | Keterangan                                                                 |
-| ---------------- | -------------------------------------------------------------------------- |
-| Permission       | `validator_presensi_siswa` — disimpan di `tugas_tambahans.permissions`     |
-| Fungsi           | Mencatat perizinan sakit/izin siswa per tanggal                            |
-| Auto-Override    | Set perizinan → otomatis update `detail_jurnal_siswas.status` di hari itu  |
-| Alur Jurnal Guru | Guru kelas isi jurnal: hanya pilihan **Hadir** / **Tidak Hadir**           |
-|                  | Status sakit/izin/alpha ditentukan oleh Validator Presensi                 |
-|                  | Jika siswa tidak hadir & tidak ada perizinan → status = Alpha              |
-| Rekap Perizinan  | Validator Presensi lihat rekap perizinan per kelas, per tanggal, per siswa |
-| Notifikasi       | Notifikasi ke Wali Kelas jika siswa sakit/izin                             |
+| Atribut            | Keterangan                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------- |
+| Summary Cards      | 4 kartu ringkasan: Total Jurnal, Terverifikasi, Belum Verifikasi, Belum Mengisi             |
+| Progress per Kelas | Progress bar horizontal % jurnal terisi vs total jadwal per kelas                           |
+| Tabel Compact      | 1 baris per guru+kelas — semua info tanpa accordion (kelas, guru, mapel, jam, status, aksi) |
+| Statistik Presensi | Ringkasan hadir/tidak hadir per jurnal langsung di baris tabel                              |
+| Quick Filter Chips | Chips: Hari Ini, Kemarin, Minggu Ini, Belum Verifikasi, per tingkat                         |
+| Highlight Warna    | Merah muda (pending), hijau (verified), merah (belum isi)                                   |
+| Export             | Export Excel data monitoring yang sedang difilter                                           |
+| Auto-refresh       | Toggle auto-refresh setiap 5 menit                                                          |
+| Responsive Mobile  | Card stack view di layar kecil sebagai pengganti tabel                                      |
+
+### 6.6 Perizinan Siswa
+
+Guru dengan tugas tambahan **Perizinan Siswa** (jenis `Perizinan Siswa` di `tugas_tambahans`) mengelola perizinan siswa.
+
+| Atribut          | Keterangan                                                                |
+| ---------------- | ------------------------------------------------------------------------- |
+| Permission       | `perizinan_siswa` — dikenali via `Guru::hasPermission('perizinan_siswa')` |
+| Fungsi           | Mencatat perizinan sakit/izin siswa per tanggal                           |
+| Auto-Override    | Set perizinan → otomatis update `detail_jurnal_siswas.status` di hari itu |
+| Alur Jurnal Guru | Guru kelas isi jurnal: hanya pilihan **Hadir** / **Tidak Hadir**          |
+|                  | Status sakit/izin/alpha ditentukan oleh Guru Perizinan                    |
+|                  | Jika siswa tidak hadir & tidak ada perizinan → status = Alpha             |
+| Daftar Perizinan | Guru Perizinan lihat daftar perizinan per kelas, per tanggal, per jenis   |
+| Notifikasi       | Notifikasi ke Wali Kelas jika siswa sakit/izin                            |
 
 ---
 
