@@ -224,12 +224,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/jurnal-mengajar/bulk-unverify', [JurnalMengajarController::class, 'bulkUnverify'])->name('jurnal-mengajar.bulk-unverify');
     });
 
-    // Jurnal — Show (Guru + Admin/Kurikulum/Kepala Lembaga)
-    Route::middleware('role:guru,admin_lembaga,kurikulum,kepala_lembaga')->group(function () {
-        Route::get('/jurnal-mengajar/{jurnal}', [JurnalMengajarController::class, 'show'])->name('jurnal-mengajar.show');
-    });
-
-    // Jurnal — Guru
+    // Jurnal — Guru (non-wildcard routes HARUS di atas wildcard {jurnal})
     Route::middleware('role:guru')->group(function () {
         Route::get('/jurnal-mengajar', [JurnalMengajarController::class, 'index'])->name('jurnal-mengajar.index');
         Route::get('/jurnal-mengajar/create', [JurnalMengajarController::class, 'create'])->name('jurnal-mengajar.create');
@@ -240,6 +235,12 @@ Route::middleware('auth')->group(function () {
         // Draft save per-step wizard
         Route::post('/jurnal-mengajar/save-draft', [JurnalMengajarController::class, 'saveDraft'])->name('jurnal-mengajar.save-draft');
         Route::delete('/jurnal-mengajar/draft/{jurnal}', [JurnalMengajarController::class, 'destroyDraft'])->name('jurnal-mengajar.destroy-draft');
+    });
+
+    // Jurnal — Show (Guru + Admin/Kurikulum/Kepala Lembaga)
+    // PENTING: wildcard {jurnal} harus SETELAH semua route non-wildcard
+    Route::middleware('role:guru,admin_lembaga,kurikulum,kepala_lembaga')->group(function () {
+        Route::get('/jurnal-mengajar/{jurnal}', [JurnalMengajarController::class, 'show'])->name('jurnal-mengajar.show');
     });
 
     // === PERIZINAN SISWA (Phase 12) — Guru dengan permission perizinan_siswa ===
