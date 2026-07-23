@@ -83,6 +83,7 @@ LEMBAGA (Sekolah/Madrasah)
 | Kesiswaan          |    -    |    -    |      R      |   -   |   -    |     -     |   -    |      -      |     -     |   -   |     ✓     |     ✓     |    ✓    |
 | Guru               |    -    |    -    |      -      |   R   |   R    |     ✓     |   ✓    |      ✓      |     ✓     |  RU   |     C     |     ✓     |    R    |
 | Validator Presensi |    -    |    -    |      -      |   -   |   -    |     -     |   -    |      -      |     -     |   -   |     -     |     ✓     |    ✓    |
+| Wali Kelas         |    -    |    -    |      R      |   R   |   R    |     -     |   R    |      -      |     R     |   R   |     R     |     ✓     |    ✓    |
 | Siswa              |    -    |    -    |      -      |   R   |   R    |     -     |   R    |      -      |     R     |   R   |     -     |     ✓     |    -    |
 | Orang Tua          |    -    |    -    |      -      |   -   |   -    |     -     |   R    |      -      |     R     |   R   |     R     |     ✓     |    -    |
 
@@ -121,6 +122,7 @@ Yayasan
       │    ├── NilaiPTS
       │    └── NilaiPAS
       ├── Raport
+      │    └── Kokurikuler           (nilai kegiatan non-akademik: Pramuka, PMR, Seni, dll — bagian dari rapor)
       ├── Ekstrakurikuler
       └── Pelanggaran
 ```

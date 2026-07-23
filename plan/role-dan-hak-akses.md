@@ -48,6 +48,7 @@
 | Lihat Nilai     |      -      |       -       |       R        |       -       |     R     |     R     |  R   |   R   |     R     |         -          |
 | Jenis Nilai     |      -      |       -       |       -        |       -       |   CRUD    |     -     |  -   |   -   |     -     |         -          |
 | Raport          |      -      |       -       |       R        |       -       |     -     |     -     |  RU  |   R   |     R     |         -          |
+| Kokurikuler     |      -      |       -       |       R        |       -       |     -     |     -     | CRUD |   R   |     R     |         -          |
 | Presensi        |      -      |       -       |       R        |       -       |     -     |     -     | CRUD |   R   |     R     |         R          |
 | Perizinan Siswa |      -      |       -       |       R        |       -       |     -     |     -     |  -   |   -   |     -     |        CRUD        |
 
@@ -74,6 +75,18 @@
 | Pelanggaran     |      -      |       -       |       R        |       -       |     -     |   CRUD    |  C   |   R   |     R     |
 | Ekstrakurikuler |      -      |       -       |       R        |       -       |     -     |   CRUD    |  R   |   R   |     R     |
 | Alumni          |      -      |       -       |       R        |       R       |     -     |   CRUD    |  -   |   -   |     -     |
+
+### 2.5B Dashboard Wali Kelas v2
+
+| Fitur                     | super_admin | admin_yayasan | kepala_lembaga | admin_lembaga | kurikulum | kesiswaan | guru (wali kelas) | siswa | orang_tua |
+| ------------------------- | :---------: | :-----------: | :------------: | :-----------: | :-------: | :-------: | :---------------: | :---: | :-------: |
+| Ringkasan Kelas           |      -      |       -       |       R        |       -       |     R     |     R     |         R         |   -   |     -     |
+| Presensi & Kehadiran      |      -      |       -       |       R        |       -       |     R     |     R     |         R         |   -   |     -     |
+| Rapor & Nilai             |      -      |       -       |       R        |       -       |     R     |     R     |         R         |   R   |     R     |
+| Tata Tertib & Pelanggaran |      -      |       -       |       R        |       -       |     -     |   CRUD    |         R         |   R   |     R     |
+| Perizinan Siswa           |      -      |       -       |       R        |       -       |     -     |     R     |         R         |   -   |     -     |
+| Profil Siswa Detail       |      -      |       -       |       R        |       R       |     R     |   CRUD    |         R         |   R   |     R     |
+| Quick Actions             |      -      |       -       |       -        |       -       |     -     |     -     |         ✓         |   -   |     -     |
 
 ### 2.6 Laporan
 

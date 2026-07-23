@@ -290,8 +290,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/nilai/finalize', [NilaiController::class, 'finalize'])->name('nilai.finalize');
     });
 
-    // Rekap Nilai (Kurikulum, Kepala Lembaga)
-    Route::middleware('role:kurikulum,kepala_lembaga')->group(function () {
+    // Rekap Nilai (Kurikulum, Kepala Lembaga, Admin Lembaga)
+    Route::middleware('role:kurikulum,kepala_lembaga,admin_lembaga')->group(function () {
         Route::get('/nilai-rekap', [NilaiController::class, 'rekap'])->name('nilai.rekap');
     });
 

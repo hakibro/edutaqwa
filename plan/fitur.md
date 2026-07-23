@@ -117,15 +117,21 @@
 
 ### 1.7 Rapor
 
-| Fitur              | Deskripsi                            |
-| ------------------ | ------------------------------------ |
-| Generate Rapor     | Generate rapor dari nilai & presensi |
-| Rapor Draft        | Edit sebelum finalisasi              |
-| Rapor Final        | Kunci rapor setelah divalidasi       |
-| Catatan Wali Kelas | Input catatan & deskripsi sikap      |
-| Catatan BK         | Input catatan pembinaan              |
-| Cetak Rapor        | PDF rapor format Kurikulum Merdeka   |
-| E-Rapor            | Rapor digital (dibagikan via link)   |
+| Fitur               | Deskripsi                                                                                                |
+| ------------------- | -------------------------------------------------------------------------------------------------------- |
+| Generate Rapor      | Generate rapor dari nilai & presensi                                                                     |
+| Rapor Draft         | Edit sebelum finalisasi                                                                                  |
+| Rapor Final         | Kunci rapor setelah divalidasi                                                                           |
+| Catatan Wali Kelas  | Input catatan & deskripsi sikap                                                                          |
+| Catatan BK          | Input catatan pembinaan                                                                                  |
+| Cetak Rapor         | PDF rapor format Kurikulum Merdeka                                                                       |
+| E-Rapor             | Rapor digital (dibagikan via link)                                                                       |
+| **Kokurikuler**     | **Nilai kegiatan di luar mapel akademik — sub dari rapor**                                               |
+| - Jenis Kokurikuler | CRUD kategori: Pramuka, PMR, Seni Tari, Olahraga, KIR, Paskibra, dll (per lembaga)                       |
+| - Input Nilai       | Guru/Pembina input nilai per siswa per kokurikuler (predikat: Sangat Baik/Baik/Cukup/Kurang + deskripsi) |
+| - Tampil di Rapor   | Tercetak di lembar rapor sebagai komponen kokurikuler                                                    |
+| - Batch Input       | Input nilai 1 kokurikuler untuk seluruh siswa sekaligus                                                  |
+| - Rekap per Siswa   | Wali kelas lihat ringkasan kokurikuler semua siswa di kelasnya                                           |
 
 ### 1.8 Presensi (DIGABUNG ke 1.11 Jurnal Mengajar)
 
@@ -148,6 +154,22 @@
 | Multi Sesi                | Jam berbeda per hari (Senin-Jumat vs Sabtu)      |
 | Riwayat Absensi           | Rekap harian/bulanan per guru                    |
 | Laporan Absensi PTK       | Export rekap kehadiran guru                      |
+
+### 1.8B Dashboard Wali Kelas v2 (Redesign Komprehensif)
+
+Halaman wali kelas saat ini hanya menampilkan stat cards + tabel presensi + quick links. Versi baru mengubahnya menjadi dashboard komprehensif dengan 5 area utama, memberi wali kelas visibilitas penuh terhadap siswa di kelasnya.
+
+| Fitur                         | Deskripsi                                                                                              |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **Ringkasan Kelas**           | Stat cards: jumlah siswa (L/P), wali kelas, tahun ajaran, badge semester aktif                         |
+| **Presensi & Kehadiran**      | Grafik batang/bulan hadir vs tidak hadir, filter bulan, highlight siswa bermasalah (>3 alpha berturut) |
+| **Rapor & Nilai**             | Quick view nilai akhir per mapel per siswa, rata-rata kelas, link ke halaman rapor penuh               |
+| **Tata Tertib & Pelanggaran** | Daftar pelanggaran terbaru di kelas, total poin per siswa, threshold warning (poin >50)                |
+| **Perizinan Siswa**           | Riwayat sakit/izin siswa di kelas, badge "Sakit Hari Ini" / "Izin Hari Ini", filter tanggal            |
+| **Profil Siswa Detail**       | Klik baris siswa → panel detail: foto, NISN, kontak orang tua, riwayat kelas, ringkasan presensi       |
+| **Quick Actions**             | Tombol aksi cepat: input rapor, catat pelanggaran, lihat presensi, hubungi orang tua                   |
+| **Tabel Siswa Interaktif**    | Sort, search, filter jenis kelamin, highlight baris siswa alpha >3, badge status                       |
+| **Mobile Responsive**         | Card stack view di mobile, tab navigasi antar area, swipe antar siswa                                  |
 
 ### 1.10 Agenda Mengajar (Selfie) — DIGABUNG ke 1.11 Jurnal Mengajar
 

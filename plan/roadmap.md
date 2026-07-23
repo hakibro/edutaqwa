@@ -212,6 +212,18 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 - [x] Navigasi dinamis guru (Wali Kelas/BK muncul di sidebar & bottom nav otomatis)
 - [x] Akumulasi poin per siswa (P9 dashboard)
 
+### 8.1B Dashboard Wali Kelas v2 (Redesign Komprehensif)
+
+- [ ] Ringkasan Kelas — stat cards: jumlah siswa (L/P), wali kelas, tahun ajaran, badge semester
+- [ ] Presensi & Kehadiran — grafik batang hadir vs tidak hadir per bulan, filter bulan, highlight siswa >3 alpha
+- [ ] Rapor & Nilai — quick view nilai akhir per mapel per siswa, rata-rata kelas, link rapor penuh
+- [ ] Tata Tertib & Pelanggaran — daftar pelanggaran terbaru, total poin per siswa, threshold warning
+- [ ] Perizinan Siswa — riwayat sakit/izin, badge "Sakit Hari Ini" / "Izin Hari Ini", filter tanggal
+- [ ] Profil Siswa Detail — klik baris → panel: foto, NISN, kontak orang tua, riwayat kelas, ringkasan presensi
+- [ ] Quick Actions — tombol aksi: input rapor, catat pelanggaran, lihat presensi, hubungi orang tua
+- [ ] Tabel Siswa Interaktif — sort, search, filter L/P, highlight alpha >3, badge status
+- [ ] Mobile Responsive — card stack view, tab navigasi, swipe antar siswa
+
 ### 8.2 Ekstrakurikuler
 
 - [x] CRUD Ekskul
@@ -414,12 +426,23 @@ Checklist pengembangan berdasarkan prioritas. Centang item yang sudah selesai.
 
 ## P15 — Rapor
 
+### 15.1 Rapor
+
 - [ ] Generate rapor (hitung nilai akhir)
 - [ ] Rapor draft → final
 - [ ] Catatan Wali Kelas (sikap spiritual & sosial)
 - [ ] Catatan BK
 - [ ] Cetak PDF rapor format Kurikulum Merdeka
 - [ ] E-Rapor (link digital)
+
+### 15.2 Kokurikuler (Sub Rapor)
+
+- [ ] CRUD Jenis Kokurikuler — kategori kegiatan (Pramuka, PMR, Seni, Olahraga, dll) per lembaga
+- [ ] Input Nilai Kokurikuler — guru/pembina input predikat (Sangat Baik/Baik/Cukup/Kurang) + deskripsi per siswa
+- [ ] Batch Input — input nilai 1 kokurikuler untuk seluruh siswa sekaligus
+- [ ] Tampil di Lembar Rapor — komponen kokurikuler tercetak di PDF rapor
+- [ ] Rekap Kokurikuler — wali kelas lihat ringkasan kokurikuler siswa di kelasnya
+- [ ] Relasi ke Rapor — nilai kokurikuler terikat tahun ajaran & semester, jadi bagian tidak terpisahkan dari rapor
 
 ---
 
